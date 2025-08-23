@@ -12,7 +12,7 @@ use {
 		arch::{self, load_application},
 		scheduler,
 		scheduler::task::NORMAL_PRIORITY,
-		LogLevel, LOGGER,
+		logging::{LogLevel, LOGGER},
 	},
 };
 

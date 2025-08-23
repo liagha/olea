@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-//! Configuration parameter of the kernel eduOS-rs
+//! Configuration parameter of the kernel Olea-Base
 
 use crate::arch::memory::VirtAddr;
 

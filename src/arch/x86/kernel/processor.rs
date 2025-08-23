@@ -160,7 +160,7 @@ pub(crate) fn init() {
 	if has_fsgsbase {
 		cr4 |= Cr4::CR4_ENABLE_FSGSBASE;
 	} else {
-		panic!("eduOS-rs requires the CPU feature FSGSBASE");
+		panic!("Olea-Base requires the CPU feature FSGSBASE");
 	}
 
 	let has_mce = match cpuid.get_feature_info() {

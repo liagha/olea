@@ -17,11 +17,14 @@ extern crate x86;
 extern crate bitflags;
 extern crate num_traits;
 
-use crate::arch::processor::shutdown;
-use crate::consts::HEAP_SIZE;
-use crate::memory::buddy::LockedHeap;
-use core::panic::PanicInfo;
-pub use logging::*;
+use {
+	crate::{
+		arch::processor::shutdown,
+		consts::HEAP_SIZE,
+		memory::buddy::LockedHeap,
+	},
+	core::panic::PanicInfo,
+};
 
 #[macro_use]
 pub mod macros;

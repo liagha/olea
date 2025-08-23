@@ -1,4 +1,4 @@
-/// Currently, eduOS supports only x86_64 (64 bit)
+/// Currently, Olea supports only x86_64 (64 bit)
 /// and x86 (32 bit) code. Both architecture are similar
 /// and share the code in the directory x86
 
