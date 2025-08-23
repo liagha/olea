@@ -28,7 +28,7 @@ extern "C" fn create_user() {
 pub extern "C" fn main() -> i32 {
 	extern "C" fn task_test() {}
 
-	println!("-- Olea-Base --");
+	println!("\n-     O L E A     -\n");
 
 	olea::init();
 
@@ -42,7 +42,7 @@ pub extern "C" fn main() -> i32 {
 
 	scheduler::reschedule();
 
-	println!("Shutdown system!");
+	info!("shutdown system.");
 
 	0
 }

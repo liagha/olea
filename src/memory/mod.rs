@@ -20,7 +20,7 @@ pub(crate) fn init() {
 #[alloc_error_handler]
 pub fn rust_oom(layout: Layout) -> ! {
 	println!(
-		"[!!!OOM!!!] Memory allocation of {} bytes failed",
+		"out of memory: memory allocation of {} bytes failed.",
 		layout.size()
 	);
 
