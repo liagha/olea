@@ -32,7 +32,7 @@ pub struct KernelLogger {
 
 /// default logger to handle kernel messages
 pub const LOGGER: KernelLogger = KernelLogger {
-	log_level: LogLevel::Info,
+	log_level: LogLevel::Debug,
 };
 
 /// Print formatted info text to our console, followed by a newline.
