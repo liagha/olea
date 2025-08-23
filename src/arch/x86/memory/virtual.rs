@@ -1,21 +1,20 @@
-use crate::arch::x86::memory::paging::{BasePageSize, PageSize};
-use crate::arch::x86::memory::VirtAddr;
-use crate::memory::freelist::{FreeList, FreeListEntry};
-use crate::scheduler::DisabledPreemption;
+use {
+	crate::{
+		arch::x86::memory::{
+			VirtAddr,
+			paging::{BasePageSize, PageSize},
+		},
+		memory::freelist::{FreeList, FreeListEntry},
+		scheduler::DisabledPreemption,
+	}
+};
 
 static mut KERNEL_FREE_LIST: FreeList<VirtAddr> = FreeList::new();
 
-/// Start of the virtual memory address space reserved for kernel memory.
-/// This also marks the start of the virtual memory address space reserved for the task heap.
 pub(crate) const KERNEL_VIRTUAL_MEMORY_START: VirtAddr = VirtAddr(0x8000_0000u64);
 
-/// End of the virtual memory address space reserved for kernel memory (32 GiB).
-/// This also marks the start of the virtual memory address space reserved for the task heap.
 pub(crate) const KERNEL_VIRTUAL_MEMORY_END: VirtAddr = VirtAddr(0x800_0000_0000u64);
 
-/// End of the virtual memory address space reserved for kernel memory (128 TiB).
-/// This is the maximum contiguous virtual memory area possible with current x86-64 CPUs, which only support 48-bit
-/// linear addressing (in two 47-bit areas).
 const TASK_VIRTUAL_MEMORY_END: VirtAddr = VirtAddr(0x8000_0000_0000u64);
 
 pub(crate) fn init() {
@@ -31,12 +30,7 @@ pub(crate) fn init() {
 #[allow(dead_code)]
 pub(crate) fn allocate(size: usize) -> VirtAddr {
 	assert!(size > 0);
-	assert!(
-		size % BasePageSize::SIZE == 0,
-		"Size {:#X} is not a multiple of {:#X}",
-		size,
-		BasePageSize::SIZE
-	);
+	assert_eq!(size % BasePageSize::SIZE, 0, "Size {:#X} is not a multiple of {:#X}", size, BasePageSize::SIZE);
 
 	let _preemption = DisabledPreemption::new();
 	let result = unsafe { KERNEL_FREE_LIST.allocate(size, None) };
@@ -51,18 +45,8 @@ pub(crate) fn allocate(size: usize) -> VirtAddr {
 pub(crate) fn allocate_aligned(size: usize, alignment: usize) -> VirtAddr {
 	assert!(size > 0);
 	assert!(alignment > 0);
-	assert!(
-		size % alignment == 0,
-		"Size {:#X} is not a multiple of the given alignment {:#X}",
-		size,
-		alignment
-	);
-	assert!(
-		alignment % BasePageSize::SIZE == 0,
-		"Alignment {:#X} is not a multiple of {:#X}",
-		alignment,
-		BasePageSize::SIZE
-	);
+	assert_eq!(size % alignment, 0, "Size {:#X} is not a multiple of the given alignment {:#X}", size, alignment);
+	assert_eq!(alignment % BasePageSize::SIZE, 0, "Alignment {:#X} is not a multiple of {:#X}", alignment, BasePageSize::SIZE);
 
 	let _preemption = DisabledPreemption::new();
 	let result = unsafe { KERNEL_FREE_LIST.allocate(size, Some(alignment)) };
@@ -81,19 +65,9 @@ pub(crate) fn deallocate(virtual_address: VirtAddr, size: usize) {
 		"Virtual address {:#X} is not < KERNEL_VIRTUAL_MEMORY_END",
 		virtual_address
 	);
-	assert!(
-		virtual_address % BasePageSize::SIZE == 0,
-		"Virtual address {:#X} is not a multiple of {:#X}",
-		virtual_address,
-		BasePageSize::SIZE
-	);
+	assert_eq!(virtual_address % BasePageSize::SIZE, 0, "Virtual address {:#X} is not a multiple of {:#X}", virtual_address, BasePageSize::SIZE);
 	assert!(size > 0);
-	assert!(
-		size % BasePageSize::SIZE == 0,
-		"Size {:#X} is not a multiple of {:#X}",
-		size,
-		BasePageSize::SIZE
-	);
+	assert_eq!(size % BasePageSize::SIZE, 0, "Size {:#X} is not a multiple of {:#X}", size, BasePageSize::SIZE);
 
 	let _preemption = DisabledPreemption::new();
 	unsafe {
