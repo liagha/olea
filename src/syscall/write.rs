@@ -12,14 +12,12 @@ pub(crate) unsafe extern "C" fn sys_writev(
 	ptr: *const IoVec,
 	cnt: i32,
 ) -> isize {
-	debug!("Enter syscall writev");
+	debug!("enter syscall writev.");
 	let mut len: isize = 0;
-	info!("slice 2");
 
 	let iovec = core::slice::from_raw_parts(ptr, cnt as usize);
 
 	for i in iovec {
-		info!("slice 3");
 		let slice = core::slice::from_raw_parts(i.iov_base, i.iov_len);
 
 		let tmp: isize = crate::file::descriptor::write(fd, slice).map_or_else(
@@ -37,9 +35,8 @@ pub(crate) unsafe extern "C" fn sys_writev(
 }
 
 pub(crate) unsafe extern "C" fn sys_write(fd: FileDescriptor, buf: *mut u8, len: usize) -> isize {
-	debug!("Enter syscall write");
-	info!("slice 4");
-	
+	debug!("enter syscall write.");
+
 	let slice = unsafe { core::slice::from_raw_parts(buf, len) };
 	crate::file::descriptor::write(fd, slice).map_or_else(
 		|e| -num::ToPrimitive::to_isize(&e).unwrap(),

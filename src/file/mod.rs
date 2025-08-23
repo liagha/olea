@@ -94,7 +94,7 @@ pub fn mkdir(path: &String) -> Result<()> {
 /// `path` must be an absolute path to the file, while `flags` defined
 /// if the file is writeable or created on demand.
 pub fn open(name: &str, flags: OpenOption) -> io::Result<FileDescriptor> {
-	debug!("Open {}, {:?}", name, flags);
+	debug!("open {}, {:?}.", name, flags);
 
 	let fs = unsafe { VFS_ROOT.as_mut().unwrap() };
 	if let Ok(file) = fs.open(name, flags) {
@@ -180,7 +180,7 @@ pub(crate) fn init() {
 
 	if DEMO.len() > 0 {
 		info!(
-			"Found mountable file at 0x{:x} (len 0x{:x})",
+			"found mountable file at 0x{:x} (len 0x{:x}).",
 			DEMO.as_ptr() as u64,
 			DEMO.len()
 		);

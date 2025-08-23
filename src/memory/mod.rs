@@ -11,7 +11,7 @@ pub(crate) mod linked_list;
 use alloc::alloc::Layout;
 
 pub(crate) fn init() {
-	info!("Memory size {} MByte", get_memory_size() >> 20);
+	info!("memory size: {} MB.", get_memory_size() >> 20);
 
 	arch::memory::init();
 }

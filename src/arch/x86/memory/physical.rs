@@ -20,7 +20,7 @@ pub(crate) fn init() {
 				};
 
 				debug!(
-					"Add free physical regions 0x{:x} - 0x{:x}",
+					"add free physical regions 0x{:x} - 0x{:x}.",
 					entry.start, entry.end
 				);
 				PHYSICAL_FREE_LIST.list.push_back(entry);
@@ -31,12 +31,7 @@ pub(crate) fn init() {
 
 pub fn allocate(size: usize) -> PhysAddr {
 	assert!(size > 0);
-	assert!(
-		size % BasePageSize::SIZE == 0,
-		"Size {:#X} is not a multiple of {:#X}",
-		size,
-		BasePageSize::SIZE
-	);
+	assert_eq!(size % BasePageSize::SIZE, 0, "size {:#X} is not a multiple of {:#X}", size, BasePageSize::SIZE);
 
 	let _preemption = DisabledPreemption::new();
 	let result = unsafe { PHYSICAL_FREE_LIST.allocate(size, None) };

@@ -79,7 +79,7 @@ struct State {
 }
 
 extern "C" fn leave_task() -> ! {
-	debug!("finish task {}", get_current_taskid());
+	debug!("finished task {}.", get_current_taskid());
 
 	do_exit();
 }
@@ -88,7 +88,7 @@ impl TaskFrame for Task {
 	#[cfg(target_arch = "x86_64")]
 	fn create_stack_frame(&mut self, func: extern "C" fn()) {
 		unsafe {
-			let mut stack: *mut u64 = ((*self.stack).top()).as_mut_ptr();
+			let mut stack: *mut u64 = (*self.stack).top().as_mut_ptr();
 
 			write_bytes((*self.stack).bottom().as_mut_ptr::<u8>(), 0xCD, STACK_SIZE);
 
@@ -109,7 +109,7 @@ impl TaskFrame for Task {
 
 			(*state).rsp = (stack as usize + size_of::<State>()) as u64;
 			(*state).rbp = (*state).rsp + size_of::<u64>() as u64;
-			(*state).gs = ((*self.stack).top()).as_u64();
+			(*state).gs = (*self.stack).top().as_u64();
 
 			(*state).rip = (func as *const ()) as u64;
 			(*state).rflags = 0x1202u64;

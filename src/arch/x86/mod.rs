@@ -19,14 +19,14 @@ use goblin::{elf, elf64};
 use x86::controlregs;
 
 pub fn load_application(path: &String) -> io::Result<()> {
-	debug!("Try to load application!");
+	debug!("try to load application!");
 	unsafe {
 		controlregs::cr3_write(paging::create_usr_pgd().as_u64());
 	}
 
 	let mut file = file::File::open(path)?;
 	let len = file.len()?;
-	debug!("File has a size of {} bytes", len);
+	debug!("file has a size of {} bytes.", len);
 	let mut buffer: Vec<u8> = Vec::new();
 
 	buffer.resize(len, 0);
@@ -35,22 +35,22 @@ pub fn load_application(path: &String) -> io::Result<()> {
 		Ok(n) => n,
 		_ => return Err(io::Error::EINVAL),
 	};
-	drop(file); // close file
-	debug!("elf information: {:#?}", &elf);
+	drop(file); 
+	debug!("ELF information: {:#?}.", &elf);
 
 	if elf.is_lib {
-		error!("Error: File is an ELF library");
+		error!("file is an ELF library.");
 		return Err(io::Error::EINVAL);
 	}
 
 	if !elf.is_64 {
-		error!("Error: File isn't a 64bit ELF executable");
+		error!("file isn't a 64bit ELF executable.");
 		return Err(io::Error::EINVAL);
 	}
 
 	if elf.libraries.len() > 0 {
 		error!(
-			"Error: File depends on following libraries: {:?}",
+			"file depends on following libraries: {:?}.",
 			elf.libraries
 		);
 		return Err(io::Error::EINVAL);
@@ -71,11 +71,11 @@ pub fn load_application(path: &String) -> io::Result<()> {
 			);
 		}
 	}
-	debug!("Virtual start address 0x{:x}", vstart);
-	debug!("Memory size 0x{:x} {}", exec_size, len);
+	debug!("virtual start address 0x{:x}.", vstart);
+	debug!("memory size 0x{:x} {}.", exec_size, len);
 
 	if exec_size == 0 {
-		error!("Error: unable to find PT_LOAD",);
+		error!("unable to find PT_LOAD.",);
 		return Err(io::Error::EINVAL);
 	}
 
@@ -96,23 +96,23 @@ pub fn load_application(path: &String) -> io::Result<()> {
 	//let mut relaent: u64 = 0;
 	for i in &elf.program_headers {
 		if i.p_type == PT_LOAD {
-			info!("Load code for address 0x{:x}", i.p_vaddr);
+			info!("load code for address 0x{:x}.", i.p_vaddr);
 
 			let mem = (USER_ENTRY.as_usize() + i.p_vaddr as usize - vstart) as *mut u8;
 
-			info!("USER_ENTRY: 0x{:x}", USER_ENTRY.as_usize());
-			info!("i.p_vaddr: 0x{:x}", i.p_vaddr);
-			info!("vstart: 0x{:x}", vstart);
-			info!("calculated mem: {:p}", mem);
-			info!("i.p_filesz: {}", i.p_filesz);
-			info!("mem alignment: {}", (mem as usize) % core::mem::align_of::<u8>());
+			info!("USER_ENTRY: 0x{:x}.", USER_ENTRY.as_usize());
+			info!("i.p_vaddr: 0x{:x}.", i.p_vaddr);
+			info!("vstart: 0x{:x}.", vstart);
+			info!("calculated mem: {:p}.", mem);
+			info!("i.p_filesz: {}.", i.p_filesz);
+			info!("mem alignment: {}.", (mem as usize) % core::mem::align_of::<u8>());
 
 			if mem.is_null() {
 				info!("mem pointer is null!");
 			}
 
 			if i.p_filesz > isize::MAX as u64 {
-				info!("p_filesz too large: {}", i.p_filesz);
+				info!("p_filesz too large: {}.", i.p_filesz);
 			}
 
 			let mem_slice = unsafe { slice::from_raw_parts_mut(mem, i.p_filesz as usize) };
@@ -122,12 +122,11 @@ pub fn load_application(path: &String) -> io::Result<()> {
 			);
 		} else if i.p_type == PT_GNU_RELRO {
 			debug!(
-				"PT_GNU_RELRO at 0x{:x} (size 0x{:x})",
+				"PT_GNU_RELRO at 0x{:x} (size 0x{:x}).",
 				i.p_vaddr, i.p_filesz
 			);
 		} else if i.p_type == PT_DYNAMIC {
-			debug!("PT_DYNAMIC at 0x{:x} (size 0x{:x})", i.p_vaddr, i.p_filesz);
-			info!("slice 1");
+			debug!("PT_DYNAMIC at 0x{:x} (size 0x{:x}).", i.p_vaddr, i.p_filesz);
 
 			let mem = (USER_ENTRY.as_u64() + i.p_vaddr as u64 - vstart as u64) as *mut u8;
 			let r#dyn = unsafe { elf::dynamic::dyn64::from_raw(0, mem as usize) };
@@ -156,17 +155,16 @@ pub fn load_application(path: &String) -> io::Result<()> {
 			}
 		} else if (j.r_info & 0xF) == R_386_GLOB_DAT as u64 {
 		} else {
-			error!("Unsupported relocation type {}", j.r_info & 0xF);
+			error!("unsupported relocation type {}.", j.r_info & 0xF);
 		}
 	}
 
-	let entry = elf.entry as usize - vstart as usize + USER_ENTRY.as_usize();
+	let entry = elf.entry as usize - vstart + USER_ENTRY.as_usize();
 
-	// free temporary buffer
 	drop(buffer);
 
-	debug!("jump to user land at 0x{:x}", entry);
+	debug!("jump to user land at 0x{:x}.", entry);
 	unsafe {
-		self::kernel::jump_to_user_land(entry);
+		kernel::jump_to_user_land(entry);
 	}
 }

@@ -3,7 +3,7 @@ use crate::scheduler::*;
 use core::arch::asm;
 
 extern "C" fn invalid_syscall(sys_no: u64) -> ! {
-	error!("Invalid syscall {}", sys_no);
+	error!("invalid syscall {}.", sys_no);
 	do_exit();
 }
 

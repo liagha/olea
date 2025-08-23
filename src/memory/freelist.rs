@@ -74,7 +74,7 @@ impl<
 
 	pub fn deallocate(&mut self, address: T, size: usize) {
 		debug!(
-			"Deallocating {} bytes at {:#X} from Free List {:#X}",
+			"deallocating {} bytes at {:#X} from Free List {:#X}.",
 			size, address, self as *const Self as usize
 		);
 
@@ -214,7 +214,7 @@ impl FreeList<PhysAddr> {
 		alignment: Option<usize>,
 	) -> Result<PhysAddr, FreeListError> {
 		debug!(
-			"Allocating {} bytes from Free List {:#X}",
+			"allocating {} bytes from Free List {:#X}.",
 			size, self as *const Self as usize
 		);
 
@@ -277,7 +277,7 @@ impl FreeList<VirtAddr> {
 		alignment: Option<usize>,
 	) -> Result<VirtAddr, FreeListError> {
 		debug!(
-			"Allocating {} bytes from Free List {:#X}",
+			"allocating {} bytes from Free List {:#X}.",
 			size, self as *const Self as usize
 		);
 

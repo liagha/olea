@@ -450,7 +450,7 @@ impl<L: PageTableLevel> PageTableMethods for PageTable<L> {
 			if self.entries[index].is_present() && self.entries[index].is_user() {
 				let physical_address = self.entries[index].address();
 
-				debug!("Free page frame at 0x{:x}", physical_address);
+				debug!("free page frame at 0x{:x}.", physical_address);
 				physical::deallocate(physical_address, BasePageSize::SIZE);
 			}
 		}
@@ -622,7 +622,7 @@ where
 				subtable.drop_user_space();
 
 				let physical_address = self.entries[index].address();
-				debug!("Free page table at 0x{:x}", physical_address);
+				debug!("free page table at 0x{:x}.", physical_address);
 				physical::deallocate(physical_address, BasePageSize::SIZE);
 			}
 		}
@@ -644,7 +644,7 @@ pub(crate) extern "x86-interrupt" fn page_fault_handler(
 			physical::allocate_aligned(BasePageSize::SIZE, BasePageSize::SIZE);
 
 		debug!(
-			"Map 0x{:x} into the user space at 0x{:x}",
+			"map 0x{:x} into the user space at 0x{:x}.",
 			physical_address, virtual_address
 		);
 
@@ -667,12 +667,11 @@ pub(crate) extern "x86-interrupt" fn page_fault_handler(
 
 		irq::send_eoi_to_master();
 	} else {
-		// Anything else is an error!
 		let pferror = PageFaultError::from_bits_truncate(error_code as u32);
 
-		error!("Page Fault (#PF) Exception: {:#?}", stack_frame);
+		error!("page fault (#PF) Exception: {:#?}.", stack_frame);
 		error!(
-			"virtual_address = {:#X}, page fault error = {}",
+			"virtual_address = {:#X}, page fault error = {}.",
 			virtual_address, pferror
 		);
 
@@ -697,7 +696,7 @@ fn get_page_range<S: PageSize>(virtual_address: VirtAddr, count: usize) -> PageI
 pub(crate) fn get_page_table_entry<S: PageSize>(
 	virtual_address: VirtAddr,
 ) -> Option<PageTableEntry> {
-	debug!("Looking up Page Table Entry for {:#X}", virtual_address);
+	debug!("looking up Page Table Entry for {:#X}.", virtual_address);
 
 	let page = Page::<S>::including_address(virtual_address);
 	let root_pagetable = unsafe { &mut *PML4_ADDRESS };
@@ -705,7 +704,7 @@ pub(crate) fn get_page_table_entry<S: PageSize>(
 }
 
 pub(crate) fn get_physical_address<S: PageSize>(virtual_address: VirtAddr) -> PhysAddr {
-	debug!("Getting physical address for {:#X}", virtual_address);
+	debug!("getting physical address for {:#X}.", virtual_address);
 
 	let page = Page::<S>::including_address(virtual_address);
 	let root_pagetable = unsafe { &mut *PML4_ADDRESS };
@@ -725,7 +724,7 @@ pub(crate) fn virtual_to_physical(virtual_address: VirtAddr) -> PhysAddr {
 
 pub(crate) fn unmap<S: PageSize>(virtual_address: VirtAddr, count: usize) {
 	debug!(
-		"Unmapping virtual address {:#X} ({} pages)",
+		"unmapping virtual address {:#X} ({} pages).",
 		virtual_address, count
 	);
 
@@ -741,7 +740,7 @@ pub(crate) fn map<S: PageSize>(
 	flags: PageTableEntryFlags,
 ) {
 	debug!(
-		"Mapping virtual address {:#X} to physical address {:#X} ({} pages)",
+		"mapping virtual address {:#X} to physical address {:#X} ({} pages).",
 		virtual_address, physical_address, count
 	);
 
@@ -786,7 +785,7 @@ pub(crate) fn drop_user_space() {
 pub(crate) fn create_usr_pgd() -> PhysAddr {
 	let irq = irq_nested_disable();
 
-	debug!("Create 1st level page table for the user-level task");
+	debug!("create 1st level page table for the user-level task.");
 
 	unsafe {
 		let physical_address =
@@ -794,7 +793,7 @@ pub(crate) fn create_usr_pgd() -> PhysAddr {
 		let user_page_table = r#virtual::allocate_aligned(BasePageSize::SIZE, BasePageSize::SIZE);
 
 		debug!(
-			"Map page frame 0x{:x} at virtual address 0x{:x}",
+			"map page frame 0x{:x} at virtual address 0x{:x}.",
 			physical_address, user_page_table
 		);
 
@@ -835,10 +834,10 @@ pub(crate) fn init() {
 	let recursive_pgt_idx = unsafe { BOOT_INFO.unwrap().recursive_index() };
 
 	debug!(
-		"Found recursive_page_table_addr at 0x{:x}",
+		"found recursive_page_table_addr at 0x{:x}.",
 		recursive_pgt as u64
 	);
-	debug!("Recursive index: {}", recursive_pgt_idx);
+	debug!("recursive index: {}.", recursive_pgt_idx);
 
 	unsafe {
 		ROOT_PAGE_TABLE = PhysAddr::from(

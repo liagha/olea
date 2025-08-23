@@ -96,7 +96,7 @@ pub(crate) fn get_boot_stack() -> BootStack {
 			}
 		}
 
-		panic!("Unable to determine the kernel stack");
+		panic!("unable to determine the kernel stack.");
 	}
 }
 

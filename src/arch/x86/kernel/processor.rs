@@ -125,7 +125,7 @@ pub(crate) fn get_physical_address_bits() -> u8 {
 }
 
 pub(crate) fn init() {
-	debug!("enable supported processor features");
+	debug!("enable supported processor features.");
 
 	let cpuid = CpuId::new();
 	let mut cr0 = unsafe { cr0() };
@@ -137,7 +137,7 @@ pub(crate) fn init() {
 	// enable cache
 	cr0 &= !(Cr0::CR0_CACHE_DISABLE | Cr0::CR0_NOT_WRITE_THROUGH);
 
-	debug!("set CR0 to {:?}", cr0);
+	debug!("set CR0 to {:?}.", cr0);
 
 	unsafe { cr0_write(cr0) };
 
@@ -176,7 +176,7 @@ pub(crate) fn init() {
 	// allow the usage of rdtsc in user space
 	cr4 &= !(Cr4::CR4_ENABLE_PPMC | Cr4::CR4_TIME_STAMP_DISABLE);
 
-	debug!("set CR4 to {:?}", cr4);
+	debug!("set CR4 to {:?}.", cr4);
 
 	unsafe { cr4_write(cr4) };
 
@@ -186,7 +186,7 @@ pub(crate) fn init() {
 	};
 
 	if !has_syscall {
-		panic!("Syscall support is missing");
+		panic!("syscall support is missing.");
 	}
 
 	// enable support of syscall and sysret
@@ -215,10 +215,10 @@ pub(crate) fn init() {
 	}
 
 	if supports_1gib_pages() {
-		info!("System supports 1GiB pages");
+		info!("system supports 1GiB pages.");
 	}
-	debug!("Physical address bits {}", get_physical_address_bits());
-	debug!("Linear address bits {}", get_linear_address_bits());
-	debug!("CR0: {:?}", cr0);
-	debug!("CR4: {:?}", cr4);
+	debug!("physical address bits {}.", get_physical_address_bits());
+	debug!("linear address bits {}.", get_linear_address_bits());
+	debug!("CR0: {:?}.", cr0);
+	debug!("CR4: {:?}.", cr4);
 }

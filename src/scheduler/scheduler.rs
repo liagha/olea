@@ -72,7 +72,7 @@ impl Scheduler {
 			self.ready_queue.push(task.clone());
 			self.tasks.insert(tid, task);
 
-			info!("Creating task {}", tid);
+			info!("creating task {}.", tid);
 
 			Ok(tid)
 		};
@@ -90,10 +90,10 @@ impl Scheduler {
 	pub fn exit(&mut self) -> ! {
 		let closure = || {
 			if self.current_task.borrow().status != TaskStatus::Idle {
-				info!("finish task with id {}", self.current_task.borrow().id);
+				info!("finished task with id {}.", self.current_task.borrow().id);
 				self.cleanup();
 			} else {
-				panic!("unable to terminate idle task");
+				panic!("unable to terminate idle task.");
 			}
 		};
 
@@ -101,17 +101,16 @@ impl Scheduler {
 
 		self.reschedule();
 
-		// we should never reach this point
 		panic!("exit failed!");
 	}
 
 	pub fn abort(&mut self) -> ! {
 		let closure = || {
 			if self.current_task.borrow().status != TaskStatus::Idle {
-				info!("abort task with id {}", self.current_task.borrow().id);
+				info!("abort task with id {}.", self.current_task.borrow().id);
 				self.cleanup();
 			} else {
-				panic!("unable to terminate idle task");
+				panic!("unable to terminate idle task.");
 			}
 		};
 
@@ -126,12 +125,12 @@ impl Scheduler {
 	pub fn block_current_task(&mut self) -> Rc<RefCell<Task>> {
 		let closure = || {
 			if self.current_task.borrow().status == TaskStatus::Running {
-				debug!("block task {}", self.current_task.borrow().id);
+				debug!("block task {}.", self.current_task.borrow().id);
 
 				self.current_task.borrow_mut().status = TaskStatus::Blocked;
 				self.current_task.clone()
 			} else {
-				panic!("unable to block task {}", self.current_task.borrow().id);
+				panic!("unable to block task {}.", self.current_task.borrow().id);
 			}
 		};
 
@@ -141,7 +140,7 @@ impl Scheduler {
 	pub fn wakeup_task(&mut self, task: Rc<RefCell<Task>>) {
 		let closure = || {
 			if task.borrow().status == TaskStatus::Blocked {
-				debug!("wakeup task {}", task.borrow().id);
+				debug!("wakeup task {}.", task.borrow().id);
 
 				task.borrow_mut().status = TaskStatus::Ready;
 				self.ready_queue.push(task.clone());
@@ -222,7 +221,7 @@ impl Scheduler {
 		// do we have finished tasks? => drop tasks => deallocate implicitly the stack
 		if let Some(id) = self.finished_tasks.pop_front() {
 			if self.tasks.remove(&id).is_none() {
-				info!("Unable to drop task {}", id);
+				info!("unable to drop task {}.", id);
 			}
 		}
 
@@ -249,7 +248,7 @@ impl Scheduler {
 			&& current_status != TaskStatus::Running
 			&& current_status != TaskStatus::Idle
 		{
-			debug!("Switch to idle task");
+			debug!("switch to idle task.");
 			// current task isn't able to run and no other task available
 			// => switch to the idle task
 			next_task = Some(self.idle_task.clone());
@@ -263,11 +262,11 @@ impl Scheduler {
 			};
 
 			if current_status == TaskStatus::Running {
-				debug!("Add task {} to ready queue", current_id);
+				debug!("add task {} to ready queue.", current_id);
 				self.current_task.borrow_mut().status = TaskStatus::Ready;
 				self.ready_queue.push(self.current_task.clone());
 			} else if current_status == TaskStatus::Finished {
-				debug!("Task {} finished", current_id);
+				debug!("task {} finished.", current_id);
 				self.current_task.borrow_mut().status = TaskStatus::Invalid;
 				// release the task later, because the stack is required
 				// to call the function "switch"
@@ -276,7 +275,7 @@ impl Scheduler {
 			}
 
 			debug!(
-				"Switching task from {} to {} (stack {:#X} => {:#X})",
+				"switching task from {} to {} (stack {:#X} => {:#X}).",
 				current_id,
 				new_id,
 				unsafe { *current_stack_pointer },

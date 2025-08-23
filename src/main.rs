@@ -18,7 +18,7 @@ use {
 extern "C" fn create_user() {
 	let path = String::from("/bin/demo");
 
-	info!("Started Loader.");
+	info!("started application loader.");
 
 	_ = load_application(&path);
 }
@@ -26,9 +26,7 @@ extern "C" fn create_user() {
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn main() -> i32 {
-	extern "C" fn task_test() {
-		println!("Task {}.", scheduler::get_current_taskid());
-	}
+	extern "C" fn task_test() {}
 
 	println!("-- Olea-Base --");
 

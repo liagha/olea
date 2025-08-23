@@ -241,7 +241,7 @@ impl Drop for Task {
 	fn drop(&mut self) {
 		if self.root_page_table != arch::get_kernel_root_page_table() {
 			debug!(
-				"Deallocate page table 0x{:x} of task {}",
+				"deallocate page table 0x{:x} of task {}.",
 				self.root_page_table, self.id
 			);
 			arch::memory::physical::deallocate(self.root_page_table, BasePageSize::SIZE);
