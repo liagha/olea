@@ -1,5 +1,5 @@
 use crate::mm::linked_list;
-use crate::synch::spinlock::Spinlock;
+use crate::sync::spinlock::Spinlock;
 use core::alloc::GlobalAlloc;
 use core::alloc::Layout;
 use core::cmp::{max, min};

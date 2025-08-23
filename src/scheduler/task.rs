@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
 use crate::arch;
-use crate::arch::mm::PhysAddr;
-use crate::arch::mm::VirtAddr;
+use crate::arch::memory::PhysAddr;
+use crate::arch::memory::VirtAddr;
 use crate::arch::processor::msb;
 use crate::arch::{BasePageSize, PageSize};
 use crate::consts::*;
@@ -202,7 +202,7 @@ impl Task {
 			prio: LOW_PRIORITY,
 			status: TaskStatus::Idle,
 			last_stack_pointer: VirtAddr::zero(),
-			stack: Box::new(crate::arch::mm::get_boot_stack()),
+			stack: Box::new(crate::arch::memory::get_boot_stack()),
 			root_page_table: arch::get_kernel_root_page_table(),
 			fd_map: BTreeMap::new(),
 		}
@@ -244,7 +244,7 @@ impl Drop for Task {
 				"Deallocate page table 0x{:x} of task {}",
 				self.root_page_table, self.id
 			);
-			arch::mm::physicalmem::deallocate(self.root_page_table, BasePageSize::SIZE);
+			arch::memory::physical::deallocate(self.root_page_table, BasePageSize::SIZE);
 		}
 	}
 }

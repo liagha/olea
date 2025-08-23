@@ -1,6 +1,6 @@
 use crate::arch::x86::kernel::BOOT_INFO;
-use crate::arch::x86::mm::paging::{BasePageSize, PageSize};
-use crate::arch::x86::mm::PhysAddr;
+use crate::arch::x86::memory::paging::{BasePageSize, PageSize};
+use crate::arch::x86::memory::PhysAddr;
 use crate::logging::*;
 use crate::mm::freelist::{FreeList, FreeListEntry};
 use crate::scheduler::DisabledPreemption;

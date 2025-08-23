@@ -1,8 +1,8 @@
 // Original version written by Colin Finck, RWTH Aachen University
 
 pub mod paging;
-pub mod physicalmem;
-pub mod virtualmem;
+pub mod physical;
+pub mod r#virtual;
 
 use crate::arch::x86::kernel::BOOT_INFO;
 use crate::consts::INTERRUPT_STACK_SIZE;
@@ -154,8 +154,8 @@ pub(crate) fn get_memory_size() -> usize {
 
 pub(crate) fn init() {
 	paging::init();
-	physicalmem::init();
-	virtualmem::init();
+	physical::init();
+	r#virtual::init();
 }
 
 #[repr(C, align(64))]

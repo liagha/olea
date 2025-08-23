@@ -1,6 +1,6 @@
 use crate::scheduler::task::*;
 use crate::scheduler::{block_current_task, reschedule, wakeup_task};
-use crate::synch::spinlock::*;
+use crate::sync::spinlock::*;
 use core::cell::UnsafeCell;
 use core::marker::Sync;
 use core::ops::{Deref, DerefMut, Drop};

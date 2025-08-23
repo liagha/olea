@@ -1,5 +1,5 @@
-use crate::arch::x86::mm::paging::{BasePageSize, PageSize};
-use crate::arch::x86::mm::VirtAddr;
+use crate::arch::x86::memory::paging::{BasePageSize, PageSize};
+use crate::arch::x86::memory::VirtAddr;
 use crate::mm::freelist::{FreeList, FreeListEntry};
 use crate::scheduler::DisabledPreemption;
 

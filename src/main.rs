@@ -6,25 +6,28 @@
 extern crate olea;
 extern crate alloc;
 
-use alloc::string::String;
-use olea::arch;
-use olea::arch::load_application;
-use olea::scheduler;
-use olea::scheduler::task::NORMAL_PRIORITY;
-use olea::{LogLevel, LOGGER};
+use {
+	alloc::string::String,
+	olea::{
+		arch::{self, load_application},
+		scheduler,
+		scheduler::task::NORMAL_PRIORITY,
+		LogLevel, LOGGER,
+	},
+};
 
 extern "C" fn create_user_foo() {
 	let path = String::from("/bin/demo");
 
-	info!("Hello from loader");
+	info!("Started Loader.");
 
 	if load_application(&path).is_err() {
-		error!("Unable to load elf64 binary {}", path)
+		error!("Unable to load ELF64 binary {}.", path)
 	}
 }
 
 extern "C" fn foo() {
-	println!("hello from task {}", scheduler::get_current_taskid());
+	println!("Task {}.", scheduler::get_current_taskid());
 }
 
 #[cfg(not(test))]
@@ -32,7 +35,7 @@ extern "C" fn foo() {
 pub extern "C" fn main() -> i32 {
 	olea::init();
 
-	println!("Hello from eduOS-rs!");
+	println!("Olea-Base");
 
 	for _i in 0..2 {
 		scheduler::spawn(foo, NORMAL_PRIORITY).unwrap();

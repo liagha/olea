@@ -1,4 +1,4 @@
-use crate::arch::mm::{PhysAddr, VirtAddr};
+use crate::arch::memory::{PhysAddr, VirtAddr};
 use crate::logging::*;
 use alloc::collections::linked_list::LinkedList;
 use core::cmp::Ordering;

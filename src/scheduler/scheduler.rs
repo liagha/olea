@@ -1,5 +1,5 @@
 use crate::arch::drop_user_space;
-use crate::arch::mm::{PhysAddr, VirtAddr};
+use crate::arch::memory::{PhysAddr, VirtAddr};
 use crate::arch::switch;
 use crate::collections::irqsave;
 use crate::consts::*;

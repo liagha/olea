@@ -4,8 +4,8 @@ use crate::arch::x86::kernel::irq;
 use crate::arch::x86::kernel::irq::{irq_nested_disable, irq_nested_enable};
 use crate::arch::x86::kernel::processor;
 use crate::arch::x86::kernel::BOOT_INFO;
-use crate::arch::x86::mm::{physicalmem, virtualmem};
-use crate::arch::x86::mm::{PhysAddr, VirtAddr};
+use crate::arch::x86::memory::{physical, r#virtual};
+use crate::arch::x86::memory::{PhysAddr, VirtAddr};
 use crate::consts::*;
 use crate::logging::*;
 use crate::scheduler;
@@ -451,7 +451,7 @@ impl<L: PageTableLevel> PageTableMethods for PageTable<L> {
 				let physical_address = self.entries[index].address();
 
 				debug!("Free page frame at 0x{:x}", physical_address);
-				physicalmem::deallocate(physical_address, BasePageSize::SIZE);
+				physical::deallocate(physical_address, BasePageSize::SIZE);
 			}
 		}
 	}
@@ -537,7 +537,7 @@ where
 			// Does the table exist yet?
 			if !self.entries[index].is_present() {
 				// Allocate a single 4 KiB page for the new entry and mark it as a valid, writable subtable.
-				let pt_addr = physicalmem::allocate(BasePageSize::SIZE);
+				let pt_addr = physical::allocate(BasePageSize::SIZE);
 				if flags.contains(PageTableEntryFlags::USER_ACCESSIBLE) {
 					self.entries[index].set(
 						pt_addr,
@@ -623,7 +623,7 @@ where
 
 				let physical_address = self.entries[index].address();
 				debug!("Free page table at 0x{:x}", physical_address);
-				physicalmem::deallocate(physical_address, BasePageSize::SIZE);
+				physical::deallocate(physical_address, BasePageSize::SIZE);
 			}
 		}
 	}
@@ -641,7 +641,7 @@ pub(crate) extern "x86-interrupt" fn page_fault_handler(
 
 		// Ok, user space want to have memory
 		let physical_address =
-			physicalmem::allocate_aligned(BasePageSize::SIZE, BasePageSize::SIZE);
+			physical::allocate_aligned(BasePageSize::SIZE, BasePageSize::SIZE);
 
 		debug!(
 			"Map 0x{:x} into the user space at 0x{:x}",
@@ -790,8 +790,8 @@ pub(crate) fn create_usr_pgd() -> PhysAddr {
 
 	unsafe {
 		let physical_address =
-			physicalmem::allocate_aligned(BasePageSize::SIZE, BasePageSize::SIZE);
-		let user_page_table = virtualmem::allocate_aligned(BasePageSize::SIZE, BasePageSize::SIZE);
+			physical::allocate_aligned(BasePageSize::SIZE, BasePageSize::SIZE);
+		let user_page_table = r#virtual::allocate_aligned(BasePageSize::SIZE, BasePageSize::SIZE);
 
 		debug!(
 			"Map page frame 0x{:x} at virtual address 0x{:x}",
@@ -820,7 +820,7 @@ pub(crate) fn create_usr_pgd() -> PhysAddr {
 
 		// unmap page table
 		unmap::<BasePageSize>(user_page_table, 1);
-		virtualmem::deallocate(user_page_table, BasePageSize::SIZE);
+		r#virtual::deallocate(user_page_table, BasePageSize::SIZE);
 
 		scheduler::set_root_page_table(physical_address);
 

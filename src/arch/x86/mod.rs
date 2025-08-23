@@ -1,9 +1,9 @@
 pub mod kernel;
-pub mod mm;
+pub mod memory;
 
-use self::mm::paging;
-use self::mm::paging::{BasePageSize, PageSize, PageTableEntryFlags};
-use self::mm::physicalmem;
+use self::memory::paging;
+use self::memory::paging::{BasePageSize, PageSize, PageTableEntryFlags};
+use self::memory::physical;
 use crate::consts::*;
 use crate::fs;
 use crate::io::{self, Read};
@@ -79,7 +79,7 @@ pub fn load_application(path: &String) -> io::Result<()> {
 		return Err(io::Error::EINVAL);
 	}
 
-	let physical_address = physicalmem::allocate(exec_size);
+	let physical_address = physical::allocate(exec_size);
 	paging::map::<BasePageSize>(
 		USER_ENTRY,
 		physical_address,

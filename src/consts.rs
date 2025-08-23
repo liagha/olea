@@ -2,7 +2,7 @@
 
 //! Configuration parameter of the kernel eduOS-rs
 
-use crate::arch::mm::VirtAddr;
+use crate::arch::memory::VirtAddr;
 
 /// Define the size of the kernel stack
 pub(crate) const STACK_SIZE: usize = 0x3000;

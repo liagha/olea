@@ -7,7 +7,7 @@ use crate::fs::initrd::{RamHandle, RomHandle};
 use crate::fs::{check_path, NodeKind, SeekFrom, Vfs, VfsNode, VfsNodeDirectory, VfsNodeFile};
 use crate::io;
 use crate::logging::*;
-use crate::synch::spinlock::*;
+use crate::sync::spinlock::*;
 use alloc::boxed::Box;
 use alloc::collections::BTreeMap;
 use alloc::string::String;

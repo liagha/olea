@@ -3,7 +3,7 @@
 use crate::fd::OpenOption;
 use crate::fs::SeekFrom;
 use crate::io;
-use crate::synch::spinlock::*;
+use crate::sync::spinlock::*;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::ops::{Deref, DerefMut};

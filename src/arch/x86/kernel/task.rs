@@ -1,6 +1,6 @@
 //! Architecture dependent interface to initialize a task
 
-use crate::arch::mm::VirtAddr;
+use crate::arch::memory::VirtAddr;
 use crate::consts::*;
 use crate::logging::*;
 use crate::scheduler::task::*;

@@ -37,7 +37,7 @@ pub mod fs;
 pub mod io;
 pub mod mm;
 pub mod scheduler;
-pub mod synch;
+pub mod sync;
 pub mod syscall;
 
 #[repr(align(256))]

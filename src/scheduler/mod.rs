@@ -5,7 +5,7 @@ mod scheduler;
 pub mod task;
 
 use crate::arch;
-use crate::arch::mm::{PhysAddr, VirtAddr};
+use crate::arch::memory::{PhysAddr, VirtAddr};
 use crate::errno::*;
 use crate::fd::{FileDescriptor, IoInterface};
 use crate::io;

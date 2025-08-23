@@ -1,7 +1,7 @@
-use crate::arch::x86::mm::paging::page_fault_handler;
+use crate::arch::x86::memory::paging::page_fault_handler;
 use crate::logging::*;
 use crate::scheduler::*;
-use crate::synch::spinlock::*;
+use crate::sync::spinlock::*;
 use core::arch::asm;
 use core::fmt;
 use x86::bits64::paging::VAddr;

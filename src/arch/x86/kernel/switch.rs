@@ -1,4 +1,4 @@
-use crate::arch::mm::VirtAddr;
+use crate::arch::memory::VirtAddr;
 use crate::arch::x86::kernel::gdt::set_current_kernel_stack;
 use core::arch::naked_asm;
 

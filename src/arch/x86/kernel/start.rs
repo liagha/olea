@@ -47,7 +47,7 @@ pub unsafe extern "C" fn _start(boot_info: &'static bootloader::BootInfo) -> ! {
 #[no_mangle]
 #[naked]
 pub unsafe extern "C" fn _start() -> ! {
-	use crate::arch::mm::{BOOT_STACK, BOOT_STACK_SIZE};
+	use crate::arch::memory::{BOOT_STACK, BOOT_STACK_SIZE};
 	use core::arch::naked_asm;
 
 	naked_asm!(

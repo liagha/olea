@@ -1,5 +1,5 @@
-use crate::arch::mm::get_boot_stack;
-use crate::arch::mm::VirtAddr;
+use crate::arch::memory::get_boot_stack;
+use crate::arch::memory::VirtAddr;
 use crate::scheduler;
 use crate::scheduler::task::Stack;
 use core::mem;

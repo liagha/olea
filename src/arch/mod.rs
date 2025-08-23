@@ -24,10 +24,10 @@ pub(crate) use self::x86::kernel::serial;
 
 // Export our platform-specific modules.
 #[cfg(any(target_arch = "x86_64", target_arch = "x86"))]
-pub(crate) use self::x86::mm;
+pub(crate) use self::x86::memory;
 
 // Export our platform-specific modules.
 #[cfg(any(target_arch = "x86_64", target_arch = "x86"))]
-pub(crate) use self::x86::mm::paging::{
+pub(crate) use self::x86::memory::paging::{
 	drop_user_space, get_kernel_root_page_table, BasePageSize, PageSize,
 };

@@ -1,7 +1,7 @@
 pub mod freelist;
 
 use crate::arch;
-use crate::arch::mm::get_memory_size;
+use crate::arch::memory::get_memory_size;
 use crate::arch::processor::shutdown;
 use crate::logging::*;
 pub(crate) mod buddy;
@@ -13,7 +13,7 @@ use alloc::alloc::Layout;
 pub(crate) fn init() {
 	info!("Memory size {} MByte", get_memory_size() >> 20);
 
-	arch::mm::init();
+	arch::memory::init();
 }
 
 #[cfg(not(test))]

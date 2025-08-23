@@ -1,4 +1,4 @@
-use crate::synch::spinlock::SpinlockIrqSave;
+use crate::sync::spinlock::SpinlockIrqSave;
 use core::fmt;
 use x86::io::*;
 

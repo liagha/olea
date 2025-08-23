@@ -1,4 +1,4 @@
-use crate::arch::mm::get_boot_stack;
+use crate::arch::memory::get_boot_stack;
 use crate::arch::x86::kernel::syscall_handler;
 use crate::logging::*;
 use crate::scheduler::task::Stack;
