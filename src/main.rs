@@ -21,9 +21,7 @@ extern "C" fn create_user_foo() {
 
 	info!("Started Loader.");
 
-	if load_application(&path).is_err() {
-		error!("Unable to load ELF64 binary {}.", path)
-	}
+	_ = load_application(&path);
 }
 
 extern "C" fn foo() {

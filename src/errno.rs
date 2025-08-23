@@ -1,13 +1,9 @@
-//! Basic error handling
-
 use core::{fmt, result};
 
 pub type Result<T> = result::Result<T, Error>;
 
-/// Possible errors of eduOS-rs
 #[derive(Debug, Clone)]
 pub enum Error {
-	/// Usage of a invalid priority
 	BadPriority,
 	BadFsKind,
 	BadFsOperation,
