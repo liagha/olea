@@ -1,6 +1,6 @@
-// src/arch/x86/kernel/boot/entry
-use crate::arch;
-use crate::arch::processor::shutdown::shutdown;
+use {
+    crate::{arch::{self}}
+};
 
 extern "C" {
     fn main() -> i32;
@@ -22,24 +22,24 @@ unsafe fn bss_init() {
 }
 
 #[cfg(not(test))]
-unsafe extern "C" fn kernel_entry_point() -> ! {
+unsafe extern "C" fn entry() -> ! {
     arch::initialize();
 
     #[cfg(target_arch = "x86")]
     bss_init();
 
-    let ret = main();
+    let output = main();
 
-    shutdown(ret)
+    arch::shutdown(output)
 }
 
 #[cfg(not(test))]
 #[cfg(target_arch = "x86_64")]
 #[no_mangle]
 pub unsafe extern "C" fn _start(boot_info: &'static bootloader::BootInfo) -> ! {
-    crate::arch::x86::kernel::BOOT_INFO = Some(boot_info);
+    arch::x86::kernel::BOOT_INFO = Some(boot_info);
 
-    kernel_entry_point();
+    entry();
 }
 
 #[cfg(not(test))]

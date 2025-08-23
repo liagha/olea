@@ -4,12 +4,12 @@ pub mod descriptors;
 pub mod interrupts;
 pub mod processor;
 pub mod scheduling;
-pub mod system_calls;
+pub mod calls;
 pub mod devices;
 pub mod boot;
 
 use bootloader::BootInfo;
-use core::arch::{asm, };
+use core::arch::{asm};
 
 #[cfg(target_arch = "x86_64")]
 pub(crate) static mut BOOT_INFO: Option<&'static BootInfo> = None;
@@ -26,5 +26,5 @@ pub fn register_task() {
 }
 
 pub fn initialize() {
-	boot::initialization::perform_early_initialization();
+	boot::init::early_init();
 }

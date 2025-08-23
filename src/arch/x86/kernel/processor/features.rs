@@ -1,11 +1,19 @@
-use crate::arch::memory::get_boot_stack;
-use crate::arch::x86::kernel::system_calls::handler::handle_system_call;
-use crate::logging::*;
-use core::arch::asm;
-use x86::controlregs::*;
-use x86::cpuid::*;
-use x86::msr::*;
-use crate::scheduler::task::Stack;
+use {
+    crate::{
+        logging::*,
+        arch::{
+            memory::get_boot_stack,
+            x86::kernel::calls::handler::call,
+        },
+        scheduler::task::Stack,
+    },
+    core::arch::asm,
+    x86::{
+        controlregs::*,
+        cpuid::*,
+        msr::*,
+    },
+};
 
 const EFER_SCE: u64 = 1 << 0;
 const EFER_LME: u64 = 1 << 8;
@@ -90,7 +98,7 @@ pub(crate) fn enable_features() {
     unsafe {
         wrmsr(IA32_EFER, rdmsr(IA32_EFER) | EFER_LMA | EFER_SCE | EFER_NXE);
         wrmsr(IA32_STAR, (0x1Bu64 << 48) | (0x08u64 << 32));
-        wrmsr(IA32_LSTAR, (handle_system_call as usize).try_into().unwrap());
+        wrmsr(IA32_LSTAR, (call as usize).try_into().unwrap());
         wrmsr(IA32_FMASK, 1 << 9);
 
         wrmsr(IA32_GS_BASE, 0);

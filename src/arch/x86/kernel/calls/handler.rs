@@ -1,9 +1,12 @@
-// src/arch/x86/kernel/system_calls/handler.rs
-use crate::syscall::SYSHANDLER_TABLE;
-use core::arch::naked_asm;
+use {
+    crate::{
+        syscall::SYSHANDLER_TABLE,
+    },
+    core::arch::naked_asm,
+};
 
 #[naked]
-pub(crate) unsafe extern "C" fn handle_system_call() {
+pub(crate) unsafe extern "C" fn call() {
     naked_asm!(
         "push rcx",
         "push rdx",

@@ -1,7 +1,12 @@
-// src/arch/x86/kernel/scheduling/switch.rs
-use crate::arch::x86::kernel::descriptors::global::set_current_kernel_stack;
-use crate::arch::memory::VirtAddr;
-use core::arch::naked_asm;
+use {
+    crate::{
+        arch::{
+            memory::VirtAddr,
+            x86::kernel::descriptors::global::set_current_kernel_stack,
+        }
+    },
+    core::arch::naked_asm,
+};
 
 #[cfg(target_arch = "x86_64")]
 macro_rules! save_context {

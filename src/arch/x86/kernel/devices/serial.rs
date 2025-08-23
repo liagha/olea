@@ -1,21 +1,24 @@
-// src/arch/x86/kernel/devices/serial.rs
-use crate::sync::spinlock::SpinlockIrqSave;
-use core::fmt;
-use x86::io::*;
+use {
+    crate::{
+        sync::spinlock::SpinlockIrqSave,
+    },
+    core::fmt,
+    x86::io::*,
+};
 
 pub(crate) struct SerialPort {
-    base_addr: u16,
+    base: u16,
 }
 
 impl SerialPort {
-    const fn new(base_addr: u16) -> Self {
-        Self { base_addr }
+    const fn new(base: u16) -> Self {
+        Self { base }
     }
 
-    pub fn write_bytes(&mut self, buf: &[u8]) {
+    pub fn write_bytes(&mut self, buffer: &[u8]) {
         unsafe {
-            for &b in buf {
-                outb(self.base_addr, b);
+            for &b in buffer {
+                outb(self.base, b);
             }
         }
     }
@@ -25,7 +28,7 @@ impl fmt::Write for SerialPort {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         unsafe {
             for &b in s.as_bytes() {
-                outb(self.base_addr, b);
+                outb(self.base, b);
             }
         }
 

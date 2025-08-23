@@ -13,7 +13,7 @@ use crate::scheduler::task::{Task, TaskPriority};
 use alloc::rc::Rc;
 use alloc::sync::Arc;
 use core::cell::RefCell;
-use crate::arch::x86::kernel::interrupts::hardware::{irq_nested_disable, irq_nested_enable};
+use crate::arch::x86::kernel::interrupts::hardware::{interrupt_nested_disable, interrupt_nested_enable};
 
 static mut SCHEDULER: Option<scheduler::Scheduler> = None;
 
@@ -107,13 +107,13 @@ pub(crate) struct DisabledPreemption {
 impl DisabledPreemption {
 	pub fn new() -> Self {
 		DisabledPreemption {
-			irq_enabled: irq_nested_disable(),
+			irq_enabled: interrupt_nested_disable(),
 		}
 	}
 }
 
 impl Drop for DisabledPreemption {
 	fn drop(&mut self) {
-		irq_nested_enable(self.irq_enabled);
+		interrupt_nested_enable(self.irq_enabled);
 	}
 }

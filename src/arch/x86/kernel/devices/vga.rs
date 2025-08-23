@@ -1,7 +1,8 @@
-// src/arch/x86/kernel/devices/vga.rs
-use crate::sync::spinlock::Spinlock;
-use core::fmt;
-use x86::io::*;
+use {
+    crate::sync::spinlock::Spinlock,
+    core::fmt,
+    x86::io::*,
+};
 
 const CRT_CONTROLLER_ADDRESS_PORT: u16 = 0x3D4;
 const CRT_CONTROLLER_DATA_PORT: u16 = 0x3D5;

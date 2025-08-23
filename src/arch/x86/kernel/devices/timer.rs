@@ -1,14 +1,13 @@
-// src/arch/x86/kernel/devices/timer.rs
 use {
     crate::{
         consts::*,
+        arch::processor::utilities::memory_barrier,
     },
     x86::{
         io::*,
         time::rdtsc,
     },
 };
-use crate::arch::processor::utilities::memory_barrier;
 
 const CLOCK_TICK_RATE: u32 = 1193182u32;
 
@@ -21,7 +20,7 @@ unsafe fn wait_some_time() {
     }
 }
 
-pub(crate) fn initialize_programmable_interval_timer() {
+pub(crate) fn init_timer() {
     let latch = ((CLOCK_TICK_RATE + TIMER_FREQ / 2) / TIMER_FREQ) as u16;
 
     unsafe {

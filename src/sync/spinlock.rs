@@ -1,7 +1,7 @@
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use lock_api::{GuardSend, RawMutex, RawMutexFair};
 use crate::arch::processor::utilities::pause;
-use crate::arch::x86::kernel::interrupts::hardware::{irq_nested_disable, irq_nested_enable};
+use crate::arch::x86::kernel::interrupts::hardware::{interrupt_nested_disable, interrupt_nested_enable};
 
 /// A [fair] [ticket lock].
 ///
@@ -103,13 +103,13 @@ unsafe impl RawMutex for RawSpinlockIrqSave {
 
 	#[inline]
 	fn lock(&self) {
-		let irq = irq_nested_disable();
+		let irq = interrupt_nested_disable();
 		let ticket = self.queue.fetch_add(1, Ordering::Relaxed);
 
 		while self.dequeue.load(Ordering::Acquire) != ticket {
-			irq_nested_enable(irq);
+			interrupt_nested_enable(irq);
 			pause();
-			irq_nested_disable();
+			interrupt_nested_disable();
 		}
 
 		self.irq.store(irq, Ordering::SeqCst);
@@ -117,7 +117,7 @@ unsafe impl RawMutex for RawSpinlockIrqSave {
 
 	#[inline]
 	fn try_lock(&self) -> bool {
-		let irq = irq_nested_disable();
+		let irq = interrupt_nested_disable();
 		let ticket = self
 			.queue
 			.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |ticket| {
@@ -125,7 +125,7 @@ unsafe impl RawMutex for RawSpinlockIrqSave {
 					self.irq.store(irq, Ordering::SeqCst);
 					Some(ticket + 1)
 				} else {
-					irq_nested_enable(irq);
+					interrupt_nested_enable(irq);
 					None
 				}
 			});
@@ -137,7 +137,7 @@ unsafe impl RawMutex for RawSpinlockIrqSave {
 	unsafe fn unlock(&self) {
 		let irq = self.irq.swap(false, Ordering::SeqCst);
 		self.dequeue.fetch_add(1, Ordering::Release);
-		irq_nested_enable(irq);
+		interrupt_nested_enable(irq);
 	}
 
 	#[inline]
@@ -155,7 +155,7 @@ unsafe impl RawMutexFair for RawSpinlockIrqSave {
 
 	#[inline]
 	unsafe fn bump(&self) {
-		let irq = irq_nested_disable();
+		let irq = interrupt_nested_disable();
 		let ticket = self.queue.load(Ordering::Relaxed);
 		let serving = self.dequeue.load(Ordering::Relaxed);
 		if serving + 1 != ticket {
@@ -164,7 +164,7 @@ unsafe impl RawMutexFair for RawSpinlockIrqSave {
 				self.lock();
 			}
 		}
-		irq_nested_enable(irq);
+		interrupt_nested_enable(irq);
 	}
 }
 

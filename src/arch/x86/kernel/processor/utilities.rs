@@ -1,4 +1,3 @@
-// src/arch/x86/kernel/processor/utilities.rs
 use core::arch::asm;
 
 #[inline(always)]
@@ -28,7 +27,7 @@ pub(crate) fn most_significant_bit(value: usize) -> Option<usize> {
 
 #[allow(dead_code)]
 #[inline(always)]
-pub(crate) fn lsb(value: usize) -> Option<usize> {
+pub(crate) fn least_significant_bit(value: usize) -> Option<usize> {
     if value > 0 {
         let ret: usize;
         unsafe {

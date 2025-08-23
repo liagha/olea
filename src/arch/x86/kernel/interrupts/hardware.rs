@@ -1,17 +1,21 @@
-// src/arch/x86/kernel/interrupts/hardware.rs
-use core::arch::asm;
-use x86::io::*;
-use crate::arch::x86::kernel::descriptors::interrupts::INTERRUPT_HANDLER;
+use {
+    crate::arch::x86::kernel::descriptors::interrupts::INTERRUPT_HANDLER,
+    core::arch::asm,
+    x86::io::*,
+};
 
-pub fn irq_enable() {
+pub const MASTER: u16 = 0x20;
+pub const SLAVE: u16 = 0xA0;
+
+pub fn interrupt_enable() {
     unsafe { asm!("sti", options(nomem, nostack, preserves_flags)) };
 }
 
-pub fn irq_disable() {
+pub fn interrupt_disable() {
     unsafe { asm!("cli", options(nomem, nostack, preserves_flags)) };
 }
 
-pub fn is_irq_enabled() -> bool {
+pub fn is_interrupt_enabled() -> bool {
     let eflags: usize;
 
     unsafe { asm!("pushf; pop {}", lateout(reg) eflags, options(nomem, nostack, preserves_flags)) };
@@ -22,33 +26,26 @@ pub fn is_irq_enabled() -> bool {
     false
 }
 
-pub fn irq_nested_disable() -> bool {
-    let was_enabled = is_irq_enabled();
-    irq_disable();
+pub fn interrupt_nested_disable() -> bool {
+    let was_enabled = is_interrupt_enabled();
+    interrupt_disable();
     was_enabled
 }
 
-pub fn irq_nested_enable(was_enabled: bool) {
+pub fn interrupt_nested_enable(was_enabled: bool) {
     if was_enabled {
-        irq_enable();
+        interrupt_enable();
     }
 }
 
 #[inline(always)]
-pub(crate) fn send_eoi_to_slave() {
+pub(crate) fn end_of_interrupt(port: u16) {
     unsafe {
-        outb(0xA0, 0x20);
+        outb(port, 0x20);
     }
 }
 
-#[inline(always)]
-pub(crate) fn send_eoi_to_master() {
-    unsafe {
-        outb(0x20, 0x20);
-    }
-}
-
-unsafe fn irq_remap() {
+unsafe fn interrupt_remap() {
     outb(0x20, 0x11);
     outb(0xA0, 0x11);
     outb(0x21, 0x20);
@@ -63,7 +60,7 @@ unsafe fn irq_remap() {
 
 pub(crate) fn init() {
     unsafe {
-        irq_remap();
+        interrupt_remap();
 
         INTERRUPT_HANDLER.lock().load_idt();
     }

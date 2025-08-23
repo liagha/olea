@@ -17,7 +17,7 @@ use goblin::elf64::dynamic::{DT_RELA, DT_RELASZ};
 use goblin::elf64::reloc::{R_386_GLOB_DAT, R_386_RELATIVE};
 use goblin::{elf, elf64};
 use x86::controlregs;
-use crate::arch::x86::kernel::system_calls::user_transition::transition_to_user_mode;
+use crate::arch::x86::kernel::calls::transition::to_user_mode;
 
 pub fn load_application(path: &String) -> io::Result<()> {
 	debug!("attempting to load application from path.");
@@ -240,6 +240,6 @@ pub fn load_application(path: &String) -> io::Result<()> {
 
 	debug!("transferring control to user application at 0x{:x}.", entry);
 	unsafe {
-		transition_to_user_mode(entry);
+		to_user_mode(entry);
 	}
 }

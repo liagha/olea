@@ -1,15 +1,20 @@
-// Original version written by Colin Finck, RWTH Aachen University
-
 pub mod paging;
 pub mod physical;
 pub mod r#virtual;
 
-use crate::arch::x86::kernel::BOOT_INFO;
-use crate::consts::INTERRUPT_STACK_SIZE;
-use crate::scheduler::task::Stack;
-use bootloader::bootinfo::MemoryRegionType;
-use core::convert::TryInto;
-use core::ops::Deref;
+use {
+	crate::{
+		arch::x86::kernel::BOOT_INFO,
+		scheduler::task::Stack,
+		consts::INTERRUPT_STACK_SIZE,
+	},
+	bootloader::bootinfo::MemoryRegionType,
+	core::{
+		convert::TryInto,
+		ops::Deref,
+	},
+};
+
 #[cfg(target_arch = "x86")]
 pub use x86::bits32::paging::VAddr as VirtAddr;
 #[cfg(target_arch = "x86_64")]
@@ -174,6 +179,7 @@ pub(crate) const BOOT_STACK_SIZE: usize = 0x10000;
 #[link_section = ".data"]
 pub(crate) static mut BOOT_STACK: Aligned<[u8; BOOT_STACK_SIZE]> =
 	Aligned::new([0; BOOT_STACK_SIZE]);
+
 pub(crate) static mut BOOT_IST_STACK: Aligned<[u8; INTERRUPT_STACK_SIZE]> =
 	Aligned::new([0; INTERRUPT_STACK_SIZE]);
 

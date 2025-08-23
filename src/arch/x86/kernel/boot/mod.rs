@@ -1,2 +1,2 @@
 pub mod entry;
-pub mod initialization;
+pub mod init;

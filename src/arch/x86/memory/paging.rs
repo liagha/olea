@@ -1,22 +1,41 @@
 #![allow(clippy::upper_case_acronyms)]
 
-use crate::arch::x86::kernel::BOOT_INFO;
-use crate::arch::x86::memory::{physical, r#virtual};
-use crate::arch::x86::memory::{PhysAddr, VirtAddr};
-use crate::consts::*;
-use crate::logging::*;
-use crate::scheduler;
-use core::arch::asm;
-use core::convert::TryInto;
-use core::marker::PhantomData;
-use core::mem::size_of;
-use core::ptr::write_bytes;
-use num_traits::CheckedShr;
-use x86::controlregs;
-use x86::irq::*;
-use crate::arch::processor::features::{get_physical_address_bits, supports_1gib_pages};
-use crate::arch::x86::kernel::interrupts::exceptions::ExceptionStackFrame;
-use crate::arch::x86::kernel::interrupts::hardware::{irq_nested_disable, irq_nested_enable, send_eoi_to_master};
+use {
+	crate::{
+		scheduler,
+		consts::*,
+		logging::*,
+		arch::{
+			x86::{
+				kernel::{
+					BOOT_INFO,
+					interrupts::{
+						exceptions::ExceptionStackFrame,
+						hardware::{interrupt_nested_disable, interrupt_nested_enable, end_of_interrupt, MASTER},
+					},
+				},
+				memory::{
+					physical, r#virtual,
+					PhysAddr, VirtAddr,
+				},
+			},
+			processor::features::{get_physical_address_bits, supports_1gib_pages},
+		},
+
+	},
+	core::{
+		arch::asm,
+		convert::TryInto,
+		marker::PhantomData,
+		mem::size_of,
+		ptr::write_bytes,
+	},
+	x86::{
+		controlregs,
+		irq::*,
+	},
+	num_traits::CheckedShr,
+};
 
 /// Pointer to the root page table (PML4)
 const PML4_ADDRESS: *mut PageTable<PML4> = 0xFFFF_FFFF_FFFF_F000 as *mut PageTable<PML4>;
@@ -649,11 +668,10 @@ pub(crate) extern "x86-interrupt" fn page_fault_handler(
 			// clear new page
 			write_bytes(virtual_address.as_mut_ptr::<u8>(), 0x00, BasePageSize::SIZE);
 
-			// clear cr2 to signalize that the pagefault is solved by the pagefault handler
 			controlregs::cr2_write(0);
 		}
 
-		send_eoi_to_master();
+		end_of_interrupt(MASTER);
 	} else {
 		let pferror = PageFaultError::from_bits_truncate(error_code as u32);
 
@@ -668,7 +686,7 @@ pub(crate) extern "x86-interrupt" fn page_fault_handler(
 			controlregs::cr2_write(0);
 		}
 
-		send_eoi_to_master();
+		end_of_interrupt(MASTER);
 
 		scheduler::abort();
 	}
@@ -745,7 +763,7 @@ pub(crate) fn get_kernel_root_page_table() -> PhysAddr {
 }
 
 pub fn map_usr_entry(func: extern "C" fn()) {
-	let irq = irq_nested_disable();
+	let irq = interrupt_nested_disable();
 
 	let addr = VirtAddr::from_usize(align_down!(
 		(func as *const ()) as usize,
@@ -759,7 +777,7 @@ pub fn map_usr_entry(func: extern "C" fn()) {
 		PageTableEntryFlags::WRITABLE | PageTableEntryFlags::USER_ACCESSIBLE,
 	);
 
-	irq_nested_enable(irq);
+	interrupt_nested_enable(irq);
 }
 
 pub(crate) fn drop_user_space() {
@@ -771,7 +789,7 @@ pub(crate) fn drop_user_space() {
 // just an workaround to explaine the difference between
 // kernel and user space
 pub(crate) fn create_usr_pgd() -> PhysAddr {
-	let irq = irq_nested_disable();
+	let irq = interrupt_nested_disable();
 
 	debug!("create 1st level page table for the user-level task.");
 
@@ -811,7 +829,7 @@ pub(crate) fn create_usr_pgd() -> PhysAddr {
 
 		scheduler::set_root_page_table(physical_address);
 
-		irq_nested_enable(irq);
+		interrupt_nested_enable(irq);
 
 		physical_address
 	}

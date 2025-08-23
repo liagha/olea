@@ -1,7 +1,7 @@
 use crate::arch::drop_user_space;
 use crate::arch::memory::{PhysAddr, VirtAddr};
 use crate::arch::switch;
-use crate::collections::irqsave;
+use crate::collections::save_interrupt;
 use crate::consts::*;
 use crate::errno::*;
 use crate::file::descriptor::{FileDescriptor, IoInterface};
@@ -77,7 +77,7 @@ impl Scheduler {
 			Ok(tid)
 		};
 
-		irqsave(closure)
+		save_interrupt(closure)
 	}
 
 	fn cleanup(&mut self) {
@@ -97,7 +97,7 @@ impl Scheduler {
 			}
 		};
 
-		irqsave(closure);
+		save_interrupt(closure);
 
 		self.reschedule();
 
@@ -114,7 +114,7 @@ impl Scheduler {
 			}
 		};
 
-		irqsave(closure);
+		save_interrupt(closure);
 
 		self.reschedule();
 
@@ -134,7 +134,7 @@ impl Scheduler {
 			}
 		};
 
-		irqsave(closure)
+		save_interrupt(closure)
 	}
 
 	pub fn wakeup_task(&mut self, task: Rc<RefCell<Task>>) {
@@ -147,7 +147,7 @@ impl Scheduler {
 			}
 		};
 
-		irqsave(closure);
+		save_interrupt(closure);
 	}
 
 	pub(crate) fn insert_io_interface(
@@ -196,17 +196,17 @@ impl Scheduler {
 			}
 		};
 
-		irqsave(closure)
+		save_interrupt(closure)
 	}
 
 	pub fn get_current_taskid(&self) -> TaskId {
-		irqsave(|| self.current_task.borrow().id)
+		save_interrupt(|| self.current_task.borrow().id)
 	}
 
 	/// Determines the start address of the stack
 	#[no_mangle]
 	pub fn get_current_interrupt_stack(&self) -> VirtAddr {
-		irqsave(|| (*self.current_task.borrow().stack).interrupt_top())
+		save_interrupt(|| (*self.current_task.borrow().stack).interrupt_top())
 	}
 
 	pub fn get_root_page_table(&self) -> PhysAddr {
@@ -291,6 +291,6 @@ impl Scheduler {
 	}
 
 	pub fn reschedule(&mut self) {
-		irqsave(|| self.schedule());
+		save_interrupt(|| self.schedule());
 	}
 }
