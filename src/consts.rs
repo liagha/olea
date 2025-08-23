@@ -1,8 +1,10 @@
 #![allow(dead_code)]
 
-//! Configuration parameter of the kernel Olea-Base
-
-use crate::arch::memory::VirtAddr;
+use {
+    crate::{
+        arch::memory::VirtAddr,
+    }
+};
 
 /// Define the size of the kernel stack
 pub(crate) const STACK_SIZE: usize = 0x3000;

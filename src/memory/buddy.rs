@@ -32,9 +32,20 @@ impl<const ORDER: usize> BuddySystem<ORDER> {
 	/// start address of the heap, while `len` specifies#
 	/// the heap size.
 	pub unsafe fn init(&mut self, start: *mut u8, len: usize) {
-		assert!((len & (len - 1)) == 0, "Heap size isn't a power of two");
+		assert!(
+			len.is_power_of_two(),
+			"Heap size must be a power of two, but got {}.",
+			len
+		);
+
 		let order: usize = len.trailing_zeros().try_into().unwrap();
-		assert!(order <= ORDER, "ORDER isn't large enough");
+
+		assert!(
+			order <= ORDER,
+			"Heap order {} exceeds maximum supported `ORDER` {}, increase `ORDER`.",
+			order,
+			ORDER
+		);
 
 		unsafe {
 			self.free_list[order].push(start as *mut usize);
@@ -53,13 +64,12 @@ impl<const ORDER: usize> BuddySystem<ORDER> {
 		let order: usize = size.trailing_zeros().try_into().unwrap();
 
 		if order >= ORDER {
-			// size of the memory allocation is too large
 			return Err(AllocatorError::TooBig);
 		}
 
 		for i in order..self.free_list.len() {
 			// Find the first non-empty list, which handles a block of
-			// memory with a equal or a larger size as the requested size
+			// memory with an equal or a larger size as the requested size
 			if !self.free_list[i].is_empty() {
 				// Split larger blocks in two buddies
 				for j in (order + 1..i + 1).rev() {
@@ -74,10 +84,10 @@ impl<const ORDER: usize> BuddySystem<ORDER> {
 					}
 				}
 
-				if let Some(addr) = self.free_list[order].pop() {
-					return Ok(NonNull::new(addr as *mut u8).unwrap());
+				return if let Some(addr) = self.free_list[order].pop() {
+					Ok(NonNull::new(addr as *mut u8).unwrap())
 				} else {
-					return Err(AllocatorError::OutOfMemory);
+					Err(AllocatorError::OutOfMemory)
 				}
 			}
 		}

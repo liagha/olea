@@ -32,7 +32,7 @@ pub struct KernelLogger {
 
 /// default logger to handle kernel messages
 pub const LOGGER: KernelLogger = KernelLogger {
-	log_level: LogLevel::Debug,
+	log_level: LogLevel::Info,
 };
 
 /// Print formatted info text to our console, followed by a newline.
@@ -40,12 +40,12 @@ pub const LOGGER: KernelLogger = KernelLogger {
 macro_rules! info {
 	($fmt:expr) => ({
 		if LOGGER.log_level >= LogLevel::Info {
-			println!(concat!("[INFO] ", $fmt));
+			println!(concat!("info: ", $fmt));
 		}
 	});
 	($fmt:expr, $($arg:tt)*) => ({
 		if LOGGER.log_level >= LogLevel::Info {
-			println!(concat!("[INFO] ", $fmt), $($arg)*);
+			println!(concat!("info: ", $fmt), $($arg)*);
 		}
 	});
 }
@@ -55,12 +55,12 @@ macro_rules! info {
 macro_rules! warn {
 	($fmt:expr) => ({
 		if LOGGER.log_level >= LogLevel::Warning {
-			println!(concat!("[WARNING] ", $fmt));
+			println!(concat!("warning: ", $fmt));
 		}
 	});
 	($fmt:expr, $($arg:tt)*) => ({
 		if LOGGER.log_level >= LogLevel::Warning {
-			println!(concat!("[WARNING] ", $fmt), $($arg)*);
+			println!(concat!("warning: ", $fmt), $($arg)*);
 		}
 	});
 }
@@ -70,12 +70,12 @@ macro_rules! warn {
 macro_rules! error {
 	($fmt:expr) => ({
 		if LOGGER.log_level >= LogLevel::Error {
-			println!(concat!("[ERROR] ", $fmt));
+			println!(concat!("error: ", $fmt));
 		}
 	});
 	($fmt:expr, $($arg:tt)*) => ({
 		if LOGGER.log_level >= LogLevel::Error {
-			println!(concat!("[ERROR] ", $fmt), $($arg)*);
+			println!(concat!("error: ", $fmt), $($arg)*);
 		}
 	});
 }
@@ -85,12 +85,12 @@ macro_rules! error {
 macro_rules! debug {
 	($fmt:expr) => ({
 		if LOGGER.log_level >= LogLevel::Debug {
-			println!(concat!("[DEBUG] ", $fmt));
+			println!(concat!("debug: ", $fmt));
 		}
 	});
 	($fmt:expr, $($arg:tt)*) => ({
 		if LOGGER.log_level >= LogLevel::Debug {
-			println!(concat!("[DEBUG] ", $fmt), $($arg)*);
+			println!(concat!("debug: ", $fmt), $($arg)*);
 		}
 	});
 }

@@ -1,14 +1,22 @@
-use crate::arch::memory::get_boot_stack;
-use crate::arch::memory::VirtAddr;
-use crate::scheduler;
-use crate::scheduler::task::Stack;
-use core::mem;
-use x86::bits64::segmentation::*;
-use x86::bits64::task::*;
-use x86::controlregs::cr3_write;
-use x86::dtables::{self, DescriptorTablePointer};
-use x86::segmentation::*;
-use x86::Ring;
+use {
+	crate::{
+		arch::{
+			memory::{get_boot_stack, VirtAddr}
+		},
+		scheduler::{self, task::Stack},
+	},
+	core::mem,
+	x86::{
+		Ring,
+		bits64::{
+			task::*,
+			segmentation::*,
+		},
+		controlregs::cr3_write,
+		dtables::{self, DescriptorTablePointer},
+		segmentation::*,
+	},
+};
 
 const GDT_NULL: usize = 0;
 const GDT_KERNEL_CODE: usize = 1;
@@ -51,7 +59,7 @@ impl Tss {
 	}
 }
 
-/// This will setup the special GDT
+/// This will set up the special GDT
 /// pointer, set up the entries in our GDT, and then
 /// finally to load the new GDT and to update the
 /// new segment registers
@@ -62,13 +70,10 @@ pub(crate) fn init() {
 	let limit = 0xFFFF_FFFF;
 
 	unsafe {
-		// The NULL descriptor is always the first entry.
 		GDT[GDT_NULL] = Descriptor::NULL;
 
 		#[cfg(target_arch = "x86_64")]
 		{
-			// The second entry is a 64bit Code Segment in kernel-space (Ring 0).
-			// All other parameters are ignored.
 			GDT[GDT_KERNEL_CODE] =
 				DescriptorBuilder::code_descriptor(0, limit, CodeSegmentType::ExecuteRead)
 					.present()

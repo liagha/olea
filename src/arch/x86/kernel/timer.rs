@@ -1,10 +1,16 @@
-use crate::arch::processor::*;
-use crate::consts::*;
-use crate::logging::*;
-use x86::io::*;
-use x86::time::rdtsc;
+use {
+	crate::{
+		arch::processor::*,
+		consts::*,
+		logging::*,
+	},
+	x86::{
+		io::*,
+		time::rdtsc,
+	},
+};
 
-const CLOCK_TICK_RATE: u32 = 1193182u32; /* 8254 chip's internal oscillator frequency */
+const CLOCK_TICK_RATE: u32 = 1193182u32;
 
 unsafe fn wait_some_time() {
 	let start = rdtsc();
@@ -15,7 +21,7 @@ unsafe fn wait_some_time() {
 	}
 }
 
-/// initialize the Programmable Interrupt Controller (PIC)
+/// Initialize the Programmable Interrupt Controller (PIC)
 pub(crate) fn init() {
 	debug!("initialize timer");
 
@@ -32,17 +38,16 @@ pub(crate) fn init() {
 		 *            first low-, then high-byte
 		 * ... 010  - mode number 2: "rate generator" / frequency divider
 		 * ...   0  - binary counter (the alternative is BCD)
-		 */
+		*/
+
 		outb(0x43, 0x34);
 
 		wait_some_time();
 
-		/* Port 0x40 is for the counter register of channel 0 */
-
-		outb(0x40, (latch & 0xFF) as u8); /* low byte  */
+		outb(0x40, (latch & 0xFF) as u8);
 
 		wait_some_time();
 
-		outb(0x40, (latch >> 8) as u8); /* high byte */
+		outb(0x40, (latch >> 8) as u8);
 	}
 }

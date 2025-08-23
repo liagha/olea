@@ -1,6 +1,6 @@
 mod gdt;
 pub mod irq;
-mod pit;
+mod timer;
 pub(crate) mod processor;
 #[cfg(not(feature = "vga"))]
 pub(crate) mod serial;
@@ -264,7 +264,7 @@ pub(crate) fn init() {
 	processor::init();
 	gdt::init();
 	irq::init();
-	pit::init();
+	timer::init();
 
 	#[cfg(feature = "vga")]
 	vga::init();
