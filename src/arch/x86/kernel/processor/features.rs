@@ -1,4 +1,3 @@
-// src/arch/x86/kernel/processor/features.rs
 use crate::arch::memory::get_boot_stack;
 use crate::arch::x86::kernel::system_calls::handler::handle_system_call;
 use crate::logging::*;

@@ -9,7 +9,7 @@ extern crate alloc;
 use {
 	alloc::string::String,
 	olea::{
-		arch::{self, load_application},
+		arch::{load_application},
 		scheduler::{self, task::NORMAL_PRIORITY},
 		logging::{LogLevel, LOGGER},
 	},

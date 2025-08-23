@@ -1,4 +1,4 @@
-// src/arch/x86/kernel/boot/entry_point.rs
+// src/arch/x86/kernel/boot/entry
 use crate::arch;
 use crate::arch::processor::shutdown::shutdown;
 

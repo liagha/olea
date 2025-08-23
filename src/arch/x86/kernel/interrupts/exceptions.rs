@@ -5,7 +5,7 @@ use core::fmt;
 use crate::arch::x86::kernel::interrupts::hardware::send_eoi_to_master;
 
 #[repr(C)]
-pub(crate) struct ExceptionStackFrame {
+pub struct ExceptionStackFrame {
     pub instruction_pointer: u64,
     pub code_segment: u64,
     pub cpu_flags: u64,

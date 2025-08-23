@@ -1,4 +1,5 @@
-// src/arch/x86/kernel/mod.rs
+#![allow(dead_code)]
+
 pub mod descriptors;
 pub mod interrupts;
 pub mod processor;
