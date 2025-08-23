@@ -71,26 +71,26 @@ bitflags! {
 	}
 }
 
-pub(crate) fn read(fd: FileDescriptor, buf: &mut [u8]) -> io::Result<usize> {
-	let obj = get_io_interface(fd)?;
+pub(crate) fn read(descriptor: FileDescriptor, buffer: &mut [u8]) -> io::Result<usize> {
+	let object = get_io_interface(descriptor)?;
 
-	if buf.is_empty() {
+	if buffer.is_empty() {
 		return Ok(0);
 	}
 
-	obj.read(buf)
+	object.read(buffer)
 }
 
-pub(crate) fn write(fd: FileDescriptor, buf: &[u8]) -> io::Result<usize> {
-	let obj = get_io_interface(fd)?;
+pub(crate) fn write(descriptor: FileDescriptor, buffer: &[u8]) -> io::Result<usize> {
+	let object = get_io_interface(descriptor)?;
 
-	if buf.is_empty() {
+	if buffer.is_empty() {
 		return Ok(0);
 	}
 
-	obj.write(buf)
+	object.write(buffer)
 }
 
-pub(crate) fn fstat(fd: FileDescriptor) -> io::Result<FileStatus> {
-	get_io_interface(fd)?.fstat()
+pub(crate) fn fstat(descriptor: FileDescriptor) -> io::Result<FileStatus> {
+	get_io_interface(descriptor)?.fstat()
 }

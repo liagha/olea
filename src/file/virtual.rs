@@ -3,7 +3,7 @@
 use crate::errno::*;
 use crate::file::descriptor::OpenOption;
 use crate::file::descriptor::{FileStatus, IoInterface};
-use crate::file::initrd::{RamHandle, RomHandle};
+use crate::file::initial::{RamHandle, RomHandle};
 use crate::file::{check_path, NodeKind, SeekFrom, Vfs, VfsNode, VfsNodeDirectory, VfsNodeFile};
 use crate::io;
 use crate::logging::*;

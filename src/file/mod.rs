@@ -2,14 +2,14 @@
 
 #![allow(dead_code)]
 
-mod initrd;
-mod vfs;
+mod initial;
+mod r#virtual;
 pub mod descriptor;
 
 use descriptor::{FileDescriptor, OpenOption};
 use descriptor::{IoInterface, SeekFrom};
 use crate::errno::*;
-use crate::file::vfs::Fs;
+use crate::file::r#virtual::Fs;
 use crate::io;
 use crate::logging::*;
 use crate::scheduler::{insert_io_interface, remove_io_interface};
