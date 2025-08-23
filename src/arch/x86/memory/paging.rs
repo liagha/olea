@@ -1,8 +1,5 @@
 #![allow(clippy::upper_case_acronyms)]
 
-use crate::arch::x86::kernel::irq;
-use crate::arch::x86::kernel::irq::{irq_nested_disable, irq_nested_enable};
-use crate::arch::x86::kernel::processor;
 use crate::arch::x86::kernel::BOOT_INFO;
 use crate::arch::x86::memory::{physical, r#virtual};
 use crate::arch::x86::memory::{PhysAddr, VirtAddr};
@@ -17,6 +14,9 @@ use core::ptr::write_bytes;
 use num_traits::CheckedShr;
 use x86::controlregs;
 use x86::irq::*;
+use crate::arch::processor::features::{get_physical_address_bits, supports_1gib_pages};
+use crate::arch::x86::kernel::interrupts::exceptions::ExceptionStackFrame;
+use crate::arch::x86::kernel::interrupts::hardware::{irq_nested_disable, irq_nested_enable, send_eoi_to_master};
 
 /// Pointer to the root page table (PML4)
 const PML4_ADDRESS: *mut PageTable<PML4> = 0xFFFF_FFFF_FFFF_F000 as *mut PageTable<PML4>;
@@ -144,29 +144,17 @@ impl PageTableEntry {
 		if flags.contains(PageTableEntryFlags::HUGE_PAGE) {
 			// HUGE_PAGE may indicate a 2 MiB or 1 GiB page.
 			// We don't know this here, so we can only verify that at least the offset bits for a 2 MiB page are zero.
-			assert!(
-				(physical_address % LargePageSize::SIZE) == 0,
-				"Physical address is not on a 2 MiB page boundary (physical_address = {:#X})",
-				physical_address
-			);
+			assert_eq!((physical_address % LargePageSize::SIZE), 0, "Physical address is not on a 2 MiB page boundary (physical_address = {:#X})", physical_address);
 		} else {
 			// Verify that the offset bits for a 4 KiB page are zero.
-			assert!(
-				(physical_address % BasePageSize::SIZE) == 0,
-				"Physical address is not on a 4 KiB page boundary (physical_address = {:#X})",
-				physical_address
-			);
+			assert_eq!((physical_address % BasePageSize::SIZE), 0, "Physical address is not on a 4 KiB page boundary (physical_address = {:#X})", physical_address);
 		}
 
 		// Verify that the physical address does not exceed the CPU's physical address width.
-		assert!(
-			CheckedShr::checked_shr(
-				&physical_address.as_u64(),
-				processor::get_physical_address_bits() as u32
-			) == Some(0),
-			"Physical address exceeds CPU's physical address width (physical_address = {:#X})",
-			physical_address
-		);
+		assert_eq!(CheckedShr::checked_shr(
+			&physical_address.as_u64(),
+			get_physical_address_bits() as u32
+		), Some(0), "Physical address exceeds CPU's physical address width (physical_address = {:#X})", physical_address);
 
 		let mut flags_to_set = flags;
 		flags_to_set.insert(PageTableEntryFlags::PRESENT);
@@ -271,7 +259,7 @@ impl<S: PageSize> Page<S> {
 		);
 
 		if S::SIZE == 1024 * 1024 * 1024 {
-			assert!(processor::supports_1gib_pages());
+			assert!(supports_1gib_pages());
 		}
 
 		Self {
@@ -409,7 +397,7 @@ impl<L: PageTableLevel> PageTableMethods for PageTable<L> {
 		physical_address: PhysAddr,
 		flags: PageTableEntryFlags,
 	) -> bool {
-		assert!(L::LEVEL == S::MAP_LEVEL);
+		assert_eq!(L::LEVEL, S::MAP_LEVEL);
 		let index = page.table_index::<L>();
 		let flush = self.entries[index].is_present();
 
@@ -433,7 +421,7 @@ impl<L: PageTableLevel> PageTableMethods for PageTable<L> {
 		&mut self,
 		page: Page<S>,
 	) -> Option<PageTableEntry> {
-		assert!(L::LEVEL == S::MAP_LEVEL);
+		assert_eq!(L::LEVEL, S::MAP_LEVEL);
 		let index = page.table_index::<L>();
 
 		if self.entries[index].is_present() {
@@ -606,7 +594,7 @@ where
 	}
 
 	fn drop_user_space(&mut self) {
-		assert!(L::LEVEL == PML4::LEVEL);
+		assert_eq!(L::LEVEL, PML4::LEVEL);
 
 		// the last entry is required to get access to the page tables
 		let last = (1 << PAGE_MAP_BITS) - 1;
@@ -630,7 +618,7 @@ where
 }
 
 pub(crate) extern "x86-interrupt" fn page_fault_handler(
-	stack_frame: irq::ExceptionStackFrame,
+	stack_frame: ExceptionStackFrame,
 	error_code: u64,
 ) {
 	let mut virtual_address = unsafe { VirtAddr::from_usize(controlregs::cr2()) };
@@ -665,7 +653,7 @@ pub(crate) extern "x86-interrupt" fn page_fault_handler(
 			controlregs::cr2_write(0);
 		}
 
-		irq::send_eoi_to_master();
+		send_eoi_to_master();
 	} else {
 		let pferror = PageFaultError::from_bits_truncate(error_code as u32);
 
@@ -680,7 +668,7 @@ pub(crate) extern "x86-interrupt" fn page_fault_handler(
 			controlregs::cr2_write(0);
 		}
 
-		irq::send_eoi_to_master();
+		send_eoi_to_master();
 
 		scheduler::abort();
 	}

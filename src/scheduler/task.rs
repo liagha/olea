@@ -3,7 +3,7 @@
 use crate::arch;
 use crate::arch::memory::PhysAddr;
 use crate::arch::memory::VirtAddr;
-use crate::arch::processor::msb;
+use crate::arch::processor::utilities::most_significant_bit;
 use crate::arch::{BasePageSize, PageSize};
 use crate::consts::*;
 use crate::file::descriptor::stdio::{GenericStderr, GenericStdin, GenericStdout};
@@ -109,7 +109,7 @@ impl PriorityTaskQueue {
 
 	/// Pop the task with the highest priority from the queue
 	pub fn pop(&mut self) -> Option<Rc<RefCell<Task>>> {
-		if let Some(i) = msb(self.priority_bitmap) {
+		if let Some(i) = most_significant_bit(self.priority_bitmap) {
 			return self.pop_from_queue(i);
 		}
 
@@ -118,7 +118,7 @@ impl PriorityTaskQueue {
 
 	/// Pop the next task, which has a higher or the same priority as `prio`
 	pub fn pop_with_priority(&mut self, priority: TaskPriority) -> Option<Rc<RefCell<Task>>> {
-		if let Some(i) = msb(self.priority_bitmap) {
+		if let Some(i) = most_significant_bit(self.priority_bitmap) {
 			if i >= priority.into().into() {
 				return self.pop_from_queue(i);
 			}

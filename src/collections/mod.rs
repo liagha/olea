@@ -1,4 +1,4 @@
-use crate::arch::irq::*;
+use crate::arch::x86::kernel::interrupts::hardware::{irq_nested_disable, irq_nested_enable};
 
 #[inline]
 pub fn irqsave<F, R>(f: F) -> R

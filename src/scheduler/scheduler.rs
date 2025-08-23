@@ -285,7 +285,7 @@ impl Scheduler {
 			self.current_task = new_task;
 
 			unsafe {
-				switch(current_stack_pointer, new_stack_pointer);
+				switch::perform_context_switch(current_stack_pointer, new_stack_pointer);
 			}
 		}
 	}

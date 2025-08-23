@@ -2,7 +2,7 @@ pub mod freelist;
 
 use crate::arch;
 use crate::arch::memory::get_memory_size;
-use crate::arch::processor::shutdown;
+use crate::arch::processor::shutdown::shutdown;
 use crate::logging::*;
 pub(crate) mod buddy;
 pub(crate) mod linked_list;

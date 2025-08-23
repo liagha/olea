@@ -61,7 +61,7 @@ pub fn init() {
 		ALLOCATOR.init(ARENA.0.as_mut_ptr(), HEAP_SIZE);
 	}
 
-	arch::init();
+	arch::initialize();
 	memory::init();
 	scheduler::init();
 	file::init();
@@ -82,5 +82,5 @@ pub fn panic(info: &PanicInfo) -> ! {
 
 	print!("\n");
 
-	shutdown(1);
+	shutdown::shutdown(1);
 }

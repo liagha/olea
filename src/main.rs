@@ -14,6 +14,7 @@ use {
 		logging::{LogLevel, LOGGER},
 	},
 };
+use olea::arch::x86::kernel::interrupts::hardware::irq_enable;
 
 extern "C" fn create_user() {
 	let path = String::from("/bin/demo");
@@ -38,7 +39,7 @@ pub extern "C" fn main() -> i32 {
 
 	scheduler::spawn(create_user, NORMAL_PRIORITY).unwrap();
 
-	arch::irq::irq_enable();
+	irq_enable();
 
 	scheduler::reschedule();
 

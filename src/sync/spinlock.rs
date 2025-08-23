@@ -1,6 +1,7 @@
-use crate::arch;
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use lock_api::{GuardSend, RawMutex, RawMutexFair};
+use crate::arch::processor::utilities::pause;
+use crate::arch::x86::kernel::interrupts::hardware::{irq_nested_disable, irq_nested_enable};
 
 /// A [fair] [ticket lock].
 ///
@@ -24,7 +25,7 @@ unsafe impl RawMutex for RawSpinlock {
 	fn lock(&self) {
 		let ticket = self.queue.fetch_add(1, Ordering::Relaxed);
 		while self.dequeue.load(Ordering::Acquire) != ticket {
-			arch::processor::pause();
+			pause();
 		}
 	}
 
@@ -102,13 +103,13 @@ unsafe impl RawMutex for RawSpinlockIrqSave {
 
 	#[inline]
 	fn lock(&self) {
-		let irq = arch::irq::irq_nested_disable();
+		let irq = irq_nested_disable();
 		let ticket = self.queue.fetch_add(1, Ordering::Relaxed);
 
 		while self.dequeue.load(Ordering::Acquire) != ticket {
-			arch::irq::irq_nested_enable(irq);
-			arch::processor::pause();
-			arch::irq::irq_nested_disable();
+			irq_nested_enable(irq);
+			pause();
+			irq_nested_disable();
 		}
 
 		self.irq.store(irq, Ordering::SeqCst);
@@ -116,7 +117,7 @@ unsafe impl RawMutex for RawSpinlockIrqSave {
 
 	#[inline]
 	fn try_lock(&self) -> bool {
-		let irq = arch::irq::irq_nested_disable();
+		let irq = irq_nested_disable();
 		let ticket = self
 			.queue
 			.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |ticket| {
@@ -124,7 +125,7 @@ unsafe impl RawMutex for RawSpinlockIrqSave {
 					self.irq.store(irq, Ordering::SeqCst);
 					Some(ticket + 1)
 				} else {
-					arch::irq::irq_nested_enable(irq);
+					irq_nested_enable(irq);
 					None
 				}
 			});
@@ -136,7 +137,7 @@ unsafe impl RawMutex for RawSpinlockIrqSave {
 	unsafe fn unlock(&self) {
 		let irq = self.irq.swap(false, Ordering::SeqCst);
 		self.dequeue.fetch_add(1, Ordering::Release);
-		arch::irq::irq_nested_enable(irq);
+		irq_nested_enable(irq);
 	}
 
 	#[inline]
@@ -154,7 +155,7 @@ unsafe impl RawMutexFair for RawSpinlockIrqSave {
 
 	#[inline]
 	unsafe fn bump(&self) {
-		let irq = arch::irq::irq_nested_disable();
+		let irq = irq_nested_disable();
 		let ticket = self.queue.load(Ordering::Relaxed);
 		let serving = self.dequeue.load(Ordering::Relaxed);
 		if serving + 1 != ticket {
@@ -163,7 +164,7 @@ unsafe impl RawMutexFair for RawSpinlockIrqSave {
 				self.lock();
 			}
 		}
-		arch::irq::irq_nested_enable(irq);
+		irq_nested_enable(irq);
 	}
 }
 
