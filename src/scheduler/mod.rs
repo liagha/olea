@@ -26,8 +26,8 @@ pub(crate) fn init() {
 }
 
 /// Create a new kernel task
-pub fn spawn(func: extern "C" fn(), prio: TaskPriority) -> Result<task::TaskId> {
-	unsafe { SCHEDULER.as_mut().unwrap().spawn(func, prio) }
+pub fn spawn(func: extern "C" fn(), priority: TaskPriority) -> Result<task::TaskId> {
+	unsafe { SCHEDULER.as_mut().unwrap().spawn(func, priority) }
 }
 
 /// Trigger the scheduler to switch to the next available task

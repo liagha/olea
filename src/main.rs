@@ -23,20 +23,21 @@ extern "C" fn create_user() {
 	_ = load_application(&path);
 }
 
-extern "C" fn foo() {
-	println!("Task {}.", scheduler::get_current_taskid());
-}
-
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn main() -> i32 {
+	extern "C" fn task_test() {
+		println!("Task {}.", scheduler::get_current_taskid());
+	}
+
 	println!("-- Olea-Base --");
 
 	olea::init();
 
-	for _i in 0..2 {
-		scheduler::spawn(foo, NORMAL_PRIORITY).unwrap();
+	for _ in 0..2 {
+		scheduler::spawn(task_test, NORMAL_PRIORITY).unwrap();
 	}
+
 	scheduler::spawn(create_user, NORMAL_PRIORITY).unwrap();
 
 	arch::irq::irq_enable();

@@ -41,8 +41,8 @@ impl TaskId {
 	}
 }
 
-impl alloc::fmt::Display for TaskId {
-	fn fmt(&self, f: &mut fmt::Formatter) -> alloc::fmt::Result {
+impl fmt::Display for TaskId {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "{}", self.0)
 	}
 }
@@ -61,8 +61,8 @@ impl TaskPriority {
 	}
 }
 
-impl alloc::fmt::Display for TaskPriority {
-	fn fmt(&self, f: &mut alloc::fmt::Formatter) -> alloc::fmt::Result {
+impl fmt::Display for TaskPriority {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "{}", self.0)
 	}
 }
@@ -75,7 +75,7 @@ pub const LOW_PRIORITY: TaskPriority = TaskPriority::from(0);
 /// Realize a priority queue for tasks
 pub(crate) struct PriorityTaskQueue {
 	queues: [VecDeque<Rc<RefCell<Task>>>; NO_PRIORITIES],
-	prio_bitmap: usize,
+	priority_bitmap: usize,
 }
 
 impl PriorityTaskQueue {
@@ -85,23 +85,23 @@ impl PriorityTaskQueue {
 
 		PriorityTaskQueue {
 			queues: [VALUE; NO_PRIORITIES],
-			prio_bitmap: 0,
+			priority_bitmap: 0,
 		}
 	}
 
 	/// Add a task by its priority to the queue
 	pub fn push(&mut self, task: Rc<RefCell<Task>>) {
-		let i: usize = task.borrow().prio.into().into();
+		let i: usize = task.borrow().priority.into().into();
 		//assert!(i < NO_PRIORITIES, "Priority {} is too high", i);
 
-		self.prio_bitmap |= 1 << i;
+		self.priority_bitmap |= 1 << i;
 		self.queues[i].push_back(task.clone());
 	}
 
 	fn pop_from_queue(&mut self, queue_index: usize) -> Option<Rc<RefCell<Task>>> {
 		let task = self.queues[queue_index].pop_front();
 		if self.queues[queue_index].is_empty() {
-			self.prio_bitmap &= !(1 << queue_index);
+			self.priority_bitmap &= !(1 << queue_index);
 		}
 
 		task
@@ -109,7 +109,7 @@ impl PriorityTaskQueue {
 
 	/// Pop the task with the highest priority from the queue
 	pub fn pop(&mut self) -> Option<Rc<RefCell<Task>>> {
-		if let Some(i) = msb(self.prio_bitmap) {
+		if let Some(i) = msb(self.priority_bitmap) {
 			return self.pop_from_queue(i);
 		}
 
@@ -117,9 +117,9 @@ impl PriorityTaskQueue {
 	}
 
 	/// Pop the next task, which has a higher or the same priority as `prio`
-	pub fn pop_with_prio(&mut self, prio: TaskPriority) -> Option<Rc<RefCell<Task>>> {
-		if let Some(i) = msb(self.prio_bitmap) {
-			if i >= prio.into().into() {
+	pub fn pop_with_priority(&mut self, priority: TaskPriority) -> Option<Rc<RefCell<Task>>> {
+		if let Some(i) = msb(self.priority_bitmap) {
+			if i >= priority.into().into() {
 				return self.pop_from_queue(i);
 			}
 		}
@@ -182,7 +182,7 @@ pub(crate) struct Task {
 	/// The ID of this context
 	pub id: TaskId,
 	/// Task Priority
-	pub prio: TaskPriority,
+	pub priority: TaskPriority,
 	/// Status of a task, e.g. if the task is ready or blocked
 	pub status: TaskStatus,
 	/// Last stack pointer before a context switch to another task
@@ -199,16 +199,16 @@ impl Task {
 	pub fn new_idle(id: TaskId) -> Task {
 		Task {
 			id,
-			prio: LOW_PRIORITY,
+			priority: LOW_PRIORITY,
 			status: TaskStatus::Idle,
 			last_stack_pointer: VirtAddr::zero(),
-			stack: Box::new(crate::arch::memory::get_boot_stack()),
+			stack: Box::new(arch::memory::get_boot_stack()),
 			root_page_table: arch::get_kernel_root_page_table(),
 			fd_map: BTreeMap::new(),
 		}
 	}
 
-	pub fn new(id: TaskId, status: TaskStatus, prio: TaskPriority) -> Task {
+	pub fn new(id: TaskId, status: TaskStatus, priority: TaskPriority) -> Task {
 		let mut fd_map: BTreeMap<FileDescriptor, Arc<dyn IoInterface>> = BTreeMap::new();
 		fd_map
 			.try_insert(STDIN_FILENO, Arc::new(GenericStdin::new()))
@@ -222,7 +222,7 @@ impl Task {
 
 		Task {
 			id,
-			prio,
+			priority,
 			status,
 			last_stack_pointer: VirtAddr::zero(),
 			stack: Box::new(TaskStack::new()),

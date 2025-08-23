@@ -56,21 +56,19 @@ impl Scheduler {
 		}
 	}
 
-	pub fn spawn(&mut self, func: extern "C" fn(), prio: TaskPriority) -> Result<TaskId> {
+	pub fn spawn(&mut self, func: extern "C" fn(), priority: TaskPriority) -> Result<TaskId> {
 		let closure = || {
-			let prio_number: usize = prio.into().into();
+			let priority_number: usize = priority.into().into();
 
-			if prio_number >= NO_PRIORITIES {
+			if priority_number >= NO_PRIORITIES {
 				return Err(Error::BadPriority);
 			}
 
-			// Create the new task.
 			let tid = self.get_tid();
-			let task = Rc::new(RefCell::new(Task::new(tid, TaskStatus::Ready, prio)));
+			let task = Rc::new(RefCell::new(Task::new(tid, TaskStatus::Ready, priority)));
 
 			task.borrow_mut().create_stack_frame(func);
 
-			// Add it to the task lists.
 			self.ready_queue.push(task.clone());
 			self.tasks.insert(tid, task);
 
@@ -229,12 +227,12 @@ impl Scheduler {
 		}
 
 		// Get information about the current task.
-		let (current_id, current_stack_pointer, current_prio, current_status) = {
+		let (current_id, current_stack_pointer, current_priority, current_status) = {
 			let mut borrowed = self.current_task.borrow_mut();
 			(
 				borrowed.id,
 				&mut borrowed.last_stack_pointer as *mut VirtAddr,
-				borrowed.prio,
+				borrowed.priority,
 				borrowed.status,
 			)
 		};
@@ -242,7 +240,7 @@ impl Scheduler {
 		// do we have a task, which is ready?
 		let mut next_task;
 		if current_status == TaskStatus::Running {
-			next_task = self.ready_queue.pop_with_prio(current_prio);
+			next_task = self.ready_queue.pop_with_priority(current_priority);
 		} else {
 			next_task = self.ready_queue.pop();
 		}
