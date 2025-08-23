@@ -1,10 +1,10 @@
 //! Implements a simple virtual file system
 
 use crate::errno::*;
-use crate::fd::OpenOption;
-use crate::fd::{FileStatus, IoInterface};
-use crate::fs::initrd::{RamHandle, RomHandle};
-use crate::fs::{check_path, NodeKind, SeekFrom, Vfs, VfsNode, VfsNodeDirectory, VfsNodeFile};
+use crate::file::descriptor::OpenOption;
+use crate::file::descriptor::{FileStatus, IoInterface};
+use crate::file::initrd::{RamHandle, RomHandle};
+use crate::file::{check_path, NodeKind, SeekFrom, Vfs, VfsNode, VfsNodeDirectory, VfsNodeFile};
 use crate::io;
 use crate::logging::*;
 use crate::sync::spinlock::*;

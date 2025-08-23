@@ -2,7 +2,7 @@
 use crate::arch::serial;
 #[cfg(feature = "vga")]
 use crate::arch::vga;
-use crate::fd::IoInterface;
+use crate::file::descriptor::IoInterface;
 use crate::io;
 
 #[derive(Debug)]

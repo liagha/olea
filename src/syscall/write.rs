@@ -1,4 +1,4 @@
-use crate::fd::FileDescriptor;
+use crate::file::descriptor::FileDescriptor;
 use crate::logging::*;
 
 #[repr(C)]
@@ -22,7 +22,7 @@ pub(crate) unsafe extern "C" fn sys_writev(
 		info!("slice 3");
 		let slice = core::slice::from_raw_parts(i.iov_base, i.iov_len);
 
-		let tmp: isize = crate::fd::write(fd, slice).map_or_else(
+		let tmp: isize = crate::file::descriptor::write(fd, slice).map_or_else(
 			|e| -num::ToPrimitive::to_isize(&e).unwrap(),
 			|v| v.try_into().unwrap(),
 		);
@@ -41,7 +41,7 @@ pub(crate) unsafe extern "C" fn sys_write(fd: FileDescriptor, buf: *mut u8, len:
 	info!("slice 4");
 	
 	let slice = unsafe { core::slice::from_raw_parts(buf, len) };
-	crate::fd::write(fd, slice).map_or_else(
+	crate::file::descriptor::write(fd, slice).map_or_else(
 		|e| -num::ToPrimitive::to_isize(&e).unwrap(),
 		|v| v.try_into().unwrap(),
 	)

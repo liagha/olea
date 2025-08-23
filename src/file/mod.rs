@@ -4,11 +4,12 @@
 
 mod initrd;
 mod vfs;
+pub mod descriptor;
 
+use descriptor::{FileDescriptor, OpenOption};
+use descriptor::{IoInterface, SeekFrom};
 use crate::errno::*;
-use crate::fd::{self, FileDescriptor, OpenOption};
-use crate::fd::{IoInterface, SeekFrom};
-use crate::fs::vfs::Fs;
+use crate::file::vfs::Fs;
 use crate::io;
 use crate::logging::*;
 use crate::scheduler::{insert_io_interface, remove_io_interface};
@@ -148,20 +149,20 @@ impl File {
 	}
 
 	pub fn len(&self) -> io::Result<usize> {
-		let fstat = fd::fstat(self.fd)?;
+		let fstat = descriptor::fstat(self.fd)?;
 		Ok(fstat.file_size)
 	}
 }
 
 impl crate::io::Read for File {
 	fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-		fd::read(self.fd, buf)
+		descriptor::read(self.fd, buf)
 	}
 }
 
 impl crate::io::Write for File {
 	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-		fd::write(self.fd, buf)
+		descriptor::write(self.fd, buf)
 	}
 }
 

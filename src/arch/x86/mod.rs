@@ -5,7 +5,7 @@ use self::memory::paging;
 use self::memory::paging::{BasePageSize, PageSize, PageTableEntryFlags};
 use self::memory::physical;
 use crate::consts::*;
-use crate::fs;
+use crate::file;
 use crate::io::{self, Read};
 use crate::logging::*;
 use alloc::string::String;
@@ -24,7 +24,7 @@ pub fn load_application(path: &String) -> io::Result<()> {
 		controlregs::cr3_write(paging::create_usr_pgd().as_u64());
 	}
 
-	let mut file = fs::File::open(path)?;
+	let mut file = file::File::open(path)?;
 	let len = file.len()?;
 	debug!("File has a size of {} bytes", len);
 	let mut buffer: Vec<u8> = Vec::new();

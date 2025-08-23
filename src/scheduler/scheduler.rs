@@ -4,7 +4,7 @@ use crate::arch::switch;
 use crate::collections::irqsave;
 use crate::consts::*;
 use crate::errno::*;
-use crate::fd::{FileDescriptor, IoInterface};
+use crate::file::descriptor::{FileDescriptor, IoInterface};
 use crate::io;
 use crate::logging::*;
 use crate::scheduler::task::*;

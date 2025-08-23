@@ -19,7 +19,7 @@ extern crate num_traits;
 
 use crate::arch::processor::shutdown;
 use crate::consts::HEAP_SIZE;
-use crate::mm::buddy::LockedHeap;
+use crate::memory::buddy::LockedHeap;
 use core::panic::PanicInfo;
 pub use logging::*;
 
@@ -32,10 +32,9 @@ pub mod collections;
 pub mod console;
 pub mod consts;
 pub mod errno;
-pub mod fd;
-pub mod fs;
+pub mod file;
 pub mod io;
-pub mod mm;
+pub mod memory;
 pub mod scheduler;
 pub mod sync;
 pub mod syscall;
@@ -60,9 +59,9 @@ pub fn init() {
 	}
 
 	arch::init();
-	mm::init();
+	memory::init();
 	scheduler::init();
-	fs::init();
+	file::init();
 }
 
 #[cfg(not(test))]

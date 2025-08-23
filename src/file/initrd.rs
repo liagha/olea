@@ -1,7 +1,7 @@
 //! Implements basic functions to realize a simple in-memory file system
 
-use crate::fd::OpenOption;
-use crate::fs::SeekFrom;
+use crate::file::descriptor::OpenOption;
+use crate::file::SeekFrom;
 use crate::io;
 use crate::sync::spinlock::*;
 use alloc::sync::Arc;

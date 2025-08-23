@@ -1,6 +1,6 @@
 use crate::arch::x86::memory::paging::{BasePageSize, PageSize};
 use crate::arch::x86::memory::VirtAddr;
-use crate::mm::freelist::{FreeList, FreeListEntry};
+use crate::memory::freelist::{FreeList, FreeListEntry};
 use crate::scheduler::DisabledPreemption;
 
 static mut KERNEL_FREE_LIST: FreeList<VirtAddr> = FreeList::new();

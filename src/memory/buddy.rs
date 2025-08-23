@@ -1,4 +1,4 @@
-use crate::mm::linked_list;
+use crate::memory::linked_list;
 use crate::sync::spinlock::Spinlock;
 use core::alloc::GlobalAlloc;
 use core::alloc::Layout;
