@@ -22,6 +22,6 @@ pub fn register_task() {
 	}
 }
 
-pub fn initialize() {
+pub fn init() {
 	boot::init::early_init();
 }

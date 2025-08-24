@@ -1,23 +1,39 @@
 pub mod kernel;
 pub mod memory;
 
-use self::memory::paging;
-use self::memory::paging::{BasePageSize, PageSize, PageTableEntryFlags};
-use self::memory::physical;
-use crate::consts::*;
-use crate::file;
-use crate::io::{self, Read};
-use crate::logging::*;
-use alloc::string::String;
-use alloc::vec::Vec;
-use core::ptr::write_bytes;
-use core::slice;
-use goblin::elf::program_header::{PT_DYNAMIC, PT_GNU_RELRO, PT_LOAD};
-use goblin::elf64::dynamic::{DT_RELA, DT_RELASZ};
-use goblin::elf64::reloc::{R_386_GLOB_DAT, R_386_RELATIVE};
-use goblin::{elf, elf64};
-use x86::controlregs;
-use crate::arch::x86::kernel::calls::transition::to_user_mode;
+use {
+	crate::{
+		file,
+		consts::*,
+		logging::*,
+		io::{self, Read},
+		arch::x86::kernel::calls::transition::to_user_mode,
+	},
+	memory::{
+		physical,
+		paging::{self, BasePageSize, PageSize, PageTableEntryFlags},
+	},
+	alloc::{
+		string::String,
+		vec::Vec,
+	},
+	core::{
+		slice,
+		ptr::write_bytes
+	},
+	goblin::{
+		elf, elf64,
+		elf::{
+			Elf,
+			program_header::{PT_DYNAMIC, PT_GNU_RELRO, PT_LOAD},
+		},
+		elf64::{
+			dynamic::{DT_RELA, DT_RELASZ},
+			reloc::{R_386_GLOB_DAT, R_386_RELATIVE},
+		},
+	},
+	x86::controlregs,
+};
 
 pub fn load_application(path: &String) -> io::Result<()> {
 	debug!("attempting to load application from path.");
@@ -27,26 +43,26 @@ pub fn load_application(path: &String) -> io::Result<()> {
 	}
 
 	let mut file = file::File::open(path)?;
-	let len = file.len()?;
+	let length = file.len()?;
 
-	if len == 0 {
+	if length == 0 {
 		error!("file is empty.");
 		return Err(io::Error::InvalidArgument);
 	}
 
-	if len > isize::MAX as usize {
+	if length > usize::MAX {
 		error!("file size exceeds maximum supported size.");
 		return Err(io::Error::ValueOverflow);
 	}
 
-	debug!("file size is {} bytes.", len);
+	debug!("file size is {} bytes.", length);
 	let mut buffer: Vec<u8> = Vec::new();
 
-	buffer.resize(len, 0);
+	buffer.resize(length, 0);
 	file.read(&mut buffer)?;
 
-	let elf = match elf::Elf::parse(&buffer) {
-		Ok(n) => n,
+	let elf = match Elf::parse(&buffer) {
+		Ok(parsed) => parsed,
 		Err(_) => {
 			error!("failed to parse elf file format.");
 			return Err(io::Error::InvalidArgument);
@@ -71,13 +87,13 @@ pub fn load_application(path: &String) -> io::Result<()> {
 		return Err(io::Error::InvalidArgument);
 	}
 
-	let vstart: usize = 0;
-	let mut exec_size: usize = 0;
-	let mut has_loadable_segment = false;
+	let virtual_start: usize = 0;
+	let mut size: usize = 0;
+	let mut has_loadable = false;
 
 	for header in &elf.program_headers {
 		if header.p_type == PT_LOAD {
-			has_loadable_segment = true;
+			has_loadable = true;
 
 			if header.p_vaddr > usize::MAX as u64 || header.p_memsz > usize::MAX as u64 {
 				error!("program header addresses exceed supported range.");
@@ -90,22 +106,22 @@ pub fn load_application(path: &String) -> io::Result<()> {
 				return Err(io::Error::ValueOverflow);
 			}
 
-			exec_size = align_up!(
-                header.p_vaddr as usize - vstart + header.p_memsz as usize,
+			size = align_up!(
+                header.p_vaddr as usize - virtual_start + header.p_memsz as usize,
                 BasePageSize::SIZE
             );
 		}
 	}
 
-	debug!("virtual start address is 0x{:x}.", vstart);
-	debug!("required memory size is 0x{:x} bytes.", exec_size);
+	debug!("virtual start address is 0x{:x}.", virtual_start);
+	debug!("required memory size is 0x{:x} bytes.", size);
 
-	if !has_loadable_segment || exec_size == 0 {
+	if !has_loadable || size == 0 {
 		error!("no loadable program segments found in elf file.");
 		return Err(io::Error::InvalidArgument);
 	}
 
-	let physical_address = physical::allocate(exec_size);
+	let physical_address = physical::allocate(size);
 	if physical_address.as_u64() == 0 {
 		error!("failed to allocate physical memory for executable.");
 		return Err(io::Error::NoBufferSpace);
@@ -114,16 +130,16 @@ pub fn load_application(path: &String) -> io::Result<()> {
 	paging::map::<BasePageSize>(
 		USER_ENTRY,
 		physical_address,
-		exec_size / BasePageSize::SIZE,
+		size / BasePageSize::SIZE,
 		PageTableEntryFlags::WRITABLE | PageTableEntryFlags::USER_ACCESSIBLE,
 	);
 
 	unsafe {
-		write_bytes(USER_ENTRY.as_mut_ptr::<u8>(), 0x00, exec_size);
+		write_bytes(USER_ENTRY.as_mut_ptr::<u8>(), 0x00, size);
 	}
 
-	let mut rela_addr: u64 = 0;
-	let mut relasz: u64 = 0;
+	let mut base_address: u64 = 0;
+	let mut total_size: u64 = 0;
 
 	for header in &elf.program_headers {
 		if header.p_type == PT_LOAD {
@@ -136,17 +152,17 @@ pub fn load_application(path: &String) -> io::Result<()> {
 				return Err(io::Error::InvalidArgument);
 			}
 
-			let mem_offset = header.p_vaddr as usize - vstart;
-			if mem_offset >= exec_size {
+			let memory_offset = header.p_vaddr as usize - virtual_start;
+			if memory_offset >= size {
 				error!("program header virtual address is outside allocated memory.");
 				return Err(io::Error::InvalidArgument);
 			}
 
-			let mem = (USER_ENTRY.as_usize() + mem_offset) as *mut u8;
+			let memory = (USER_ENTRY.as_usize() + memory_offset) as *mut u8;
 
 			if header.p_filesz > 0 {
 				let mem_slice = unsafe {
-					slice::from_raw_parts_mut(mem, header.p_filesz as usize)
+					slice::from_raw_parts_mut(memory, header.p_filesz as usize)
 				};
 
 				let file_start = header.p_offset as usize;
@@ -155,7 +171,7 @@ pub fn load_application(path: &String) -> io::Result<()> {
 			}
 
 		} else if header.p_type == PT_GNU_RELRO {
-			debug!("found gnu relro segment at 0x{:x}.", header.p_vaddr);
+			debug!("found GNU Relocation Read-Only (RELRO) segment at 0x{:x}.", header.p_vaddr);
 
 		} else if header.p_type == PT_DYNAMIC {
 			debug!("processing dynamic segment at 0x{:x}.", header.p_vaddr);
@@ -165,32 +181,32 @@ pub fn load_application(path: &String) -> io::Result<()> {
 				return Err(io::Error::ValueOverflow);
 			}
 
-			let mem_offset = header.p_vaddr as usize - vstart;
-			if mem_offset >= exec_size {
+			let memory_offset = header.p_vaddr as usize - virtual_start;
+			if memory_offset >= size {
 				error!("dynamic segment is outside allocated memory.");
 				return Err(io::Error::InvalidArgument);
 			}
 
-			let mem = (USER_ENTRY.as_u64() + mem_offset as u64) as *mut u8;
+			let memory = (USER_ENTRY.as_u64() + memory_offset as u64) as *mut u8;
 			let dynamic_entries = unsafe {
-				elf::dynamic::dyn64::from_raw(0, mem as usize)
+				elf::dynamic::dyn64::from_raw(0, memory as usize)
 			};
 
 			for entry in dynamic_entries {
 				match entry.d_tag {
-					DT_RELA => rela_addr = USER_ENTRY.as_u64() + entry.d_val,
-					DT_RELASZ => relasz = entry.d_val,
+					DT_RELA => base_address = USER_ENTRY.as_u64() + entry.d_val,
+					DT_RELASZ => total_size = entry.d_val,
 					_ => {}
 				}
 			}
 		}
 	}
 
-	if rela_addr != 0 && relasz > 0 {
-		debug!("processing relocations at 0x{:x}.", rela_addr);
+	if base_address != 0 && total_size > 0 {
+		debug!("processing relocations at 0x{:x}.", base_address);
 
 		let relocations = unsafe {
-			elf64::reloc::from_raw_rela(rela_addr as *const elf64::reloc::Rela, relasz as usize)
+			elf64::reloc::from_raw_rela(base_address as *const elf64::reloc::Rela, total_size as usize)
 		};
 
 		for reloc in relocations {
@@ -199,8 +215,8 @@ pub fn load_application(path: &String) -> io::Result<()> {
 				return Err(io::Error::ValueOverflow);
 			}
 
-			let offset_addr = USER_ENTRY.as_usize() - vstart + reloc.r_offset as usize;
-			if offset_addr + 8 > USER_ENTRY.as_usize() + exec_size {
+			let offset_addr = USER_ENTRY.as_usize() - virtual_start + reloc.r_offset as usize;
+			if offset_addr + 8 > USER_ENTRY.as_usize() + size {
 				error!("relocation target is outside allocated memory.");
 				return Err(io::Error::InvalidArgument);
 			}
@@ -211,7 +227,7 @@ pub fn load_application(path: &String) -> io::Result<()> {
 			match reloc_type {
 				r if r == R_386_RELATIVE as u64 => {
 					unsafe {
-						*offset = (USER_ENTRY.as_usize() as i64 - vstart as i64 + reloc.r_addend) as u64;
+						*offset = (USER_ENTRY.as_usize() as i64 - virtual_start as i64 + reloc.r_addend) as u64;
 					}
 				}
 				r if r == R_386_GLOB_DAT as u64 => {
@@ -230,8 +246,8 @@ pub fn load_application(path: &String) -> io::Result<()> {
 		return Err(io::Error::ValueOverflow);
 	}
 
-	let entry = elf.entry as usize - vstart + USER_ENTRY.as_usize();
-	if entry < USER_ENTRY.as_usize() || entry >= USER_ENTRY.as_usize() + exec_size {
+	let entry = elf.entry as usize - virtual_start + USER_ENTRY.as_usize();
+	if entry < USER_ENTRY.as_usize() || entry >= USER_ENTRY.as_usize() + size {
 		error!("entry point is outside loaded executable memory.");
 		return Err(io::Error::InvalidArgument);
 	}

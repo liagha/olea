@@ -14,7 +14,7 @@ pub(crate) fn early_init() {
     enable_features();
     global::init();
     interrupts::hardware::init();
-    timer::init_timer();
+    timer::init();
 
     #[cfg(feature = "vga")]
     vga::init();

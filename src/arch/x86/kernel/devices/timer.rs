@@ -20,7 +20,7 @@ unsafe fn wait_some_time() {
     }
 }
 
-pub(crate) fn init_timer() {
+pub(crate) fn init() {
     let latch = ((CLOCK_TICK_RATE + TIMER_FREQ / 2) / TIMER_FREQ) as u16;
 
     unsafe {

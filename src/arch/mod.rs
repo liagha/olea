@@ -8,7 +8,7 @@ pub mod x86;
 
 // Export our platform-specific modules.
 #[cfg(any(target_arch = "x86_64", target_arch = "x86"))]
-pub(crate) use self::x86::kernel::{initialize, processor, processor::shutdown, register_task, scheduling::switch};
+pub(crate) use self::x86::kernel::{init, processor, processor::shutdown, register_task, scheduling::switch};
 
 #[cfg(any(target_arch = "x86_64", target_arch = "x86"))]
 pub use self::x86::load_application;

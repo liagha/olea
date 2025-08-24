@@ -61,7 +61,7 @@ pub fn init() {
 		ALLOCATOR.init(ARENA.0.as_mut_ptr(), HEAP_SIZE);
 	}
 
-	arch::initialize();
+	arch::init();
 	memory::init();
 	scheduler::init();
 	file::init();
