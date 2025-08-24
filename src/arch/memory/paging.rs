@@ -12,7 +12,6 @@ use {
         mem::size_of,
         ptr::write_bytes,
     },
-    num_traits::CheckedShr,
     x86::{
         controlregs,
         irq::*,
@@ -91,7 +90,7 @@ impl PageTableEntry {
 		PhysAddr::from(
 			self.physical_address_and_flags.as_usize()
 				& !(BasePageSize::SIZE - 1)
-				& !(PageTableEntryFlags::EXECUTE_DISABLE).bits(),
+				& !PageTableEntryFlags::EXECUTE_DISABLE.bits(),
 		)
 	}
 
@@ -110,15 +109,17 @@ impl PageTableEntry {
 
 	fn set(&mut self, physical_address: PhysAddr, flags: PageTableEntryFlags) {
 		if flags.contains(PageTableEntryFlags::HUGE_PAGE) {
-			assert_eq!((physical_address % LargePageSize::SIZE), 0, "Physical address is not on a 2 MiB page boundary (physical_address = {:#X})", physical_address);
+			assert_eq!(physical_address % LargePageSize::SIZE, 0, "physical address is not on a `2 MB` page boundary (physical_address = `{:#X}`).", physical_address);
 		} else {
-			assert_eq!((physical_address % BasePageSize::SIZE), 0, "Physical address is not on a 4 KiB page boundary (physical_address = {:#X})", physical_address);
+			assert_eq!(physical_address % BasePageSize::SIZE, 0, "physical address is not on a `4 KB` page boundary (physical_address = `{:#X}`).", physical_address);
 		}
 
-		assert_eq!(CheckedShr::checked_shr(
-			&physical_address.as_u64(),
-			get_physical_address_bits() as u32
-		), Some(0), "Physical address exceeds CPU's physical address width (physical_address = {:#X})", physical_address);
+		assert_eq!(
+			physical_address.as_u64().checked_shr(get_physical_address_bits() as u32),
+			Some(0),
+			"physical address exceeds CPU's physical address width (physical_address = `{:#X}`).",
+			physical_address
+		);
 
 		let mut flags_to_set = flags;
 		flags_to_set.insert(PageTableEntryFlags::PRESENT | PageTableEntryFlags::ACCESSED);
@@ -184,7 +185,7 @@ impl<S: PageSize> Page<S> {
 	fn including_address(virtual_address: VirtAddr) -> Self {
 		assert!(
 			Self::is_valid_address(virtual_address),
-			"Virtual address {:#X} is invalid",
+			"virtual address `{:#X}` is invalid.",
 			virtual_address
 		);
 
@@ -278,6 +279,17 @@ trait PageTableMethods {
 }
 
 impl<L: PageTableLevel> PageTableMethods for PageTable<L> {
+	default fn get_page_table_entry<S: PageSize>(&mut self, page: Page<S>) -> Option<PageTableEntry> {
+		assert_eq!(L::LEVEL, S::MAP_LEVEL);
+		let index = page.table_index::<L>();
+
+		if self.entries[index].is_present() {
+			Some(self.entries[index])
+		} else {
+			None
+		}
+	}
+
 	fn map_page_in_this_table<S: PageSize>(&mut self, page: Page<S>, physical_address: PhysAddr, flags: PageTableEntryFlags) -> bool {
 		assert_eq!(L::LEVEL, S::MAP_LEVEL);
 		let index = page.table_index::<L>();
@@ -292,15 +304,8 @@ impl<L: PageTableLevel> PageTableMethods for PageTable<L> {
 		flush
 	}
 
-	default fn get_page_table_entry<S: PageSize>(&mut self, page: Page<S>) -> Option<PageTableEntry> {
-		assert_eq!(L::LEVEL, S::MAP_LEVEL);
-		let index = page.table_index::<L>();
-
-		if self.entries[index].is_present() {
-			Some(self.entries[index])
-		} else {
-			None
-		}
+	default fn map_page<S: PageSize>(&mut self, page: Page<S>, physical_address: PhysAddr, flags: PageTableEntryFlags) -> bool {
+		self.map_page_in_this_table::<S>(page, physical_address, flags)
 	}
 
 	default fn drop_user_space(&mut self) {
@@ -313,10 +318,6 @@ impl<L: PageTableLevel> PageTableMethods for PageTable<L> {
 				physical::deallocate(physical_address, BasePageSize::SIZE);
 			}
 		}
-	}
-
-	default fn map_page<S: PageSize>(&mut self, page: Page<S>, physical_address: PhysAddr, flags: PageTableEntryFlags) -> bool {
-		self.map_page_in_this_table::<S>(page, physical_address, flags)
 	}
 }
 

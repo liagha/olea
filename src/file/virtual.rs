@@ -1,6 +1,6 @@
 //! Implements a simple virtual file system
 
-use crate::errno::*;
+use crate::error::*;
 use crate::file::descriptor::OpenOptions;
 use crate::file::descriptor::{FileStatus, IoInterface};
 use crate::file::initial::{RamHandle, RomHandle};

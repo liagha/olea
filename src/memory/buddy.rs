@@ -34,7 +34,7 @@ impl<const ORDER: usize> BuddySystem<ORDER> {
 	pub unsafe fn init(&mut self, start: *mut u8, len: usize) {
 		assert!(
 			len.is_power_of_two(),
-			"Heap size must be a power of two, but got {}.",
+			"heap size must be a power of two, but got `{}`.",
 			len
 		);
 
@@ -42,7 +42,7 @@ impl<const ORDER: usize> BuddySystem<ORDER> {
 
 		assert!(
 			order <= ORDER,
-			"Heap order {} exceeds maximum supported `ORDER` {}, increase `ORDER`.",
+			"heap order `{}` exceeds maximum supported `ORDER` `{}`, increase `ORDER`.",
 			order,
 			ORDER
 		);

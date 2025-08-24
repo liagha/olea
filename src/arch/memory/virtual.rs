@@ -28,13 +28,13 @@ pub fn init() {
 #[allow(dead_code)]
 pub fn allocate(size: usize) -> VirtAddr {
 	assert!(size > 0);
-	assert_eq!(size % BasePageSize::SIZE, 0, "Size {:#X} is not a multiple of {:#X}", size, BasePageSize::SIZE);
+	assert_eq!(size % BasePageSize::SIZE, 0, "size `{:#X}` is not a multiple of `{:#X}`.", size, BasePageSize::SIZE);
 
 	let _preemption = DisabledPreemption::new();
 	let result = unsafe { KERNEL_FREE_LIST.allocate(size, None) };
 	assert!(
 		result.is_ok(),
-		"Could not allocate {:#X} bytes of virtual memory",
+		"could not allocate `{:#X}` bytes of virtual memory.",
 		size
 	);
 	result.unwrap()
@@ -43,14 +43,14 @@ pub fn allocate(size: usize) -> VirtAddr {
 pub fn allocate_aligned(size: usize, alignment: usize) -> VirtAddr {
 	assert!(size > 0);
 	assert!(alignment > 0);
-	assert_eq!(size % alignment, 0, "Size {:#X} is not a multiple of the given alignment {:#X}", size, alignment);
-	assert_eq!(alignment % BasePageSize::SIZE, 0, "Alignment {:#X} is not a multiple of {:#X}", alignment, BasePageSize::SIZE);
+	assert_eq!(size % alignment, 0, "size `{:#X}` is not a multiple of the given alignment `{:#X}`.", size, alignment);
+	assert_eq!(alignment % BasePageSize::SIZE, 0, "alignment `{:#X}` is not a multiple of `{:#X}`.", alignment, BasePageSize::SIZE);
 
 	let _preemption = DisabledPreemption::new();
 	let result = unsafe { KERNEL_FREE_LIST.allocate(size, Some(alignment)) };
 	assert!(
 		result.is_ok(),
-		"Could not allocate {:#X} bytes of virtual memory aligned to {} bytes",
+		"could not allocate `{:#X}` bytes of virtual memory aligned to `{}` bytes.",
 		size,
 		alignment
 	);
@@ -60,12 +60,12 @@ pub fn allocate_aligned(size: usize, alignment: usize) -> VirtAddr {
 pub fn deallocate(virtual_address: VirtAddr, size: usize) {
 	assert!(
 		virtual_address < KERNEL_VIRTUAL_MEMORY_END,
-		"Virtual address {:#X} is not < KERNEL_VIRTUAL_MEMORY_END",
+		"virtual address `{:#X}` is not smaller than `KERNEL_VIRTUAL_MEMORY_END`.",
 		virtual_address
 	);
-	assert_eq!(virtual_address % BasePageSize::SIZE, 0, "Virtual address {:#X} is not a multiple of {:#X}", virtual_address, BasePageSize::SIZE);
+	assert_eq!(virtual_address % BasePageSize::SIZE, 0, "virtual address `{:#X}` is not a multiple of `{:#X}`.", virtual_address, BasePageSize::SIZE);
 	assert!(size > 0);
-	assert_eq!(size % BasePageSize::SIZE, 0, "Size {:#X} is not a multiple of {:#X}", size, BasePageSize::SIZE);
+	assert_eq!(size % BasePageSize::SIZE, 0, "size `{:#X}` is not a multiple of `{:#X}`.", size, BasePageSize::SIZE);
 
 	let _preemption = DisabledPreemption::new();
 	unsafe {

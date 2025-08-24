@@ -5,7 +5,6 @@
 #![feature(abi_x86_interrupt)]
 #![feature(specialization)]
 #![feature(map_try_insert)]
-#![allow(clippy::module_inception)]
 #![allow(incomplete_features)]
 #![allow(static_mut_refs)]
 #![no_std]
@@ -15,7 +14,6 @@ extern crate alloc;
 extern crate x86;
 #[macro_use]
 extern crate bitflags;
-extern crate num_traits;
 
 use {
 	crate::{
@@ -34,7 +32,7 @@ pub mod arch;
 pub mod collections;
 pub mod console;
 pub mod consts;
-pub mod errno;
+pub mod error;
 pub mod file;
 pub mod io;
 pub mod memory;

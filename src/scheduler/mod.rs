@@ -6,7 +6,7 @@ pub mod task;
 
 use crate::arch;
 use crate::arch::memory::{PhysAddr, VirtAddr};
-use crate::errno::*;
+use crate::error::*;
 use crate::file::descriptor::{FileDescriptor, IoInterface};
 use crate::io;
 use crate::scheduler::task::{Task, TaskPriority};

@@ -37,7 +37,7 @@ pub unsafe extern "C" fn write_vector(
 		// Attempt to write this buffer
 		let tmp: isize = crate::file::descriptor::write(descriptor, slice).map_or_else(
 			// On error: return negative error code
-			|e| -num::ToPrimitive::to_isize(&e).unwrap(),
+			|e| -(e as isize),
 			// On success: return number of bytes written
 			|v| v.try_into().unwrap(),
 		);
@@ -70,9 +70,7 @@ pub unsafe extern "C" fn write(descriptor: FileDescriptor, buffer: *mut u8, leng
 
 	// Call the file descriptor write function
 	crate::file::descriptor::write(descriptor, slice).map_or_else(
-		// On error: return negative error code
-		|e| -num::ToPrimitive::to_isize(&e).unwrap(),
-		// On success: return number of bytes written
+		|e| -(e as isize),
 		|v| v.try_into().unwrap(),
 	)
 }

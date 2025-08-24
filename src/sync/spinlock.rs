@@ -13,7 +13,6 @@ pub struct RawSpinlock {
 }
 
 unsafe impl RawMutex for RawSpinlock {
-	#[allow(clippy::declare_interior_mutable_const)]
 	const INIT: Self = Self {
 		queue: AtomicUsize::new(0),
 		dequeue: AtomicUsize::new(0),
@@ -92,7 +91,6 @@ pub struct RawSpinlockIrqSave {
 }
 
 unsafe impl RawMutex for RawSpinlockIrqSave {
-	#[allow(clippy::declare_interior_mutable_const)]
 	const INIT: Self = Self {
 		queue: AtomicUsize::new(0),
 		dequeue: AtomicUsize::new(0),

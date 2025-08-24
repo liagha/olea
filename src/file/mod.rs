@@ -8,7 +8,7 @@ pub mod descriptor;
 
 use descriptor::{FileDescriptor, OpenOptions};
 use descriptor::{IoInterface, SeekFrom};
-use crate::errno::*;
+use crate::error::*;
 use crate::file::r#virtual::Fs;
 use crate::io;
 use crate::logging::*;

@@ -34,29 +34,29 @@ pub fn init() {
 
 pub fn allocate(size: usize) -> PhysAddr {
 	assert!(size > 0);
-	assert_eq!(size % BasePageSize::SIZE, 0, "size {:#X} is not a multiple of {:#X}", size, BasePageSize::SIZE);
+	assert_eq!(size % BasePageSize::SIZE, 0, "size `{:#X}` is not a multiple of `{:#X}`.", size, BasePageSize::SIZE);
 
 	let _preemption = DisabledPreemption::new();
 	let result = unsafe { PHYSICAL_FREE_LIST.allocate(size, None) };
-	assert!(result.is_ok(), "Could not allocate {:#X} bytes of physical memory", size);
+	assert!(result.is_ok(), "could not allocate `{:#X}` bytes of physical memory.", size);
 	result.unwrap()
 }
 
 pub fn allocate_aligned(size: usize, alignment: usize) -> PhysAddr {
 	assert!(size > 0);
 	assert!(alignment > 0);
-	assert_eq!(size % alignment, 0, "Size {:#X} is not a multiple of the given alignment {:#X}", size, alignment);
-	assert_eq!(alignment % BasePageSize::SIZE, 0, "Alignment {:#X} is not a multiple of {:#X}", alignment, BasePageSize::SIZE);
+	assert_eq!(size % alignment, 0, "size `{:#X}` is not a multiple of the given alignment `{:#X}`.", size, alignment);
+	assert_eq!(alignment % BasePageSize::SIZE, 0, "alignment `{:#X}` is not a multiple of `{:#X}`.", alignment, BasePageSize::SIZE);
 
 	let _preemption = DisabledPreemption::new();
 	let result = unsafe { PHYSICAL_FREE_LIST.allocate(size, Some(alignment)) };
-	assert!(result.is_ok(), "Could not allocate {:#X} bytes of physical memory aligned to {} bytes", size, alignment);
+	assert!(result.is_ok(), "could not allocate `{:#X}` bytes of physical memory aligned to `{}` bytes.", size, alignment);
 	result.unwrap()
 }
 
 pub fn deallocate(physical_address: PhysAddr, size: usize) {
 	assert!(size > 0);
-	assert_eq!(size % BasePageSize::SIZE, 0, "Size {:#X} is not a multiple of {:#X}", size, BasePageSize::SIZE);
+	assert_eq!(size % BasePageSize::SIZE, 0, "size `{:#X}` is not a multiple of `{:#X}`.", size, BasePageSize::SIZE);
 
 	let _preemption = DisabledPreemption::new();
 	unsafe {
