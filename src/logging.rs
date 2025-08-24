@@ -39,12 +39,12 @@ pub const LOGGER: KernelLogger = KernelLogger {
 #[macro_export]
 macro_rules! info {
 	($fmt:expr) => ({
-		if LOGGER.log_level >= LogLevel::Info {
+		if $crate::logging::LOGGER.log_level >= $crate::logging::LogLevel::Info {
 			println!(concat!("info: ", $fmt));
 		}
 	});
 	($fmt:expr, $($arg:tt)*) => ({
-		if LOGGER.log_level >= LogLevel::Info {
+		if $crate::logging::LOGGER.log_level >= $crate::logging::LogLevel::Info {
 			println!(concat!("info: ", $fmt), $($arg)*);
 		}
 	});
@@ -54,12 +54,12 @@ macro_rules! info {
 #[macro_export]
 macro_rules! warn {
 	($fmt:expr) => ({
-		if LOGGER.log_level >= LogLevel::Warning {
+		if $crate::logging::LOGGER.log_level >= $crate::logging::LogLevel::Warning {
 			println!(concat!("warning: ", $fmt));
 		}
 	});
 	($fmt:expr, $($arg:tt)*) => ({
-		if LOGGER.log_level >= LogLevel::Warning {
+		if $crate::logging::LOGGER.log_level >= $crate::logging::LogLevel::Warning {
 			println!(concat!("warning: ", $fmt), $($arg)*);
 		}
 	});
@@ -69,12 +69,12 @@ macro_rules! warn {
 #[macro_export]
 macro_rules! error {
 	($fmt:expr) => ({
-		if LOGGER.log_level >= LogLevel::Error {
+		if $crate::logging::LOGGER.log_level >= $crate::logging::LogLevel::Error {
 			println!(concat!("error: ", $fmt));
 		}
 	});
 	($fmt:expr, $($arg:tt)*) => ({
-		if LOGGER.log_level >= LogLevel::Error {
+		if $crate::logging::LOGGER.log_level >= $crate::logging::LogLevel::Error {
 			println!(concat!("error: ", $fmt), $($arg)*);
 		}
 	});
@@ -84,12 +84,12 @@ macro_rules! error {
 #[macro_export]
 macro_rules! debug {
 	($fmt:expr) => ({
-		if LOGGER.log_level >= LogLevel::Debug {
+		if $crate::logging::LOGGER.log_level >= $crate::logging::LogLevel::Debug {
 			println!(concat!("debug: ", $fmt));
 		}
 	});
 	($fmt:expr, $($arg:tt)*) => ({
-		if LOGGER.log_level >= LogLevel::Debug {
+		if $crate::logging::LOGGER.log_level >= $crate::logging::LogLevel::Debug {
 			println!(concat!("debug: ", $fmt), $($arg)*);
 		}
 	});

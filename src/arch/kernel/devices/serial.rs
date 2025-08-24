@@ -1,9 +1,9 @@
 use {
     crate::{
+        format,
         sync::spinlock::SpinlockIrqSave,
+        arch::x86::outb,
     },
-    core::fmt,
-    x86::io::*,
 };
 
 pub struct SerialPort {
@@ -24,8 +24,8 @@ impl SerialPort {
     }
 }
 
-impl fmt::Write for SerialPort {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
+impl format::Write for SerialPort {
+    fn write_str(&mut self, s: &str) -> format::Result {
         unsafe {
             for &b in s.as_bytes() {
                 outb(self.base, b);

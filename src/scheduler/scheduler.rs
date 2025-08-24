@@ -4,7 +4,6 @@ use crate::consts::*;
 use crate::error::*;
 use crate::file::descriptor::{FileDescriptor, IoInterface};
 use crate::io;
-use crate::logging::*;
 use crate::scheduler::task::*;
 use alloc::collections::{BTreeMap, VecDeque};
 use alloc::rc::Rc;

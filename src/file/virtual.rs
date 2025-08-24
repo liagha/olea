@@ -1,25 +1,34 @@
 //! Implements a simple virtual file system
 
-use crate::error::*;
-use crate::file::descriptor::OpenOptions;
-use crate::file::descriptor::{FileStatus, IoInterface};
-use crate::file::initial::{RamHandle, RomHandle};
-use crate::file::{check_path, NodeKind, SeekFrom, Vfs, VfsNode, VfsNodeDirectory, VfsNodeFile};
-use crate::io;
-use crate::logging::*;
-use crate::sync::spinlock::*;
-use alloc::boxed::Box;
-use alloc::collections::BTreeMap;
-use alloc::string::String;
-use alloc::sync::Arc;
-use alloc::vec::Vec;
-use core::any::Any;
-use core::fmt;
+use {
+	crate::{
+		io,
+		format,
+		error::*,
+		file::{
+			check_path, 
+			NodeKind, SeekFrom, Vfs, VfsNode, VfsNodeDirectory, VfsNodeFile,
+			descriptor::{
+				OpenOptions, FileStatus, IoInterface,
+			},
+			initial::{RamHandle, RomHandle},
+		},
+		sync::spinlock::*,
+	},
+	alloc::{
+		boxed::Box,
+		collections::BTreeMap,
+		string::String,
+		sync::Arc,
+		vec::Vec,
+	},
+	core::any::Any,
+};
 
 #[derive(Debug)]
 struct VfsDirectory {
 	/// in principle, a map with all entries of the current directory
-	children: BTreeMap<String, Box<dyn Any + core::marker::Send + core::marker::Sync>>,
+	children: BTreeMap<String, Box<dyn Any + Send + Sync>>,
 }
 
 impl VfsDirectory {
@@ -197,11 +206,11 @@ impl VfsNodeFile for VfsFile {
 	}
 }
 
-impl fmt::Write for VfsFile {
-	fn write_str(&mut self, s: &str) -> core::fmt::Result {
+impl format::Write for VfsFile {
+	fn write_str(&mut self, s: &str) -> format::Result {
 		match self.data {
 			DataHandle::RAM(ref mut data) => data.write_str(s),
-			_ => Err(core::fmt::Error),
+			_ => Err(format::Error),
 		}
 	}
 }

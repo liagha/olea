@@ -1,7 +1,7 @@
 use {
     crate::{
         consts::*,
-        arch::kernel::processor::utilities::memory_barrier,
+        arch::kernel::processor::memory_barrier,
     },
     x86::{
         io::*,

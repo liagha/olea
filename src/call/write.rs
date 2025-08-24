@@ -1,5 +1,4 @@
 use crate::file::descriptor::FileDescriptor;
-use crate::logging::*;
 
 /// I/O Vector structure for vectored I/O operations
 /// Represents a single buffer in a scatter-gather I/O operation

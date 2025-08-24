@@ -6,17 +6,21 @@ mod initial;
 mod r#virtual;
 pub mod descriptor;
 
-use descriptor::{FileDescriptor, OpenOptions};
-use descriptor::{IoInterface, SeekFrom};
-use crate::error::*;
-use crate::file::r#virtual::Fs;
-use crate::io;
-use crate::logging::*;
-use crate::scheduler::{insert_io_interface, remove_io_interface};
-use alloc::string::{String, ToString};
-use alloc::sync::Arc;
-use alloc::vec::Vec;
-use core::include_bytes;
+use {
+	crate::{
+		io,
+		error::*,
+		file::r#virtual::Fs,
+		scheduler::{insert_io_interface, remove_io_interface},
+	},
+	descriptor::{FileDescriptor, OpenOptions, SeekFrom, IoInterface},
+	alloc::{
+		sync::Arc,
+		vec::Vec,
+		string::{String, ToString}
+	},
+	core::include_bytes,
+};
 
 static DEMO: &[u8] = include_bytes!("../../demo/hello");
 

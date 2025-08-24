@@ -11,7 +11,6 @@ use {
 	olea::{
 		arch::{load_application},
 		scheduler::{self, task::NORMAL_PRIORITY},
-		logging::{LogLevel, LOGGER},
 	},
 };
 use olea::arch::kernel::interrupts::hardware::interrupt_enable;

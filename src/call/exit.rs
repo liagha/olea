@@ -1,4 +1,3 @@
-use crate::logging::*;
 use crate::scheduler::*;
 
 /// Handler for exit() and exit_group() system calls

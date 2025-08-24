@@ -1,7 +1,6 @@
 use {
     crate::{
         consts::*,
-        logging::*,
         arch::memory::VirtAddr,
         scheduler::{
             task::*,

@@ -1,6 +1,5 @@
 use {
     crate::{
-        logging::*,
         memory::freelist::{FreeList, FreeListEntry},
         scheduler::DisabledPreemption,
     },

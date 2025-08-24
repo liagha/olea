@@ -1,7 +1,12 @@
 pub mod stdio;
 
-use crate::io;
-use crate::scheduler::get_io_interface;
+use {
+	crate::{
+		io,
+		format,
+		scheduler::get_io_interface,
+	},
+};
 
 pub type FileDescriptor = i32;
 
@@ -33,7 +38,7 @@ pub struct FileStatus {
 }
 
 #[allow(dead_code)]
-pub trait IoInterface: Sync + Send + core::fmt::Debug {
+pub trait IoInterface: Sync + Send + format::Debug {
 	/// `read` attempts to read `len` bytes from the object references
 	/// by the descriptor
 	fn read(&self, _buf: &mut [u8]) -> io::Result<usize> {

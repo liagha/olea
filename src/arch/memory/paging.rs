@@ -2,7 +2,6 @@ use {
     crate::{
         arch::kernel::processor::features::{get_physical_address_bits, supports_1gib_pages},
         consts::*,
-        logging::*,
         scheduler,
     },
     core::{

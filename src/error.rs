@@ -1,4 +1,7 @@
-use core::{fmt, result};
+use {
+	crate::{format::{self, Display, Formatter}},
+	core::result,
+};
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -12,8 +15,8 @@ pub enum Error {
 	InvalidArgument,
 }
 
-impl fmt::Display for Error {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Display for Error {
+	fn fmt(&self, f: &mut Formatter) -> format::Result {
 		match *self {
 			Error::BadPriority => write!(f, "invalid priority number."),
 			Error::BadFsKind => write!(f, "bad file system kind."),

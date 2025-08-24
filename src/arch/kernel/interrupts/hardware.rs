@@ -1,8 +1,14 @@
 use {
-    core::arch::asm,
-    x86::io::*,
+    crate::{
+        arch::{
+            asm,
+            kernel::{
+                descriptors::interrupts::INTERRUPT_HANDLER,
+            },
+            x86::outb,
+        },
+    },
 };
-use crate::arch::kernel::descriptors::interrupts::INTERRUPT_HANDLER;
 
 pub const MASTER: u16 = 0x20;
 pub const SLAVE: u16 = 0xA0;
@@ -62,6 +68,6 @@ pub fn init() {
     unsafe {
         interrupt_remap();
 
-        INTERRUPT_HANDLER.lock().load_idt();
+        INTERRUPT_HANDLER.lock().load_interrupts();
     }
 }

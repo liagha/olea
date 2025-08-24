@@ -142,7 +142,7 @@ pub fn init() {
         }
 
         let gdtr = DescriptorTablePointer::new(&GLOBAL_DESCRIPTOR_TABLE_ARRAY);
-        dtables::lgdt(&gdtr);
+        lgdt(&gdtr);
 
         load_cs(SegmentSelector::new(KERNEL_CODE as u16, Ring::Ring0));
         load_ss(SegmentSelector::new(KERNEL_DATA as u16, Ring::Ring0));

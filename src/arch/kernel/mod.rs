@@ -10,7 +10,7 @@ pub mod scheduling;
 
 use {
 	bootloader::BootInfo,
-	core::arch::asm,
+	super::asm,
 };
 
 #[cfg(target_arch = "x86_64")]

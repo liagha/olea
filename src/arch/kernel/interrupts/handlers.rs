@@ -1,11 +1,15 @@
-use crate::{
-    logging::*,
-    scheduler::*
-    ,
-};
-use crate::arch::kernel::interrupts::{
-    exceptions::ExceptionStackFrame,
-    hardware::{end_of_interrupt, MASTER, SLAVE},
+use {
+    crate::{
+        scheduler::*,
+        arch::{
+            kernel::{
+                interrupts::{
+                    end_of_interrupt, MASTER, SLAVE,
+                    exceptions::ExceptionStackFrame,
+                },
+            },
+        },
+    },
 };
 
 pub extern "x86-interrupt" fn unhandled_irq1(stack_frame: ExceptionStackFrame, irq: u64) {

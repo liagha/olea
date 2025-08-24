@@ -1,6 +1,9 @@
-use crate::logging::*;
-use crate::scheduler::*;
-use core::arch::asm;
+use {
+	crate::{
+		arch::asm,
+		scheduler::*,
+	}
+};
 
 /// Helper function called by sys_invalid to handle unknown system calls
 /// Takes call number as parameter and terminates the process

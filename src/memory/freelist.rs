@@ -1,7 +1,10 @@
-use crate::arch::memory::{PhysAddr, VirtAddr};
-use crate::logging::*;
-use alloc::collections::linked_list::LinkedList;
-use core::cmp::Ordering;
+use {
+	crate::{
+		arch::memory::{PhysAddr, VirtAddr},
+	},
+	alloc::collections::linked_list::LinkedList,
+	core::cmp::Ordering,
+};
 
 #[derive(Copy, Clone, Debug)]
 pub enum FreeListError {
@@ -9,9 +12,9 @@ pub enum FreeListError {
 }
 
 pub struct FreeListEntry<
-	T: core::marker::Copy
-		+ core::cmp::PartialEq
-		+ core::cmp::PartialOrd
+	T: Copy
+		+ PartialEq
+		+ PartialOrd
 		+ core::fmt::UpperHex
 		+ core::ops::Sub
 		+ core::ops::BitAnd<u64>
@@ -24,9 +27,9 @@ pub struct FreeListEntry<
 }
 
 impl<
-		T: core::marker::Copy
-			+ core::cmp::PartialEq
-			+ core::cmp::PartialOrd
+		T: Copy
+			+ PartialEq
+			+ PartialOrd
 			+ core::fmt::UpperHex
 			+ core::ops::Sub
 			+ core::ops::BitAnd<u64>
@@ -41,9 +44,9 @@ impl<
 }
 
 pub struct FreeList<
-	T: core::marker::Copy
-		+ core::cmp::PartialEq
-		+ core::cmp::PartialOrd
+	T: Copy
+		+ PartialEq
+		+ PartialOrd
 		+ core::fmt::UpperHex
 		+ core::ops::Sub
 		+ core::ops::BitAnd<u64>
@@ -55,9 +58,9 @@ pub struct FreeList<
 }
 
 impl<
-		T: core::marker::Copy
-			+ core::cmp::PartialEq
-			+ core::cmp::PartialOrd
+		T: Copy
+			+ PartialEq
+			+ PartialOrd
 			+ core::fmt::UpperHex
 			+ core::ops::Sub
 			+ core::ops::BitAnd<u64>

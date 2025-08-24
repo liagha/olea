@@ -2,8 +2,8 @@
 
 use {
 	crate::{
+		format,
 		consts::*,
-		logging::*,
 		file::{
 			descriptor::{
 				stdio::{GenericStderr, GenericStdin, GenericStdout},
@@ -27,7 +27,6 @@ use {
 		rc::Rc, sync::Arc, boxed::Box,
 		collections::{BTreeMap, VecDeque},
 	},
-	core::fmt,
 	core::cell::RefCell,
 };
 
@@ -56,8 +55,8 @@ impl TaskId {
 	}
 }
 
-impl fmt::Display for TaskId {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl format::Display for TaskId {
+	fn fmt(&self, f: &mut format::Formatter) -> format::Result {
 		write!(f, "{}", self.0)
 	}
 }
@@ -76,8 +75,8 @@ impl TaskPriority {
 	}
 }
 
-impl fmt::Display for TaskPriority {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl format::Display for TaskPriority {
+	fn fmt(&self, f: &mut format::Formatter) -> format::Result {
 		write!(f, "{}", self.0)
 	}
 }

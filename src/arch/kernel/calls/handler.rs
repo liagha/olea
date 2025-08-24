@@ -1,8 +1,8 @@
 use {
     crate::{
+        arch::naked_asm,
         call::CALL_TABLE,
     },
-    core::arch::naked_asm,
 };
 
 /// Main system call entry point that handles ALL system calls

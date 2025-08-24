@@ -1,13 +1,15 @@
 use {
     crate::{
-        logging::*,
+        format,
         scheduler::*,
+        arch::{
+            kernel::{
+                interrupts::{
+                    end_of_interrupt, MASTER,
+                },
+            },
+        },
     },
-    core::fmt,
-};
-use crate::arch::kernel::interrupts::hardware::{
-    end_of_interrupt,
-    MASTER,
 };
 
 #[repr(C)]
@@ -19,11 +21,11 @@ pub struct ExceptionStackFrame {
     pub stack_segment: u64,
 }
 
-impl fmt::Debug for ExceptionStackFrame {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl format::Debug for ExceptionStackFrame {
+    fn fmt(&self, f: &mut format::Formatter) -> format::Result {
         struct Hex(u64);
-        impl fmt::Debug for Hex {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        impl format::Debug for Hex {
+            fn fmt(&self, f: &mut format::Formatter) -> format::Result {
                 write!(f, "{:#x}", self.0)
             }
         }
@@ -38,109 +40,109 @@ impl fmt::Debug for ExceptionStackFrame {
     }
 }
 
-pub extern "x86-interrupt" fn handle_divide_by_zero_exception(stack_frame: ExceptionStackFrame) {
-    info!("task {} receive a Divide By Zero Exception: {:#?}.", get_current_taskid(), stack_frame);
+pub extern "x86-interrupt" fn divide_by_zero(stack_frame: ExceptionStackFrame) {
+    info!("task `{}` receive a `Divide By Zero` exception: `{:#?}`.", get_current_taskid(), stack_frame);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn debug_exception(stack_frame: ExceptionStackFrame) {
-    info!("task {} receive a Debug Exception: {:#?}.", get_current_taskid(), stack_frame);
+pub extern "x86-interrupt" fn debug(stack_frame: ExceptionStackFrame) {
+    info!("task `{}` receive a `Debug` exception: `{:#?}`.", get_current_taskid(), stack_frame);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn nmi_exception(stack_frame: ExceptionStackFrame) {
-    info!("task {} receive a Non Maskable Interrupt Exception: {:#?}.", get_current_taskid(), stack_frame);
+pub extern "x86-interrupt" fn non_maskable(stack_frame: ExceptionStackFrame) {
+    info!("task `{}` receive a `Non Maskable Interrupt` exception: `{:#?}`.", get_current_taskid(), stack_frame);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn int3_exception(stack_frame: ExceptionStackFrame) {
-    info!("task {} receive a Int 3 Exception: {:#?}.", get_current_taskid(), stack_frame);
+pub extern "x86-interrupt" fn int_three(stack_frame: ExceptionStackFrame) {
+    info!("task `{}` receive a `Int 3` exception: `{:#?}`.", get_current_taskid(), stack_frame);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn int0_exception(stack_frame: ExceptionStackFrame) {
-    info!("task {} receive a INT0 Exception: {:#?}.", get_current_taskid(), stack_frame);
+pub extern "x86-interrupt" fn int_zero(stack_frame: ExceptionStackFrame) {
+    info!("task `{}` receive a `INT0` exception: `{:#?}`.", get_current_taskid(), stack_frame);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn out_of_bound_exception(stack_frame: ExceptionStackFrame) {
-    info!("task {} receive a Out of Bounds Exception: {:#?}.", get_current_taskid(), stack_frame);
+pub extern "x86-interrupt" fn out_of_bound(stack_frame: ExceptionStackFrame) {
+    info!("task `{}` receive a `Out of Bounds` exception: `{:#?}`.", get_current_taskid(), stack_frame);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn invalid_opcode_exception(stack_frame: ExceptionStackFrame) {
-    info!("task {} receive a Invalid Opcode Exception: {:#?}.", get_current_taskid(), stack_frame);
+pub extern "x86-interrupt" fn invalid_opcode(stack_frame: ExceptionStackFrame) {
+    info!("task `{}` receive a `Invalid Opcode` exception: `{:#?}`.", get_current_taskid(), stack_frame);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn no_coprocessor_exception(stack_frame: ExceptionStackFrame) {
-    info!("task {} receive a Coprocessor Not Available Exception: {:#?}.", get_current_taskid(), stack_frame);
+pub extern "x86-interrupt" fn no_coprocessor(stack_frame: ExceptionStackFrame) {
+    info!("task `{}` receive a `Coprocessor Not Available` exception: `{:#?}`.", get_current_taskid(), stack_frame);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn double_fault_exception(stack_frame: ExceptionStackFrame, error_code: u64) {
-    info!("task {} receive a Double Fault Exception: {:#?} error code: 0x{:x}.", get_current_taskid(), stack_frame, error_code);
+pub extern "x86-interrupt" fn double_fault(stack_frame: ExceptionStackFrame, error_code: u64) {
+    info!("task `{}` receive a `Double Fault` exception: `{:#?}` error code: `0x{:x}`.", get_current_taskid(), stack_frame, error_code);
     abort();
 }
 
-pub extern "x86-interrupt" fn coprocessor_segment_overrun_exception(stack_frame: ExceptionStackFrame) {
-    info!("task {} receive a Coprocessor Segment Overrun Exception: {:#?}.", get_current_taskid(), stack_frame);
+pub extern "x86-interrupt" fn coprocessor_segment_overrun(stack_frame: ExceptionStackFrame) {
+    info!("task `{}` receive a `Coprocessor Segment Overrun` exception: `{:#?}`.", get_current_taskid(), stack_frame);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn bad_tss_exception(stack_frame: ExceptionStackFrame, error_code: u64) {
-    info!("task {} receive a Bad TSS Exception: {:#?} error code: 0x{:x}.", get_current_taskid(), stack_frame, error_code);
+pub extern "x86-interrupt" fn bad_tss(stack_frame: ExceptionStackFrame, error_code: u64) {
+    info!("task `{}` receive a `Bad TSS` exception: `{:#?}` error code: `0x{:x}`.", get_current_taskid(), stack_frame, error_code);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn segment_not_present_exception(stack_frame: ExceptionStackFrame, error_code: u64) {
-    info!("task {} receive a Segment Not Present Exception: {:#?} error code: 0x{:x}.", get_current_taskid(), stack_frame, error_code);
+pub extern "x86-interrupt" fn segment_not_present(stack_frame: ExceptionStackFrame, error_code: u64) {
+    info!("task `{}` receive a `Segment Not Present` exception: `{:#?}` error code: `0x{:x}`.", get_current_taskid(), stack_frame, error_code);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn stack_fault_exception(stack_frame: ExceptionStackFrame, error_code: u64) {
-    info!("task {} receive a Stack Fault Exception: {:#?} error code: 0x{:x}.", get_current_taskid(), stack_frame, error_code);
+pub extern "x86-interrupt" fn stack_fault(stack_frame: ExceptionStackFrame, error_code: u64) {
+    info!("task `{}` receive a `Stack Fault` exception: `{:#?}` error code: `0x{:x}`.", get_current_taskid(), stack_frame, error_code);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn general_protection_exception(stack_frame: ExceptionStackFrame, error_code: u64) {
-    info!("task {} receive a General Protection Exception: {:#?} error code: 0x{:x}.", get_current_taskid(), stack_frame, error_code);
+pub extern "x86-interrupt" fn general_protection(stack_frame: ExceptionStackFrame, error_code: u64) {
+    info!("task `{}` receive a `General Protection` exception: `{:#?}` error code: `0x{:x}`.", get_current_taskid(), stack_frame, error_code);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn reserved_exception(stack_frame: ExceptionStackFrame) {
-    info!("task {} receive a Reserved Exception: {:#?}.", get_current_taskid(), stack_frame);
+pub extern "x86-interrupt" fn reserved(stack_frame: ExceptionStackFrame) {
+    info!("task `{}` receive a `Reserved` exception: `{:#?}`.", get_current_taskid(), stack_frame);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn floating_point_exception(stack_frame: ExceptionStackFrame) {
-    info!("task {} receive a Floating Point Exception: {:#?}.", get_current_taskid(), stack_frame);
+pub extern "x86-interrupt" fn floating_point(stack_frame: ExceptionStackFrame) {
+    info!("task `{}` receive a `Floating Point` exception: `{:#?}`.", get_current_taskid(), stack_frame);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn alignment_check_exception(stack_frame: ExceptionStackFrame, error_code: u64) {
-    info!("task {} receive a Alignment Check Exception: {:#?} error code: 0x{:x}.", get_current_taskid(), stack_frame, error_code);
+pub extern "x86-interrupt" fn alignment_check(stack_frame: ExceptionStackFrame, error_code: u64) {
+    info!("task `{}` receive a `Alignment Check` exception: `{:#?}` error code: `0x{:x}`.", get_current_taskid(), stack_frame, error_code);
     end_of_interrupt(MASTER);
     abort();
 }
 
-pub extern "x86-interrupt" fn machine_check_exception(stack_frame: ExceptionStackFrame) {
-    info!("task {} receive a Machine Check Exception: {:#?}.", get_current_taskid(), stack_frame);
+pub extern "x86-interrupt" fn machine_check(stack_frame: ExceptionStackFrame) {
+    info!("task `{}` receive a `Machine Check` exception: `{:#?}`.", get_current_taskid(), stack_frame);
     end_of_interrupt(MASTER);
     abort();
 }

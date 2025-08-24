@@ -4,5 +4,6 @@ pub mod utilities;
 
 pub use {
     shutdown::shutdown,
+    utilities::*,
     features::*,
 };

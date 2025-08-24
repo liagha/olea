@@ -1,8 +1,12 @@
 use {
-    crate::arch::memory::VirtAddr,
-    core::arch::naked_asm,
+    crate::{
+        arch::{
+            naked_asm,
+            memory::VirtAddr,
+            kernel::descriptors::global::set_current_kernel_stack,
+        }
+    },
 };
-use crate::arch::kernel::descriptors::global::set_current_kernel_stack;
 
 #[cfg(target_arch = "x86_64")]
 macro_rules! save_context {

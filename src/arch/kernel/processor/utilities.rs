@@ -1,4 +1,6 @@
-use core::arch::asm;
+use {
+    crate::arch::asm,
+};
 
 #[inline(always)]
 pub fn memory_barrier() {

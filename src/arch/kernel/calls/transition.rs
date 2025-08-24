@@ -1,8 +1,8 @@
 use {
     crate::{
+        arch::naked_asm,
         consts::USER_ENTRY,
     },
-    core::arch::{naked_asm},
 };
 
 /// Low-level function to transition from kernel mode to user mode

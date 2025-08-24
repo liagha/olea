@@ -1,10 +1,13 @@
 use {
-	crate::error::numbers,
+	core::result,
+	crate::{
+		format::{self, Arguments},
+		error::numbers,
+	},
 	alloc::{
 		string::String,
 		vec::Vec,
 	},
-	core::{fmt, result},
 };
 
 #[derive(Debug, PartialEq)]
@@ -84,7 +87,7 @@ pub trait Write {
 	}
 
 	/// Writes a formatted string into this writer, returning any error encountered.
-	fn write_fmt(&mut self, fmt: fmt::Arguments<'_>) -> Result<()> {
+	fn write_fmt(&mut self, fmt: Arguments<'_>) -> Result<()> {
 		// Create a shim which translates a Write to a fmt::Write and saves
 		// off I/O errors. instead of discarding them
 		struct Adapter<'a, T: ?Sized> {
@@ -92,13 +95,13 @@ pub trait Write {
 			error: Result<()>,
 		}
 
-		impl<T: Write + ?Sized> fmt::Write for Adapter<'_, T> {
-			fn write_str(&mut self, s: &str) -> fmt::Result {
+		impl<T: Write + ?Sized> format::Write for Adapter<'_, T> {
+			fn write_str(&mut self, s: &str) -> format::Result {
 				match self.inner.write_all(s.as_bytes()) {
 					Ok(()) => Ok(()),
 					Err(e) => {
 						self.error = Err(e);
-						Err(fmt::Error)
+						Err(format::Error)
 					}
 				}
 			}
@@ -108,7 +111,7 @@ pub trait Write {
 			inner: self,
 			error: Ok(()),
 		};
-		match fmt::write(&mut output, fmt) {
+		match format::write(&mut output, fmt) {
 			Ok(()) => Ok(()),
 			Err(..) => {
 				// check if the error came from the underlying `Write` or not

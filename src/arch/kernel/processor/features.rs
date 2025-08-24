@@ -1,26 +1,24 @@
 use {
     crate::{
-        arch::memory::get_boot_stack,
-        logging::*,
+        arch::{
+            asm,
+            memory::get_boot_stack,
+            kernel::calls::call,
+            x86::*,
+        },
         scheduler::task::Stack,
     },
-    core::arch::asm,
-    x86::{
-        controlregs::*,
-        cpuid::*,
-        msr::*,
-    },
 };
-use crate::arch::kernel::calls::handler::call;
 
-const EFER_SCE: u64 = 1 << 0;
-const EFER_LME: u64 = 1 << 8;
-const EFER_LMA: u64 = 1 << 10;
-const EFER_NXE: u64 = 1 << 11;
-const EFER_SVME: u64 = 1 << 12;
-const EFER_LMSLE: u64 = 1 << 13;
-const EFER_FFXSR: u64 = 1 << 14;
-const EFER_TCE: u64 = 1 << 15;
+// Constants for Extended Feature Enable Register (EFER) bits
+const SYSTEM_CALL_ENABLE: u64 = 1 << 0;  // Enables SYSCALL/SYSRET instructions
+const LONG_MODE_ENABLE: u64 = 1 << 8;   // Enables 64-bit long mode
+const LONG_MODE_ACTIVE: u64 = 1 << 10;  // Indicates long mode is active
+const NO_EXECUTE_ENABLE: u64 = 1 << 11; // Enables NX bit for memory protection
+const SECURE_VIRTUAL_MACHINE_ENABLE: u64 = 1 << 12; // Enables SVM (AMD virtualization)
+const LONG_MODE_SEGMENT_LIMIT_ENABLE: u64 = 1 << 13; // Enables LMSLE
+const FAST_FXSAVE_FXRSTOR: u64 = 1 << 14; // Enables fast FXSAVE/FXRSTOR
+const TRANSLATION_CACHE_EXTENSION: u64 = 1 << 15; // Enables TCE
 
 static mut PHYSICAL_ADDRESS_BITS: u8 = 0;
 static mut LINEAR_ADDRESS_BITS: u8 = 0;
@@ -94,7 +92,7 @@ pub fn enable_features() {
     }
 
     unsafe {
-        wrmsr(IA32_EFER, rdmsr(IA32_EFER) | EFER_LMA | EFER_SCE | EFER_NXE);
+        wrmsr(IA32_EFER, rdmsr(IA32_EFER) | LONG_MODE_ACTIVE | SYSTEM_CALL_ENABLE | NO_EXECUTE_ENABLE);
         wrmsr(IA32_STAR, (0x1Bu64 << 48) | (0x08u64 << 32));
         wrmsr(IA32_LSTAR, (call as usize).try_into().unwrap());
         wrmsr(IA32_FMASK, 1 << 9);

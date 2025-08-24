@@ -1,7 +1,9 @@
 use {
-    crate::sync::spinlock::Spinlock,
-    core::fmt,
-    x86::io::*,
+    crate::{
+        format,
+        sync::spinlock::Spinlock,
+        arch::x86::outb,
+    },
 };
 
 const CRT_CONTROLLER_ADDRESS_PORT: u16 = 0x3D4;
@@ -113,8 +115,8 @@ impl VgaScreen {
 
 unsafe impl Send for VgaScreen {}
 
-impl fmt::Write for VgaScreen {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
+impl format::Write for VgaScreen {
+    fn write_str(&mut self, s: &str) -> format::Result {
         for &b in s.as_bytes() {
             self.write_byte(b);
         }
