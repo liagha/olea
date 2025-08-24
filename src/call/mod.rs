@@ -55,22 +55,22 @@ pub(crate) struct CallTable {
 impl CallTable {
 	/// Create a new system call table with all entries initialized
 	/// This must be const fn to allow static initialization
-	pub const fn new() -> Self {
+	pub const fn default() -> Self {
 		// Initialize all entries to point to invalid call handler
 		// This ensures that unimplemented syscalls are caught
 		let mut table = CallTable {
 			handle: [invalid as *const _; numbers::MAX_CALLS],
 		};
 
-		// === IMPLEMENTED SYSTEM CALLS ===
+		// Implemented Calls
 		// Map specific call numbers to their handler functions
 
 		// I/O operations
-		table.handle[numbers::WRITE] = write as *const _;      // Write to file descriptor
+		table.handle[numbers::WRITE] = write as *const _;                  // Write to file descriptor
 		table.handle[numbers::WRITE_VECTOR] = write_vector as *const _;    // Vectored write
 
 		// File operations (stubbed out)
-		table.handle[numbers::CLOSE] = nothing as *const _;    // Close file (no-op)
+		table.handle[numbers::CLOSE] = nothing as *const _;         // Close file (no-op)
 		table.handle[numbers::IO_CONTROL] = nothing as *const _;    // I/O control (no-op)
 
 		// Process control
@@ -79,13 +79,13 @@ impl CallTable {
 
 		// Thread/architecture control (stubbed out)
 		table.handle[numbers::ARCH_PROCESS_CONTROL] = nothing as *const _;       // Arch control (no-op)
-		table.handle[numbers::SET_THREAD_ID_ADDRESS] = nothing as *const _;  // Set TID address (no-op)
+		table.handle[numbers::SET_THREAD_ID_ADDRESS] = nothing as *const _;      // Set TID address (no-op)
 
 		table
 	}
 }
 
-// === SAFETY IMPLEMENTATIONS ===
+// Safety Implementations
 // These are required because the table contains raw function pointers
 // We assert that the table can be safely shared between threads
 
@@ -97,11 +97,11 @@ unsafe impl Sync for CallTable {}
 
 impl Default for CallTable {
 	fn default() -> Self {
-		Self::new()
+		Self::default()
 	}
 }
 
 /// Global system call handler table
 /// This is accessed by the assembly code in the call entry point
 /// Static initialization ensures it's available at boot time
-pub(crate) static CALL_TABLE: CallTable = CallTable::new();
+pub(crate) static CALL_TABLE: CallTable = CallTable::default();

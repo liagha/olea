@@ -1,6 +1,6 @@
 //! Implements basic functions to realize a simple in-memory file system
 
-use crate::file::descriptor::OpenOption;
+use crate::file::descriptor::OpenOptions;
 use crate::file::SeekFrom;
 use crate::io;
 use crate::sync::spinlock::*;
@@ -25,7 +25,7 @@ impl RomHandle {
 		}
 	}
 
-	pub fn get_handle(&self, _opt: OpenOption) -> RomHandle {
+	pub fn get_handle(&self, _opt: OpenOptions) -> RomHandle {
 		RomHandle {
 			pos: Spinlock::new(0),
 			data: self.data.clone(),
@@ -69,7 +69,7 @@ impl RomHandle {
 					*pos_guard = data as usize;
 					Ok(data as usize)
 				} else {
-					Err(io::Error::EINVAL)
+					Err(io::Error::InvalidArgument)
 				}
 			}
 			SeekFrom::Current(n) => {
@@ -78,7 +78,7 @@ impl RomHandle {
 					*pos_guard = pos as usize;
 					Ok(pos as usize)
 				} else {
-					Err(io::Error::EINVAL)
+					Err(io::Error::InvalidArgument)
 				}
 			}
 		}
@@ -143,7 +143,7 @@ impl RamHandle {
 
 	pub fn write(&self, buf: &[u8]) -> io::Result<usize> {
 		if self.writeable == false {
-			return Err(io::Error::EBADF);
+			return Err(io::Error::BadFileDescriptor);
 		}
 
 		let mut guard = self.data.write();
@@ -177,7 +177,7 @@ impl RamHandle {
 					*pos_guard = data as usize;
 					Ok(data as usize)
 				} else {
-					Err(io::Error::EINVAL)
+					Err(io::Error::InvalidArgument)
 				}
 			}
 			SeekFrom::Current(n) => {
@@ -186,7 +186,7 @@ impl RamHandle {
 					*pos_guard = pos as usize;
 					Ok(pos as usize)
 				} else {
-					Err(io::Error::EINVAL)
+					Err(io::Error::InvalidArgument)
 				}
 			}
 		}
@@ -212,9 +212,9 @@ impl RamHandle {
 		Ok(())
 	}
 
-	pub fn get_handle(&self, opt: OpenOption) -> RamHandle {
+	pub fn get_handle(&self, opt: OpenOptions) -> RamHandle {
 		RamHandle {
-			writeable: opt.contains(OpenOption::O_RDWR),
+			writeable: opt.contains(OpenOptions::READ_WRITE),
 			pos: Spinlock::new(0),
 			data: self.data.clone(),
 		}

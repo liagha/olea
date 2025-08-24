@@ -37,38 +37,55 @@ pub trait IoInterface: Sync + Send + core::fmt::Debug {
 	/// `read` attempts to read `len` bytes from the object references
 	/// by the descriptor
 	fn read(&self, _buf: &mut [u8]) -> io::Result<usize> {
-		Err(io::Error::ENOSYS)
+		Err(io::Error::NotImplemented)
 	}
 
 	/// `write` attempts to write `len` bytes to the object references
 	/// by the descriptor
 	fn write(&self, _buf: &[u8]) -> io::Result<usize> {
-		Err(io::Error::ENOSYS)
+		Err(io::Error::NotImplemented)
 	}
 
 	fn seek(&self, _offset: SeekFrom) -> io::Result<usize> {
-		Err(io::Error::ENOSYS)
+		Err(io::Error::NotImplemented)
 	}
 
 	fn fstat(&self) -> io::Result<FileStatus> {
-		Err(io::Error::ENOSYS)
+		Err(io::Error::NotImplemented)
 	}
 }
 
 bitflags! {
-	/// Options for opening files
-	#[derive(Debug, Copy, Clone)]
-	pub struct OpenOption: i32 {
-		const O_RDONLY = 0o0000;
-		const O_WRONLY = 0o0001;
-		const O_RDWR = 0o0002;
-		const O_CREAT = 0o0100;
-		const O_EXCL = 0o0200;
-		const O_TRUNC = 0o1000;
-		const O_APPEND = 0o2000;
-		const O_DIRECT = 0o40000;
-		const O_DIRECTORY = 0o200_000;
-	}
+   /// Options for opening files
+   #[derive(Debug, Copy, Clone)]
+   pub struct OpenOptions: i32 {
+       /// Open file for reading only
+       const READ_ONLY = 0o0000;
+       
+       /// Open file for writing only
+       const WRITE_ONLY = 0o0001;
+       
+       /// Open file for both reading and writing
+       const READ_WRITE = 0o0002;
+       
+       /// Create the file if it doesn't exist
+       const CREATE = 0o0100;
+       
+       /// Fail if file already exists (use with CREATE)
+       const EXCLUSIVE = 0o0200;
+       
+       /// Truncate file to zero length when opening
+       const TRUNCATE = 0o1000;
+       
+       /// All writes append to end of file
+       const APPEND = 0o2000;
+       
+       /// Bypass kernel buffer cache for direct I/O
+       const DIRECT_IO = 0o40000;
+       
+       /// Fail if path is not a directory
+       const DIRECTORY = 0o200_000;
+   }
 }
 
 pub(crate) fn read(descriptor: FileDescriptor, buffer: &mut [u8]) -> io::Result<usize> {

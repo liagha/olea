@@ -6,23 +6,23 @@ use num_derive::{FromPrimitive, ToPrimitive};
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive)]
 pub enum Error {
-	ENOENT = crate::errno::ENOENT as isize,
-	ENOSYS = crate::errno::ENOSYS as isize,
-	EIO = crate::errno::EIO as isize,
-	EBADF = crate::errno::EBADF as isize,
-	EISDIR = crate::errno::EISDIR as isize,
-	EINVAL = crate::errno::EINVAL as isize,
-	ETIME = crate::errno::ETIME as isize,
-	EAGAIN = crate::errno::EAGAIN as isize,
-	EFAULT = crate::errno::EFAULT as isize,
-	ENOBUFS = crate::errno::ENOBUFS as isize,
-	ENOTCONN = crate::errno::ENOTCONN as isize,
-	ENOTDIR = crate::errno::ENOTDIR as isize,
-	EMFILE = crate::errno::EMFILE as isize,
-	EEXIST = crate::errno::EEXIST as isize,
-	EADDRINUSE = crate::errno::EADDRINUSE as isize,
-	EOVERFLOW = crate::errno::EOVERFLOW as isize,
-	ENOTSOCK = crate::errno::ENOTSOCK as isize,
+	FileNotFound = crate::errno::FILE_NOT_FOUND as isize,
+	NotImplemented = crate::errno::NOT_IMPLEMENTED as isize,
+	IoError = crate::errno::IO_ERROR as isize,
+	BadFileDescriptor = crate::errno::BAD_FILE_DESCRIPTOR as isize,
+	IsADirectory = crate::errno::IS_A_DIRECTORY as isize,
+	InvalidArgument = crate::errno::INVALID_ARGUMENT as isize,
+	TimerExpired = crate::errno::TIMER_EXPIRED as isize,
+	TryAgain = crate::errno::TRY_AGAIN as isize,
+	BadAddress = crate::errno::BAD_ADDRESS as isize,
+	NoBufferSpace = crate::errno::NO_BUFFER_SPACE as isize,
+	NotConnected = crate::errno::NOT_CONNECTED as isize,
+	NotADirectory = crate::errno::NOT_A_DIRECTORY as isize,
+	TooManyOpenFiles = crate::errno::TOO_MANY_OPEN_FILES as isize,
+	FileExists = crate::errno::FILE_EXISTS as isize,
+	AddressInUse = crate::errno::ADDRESS_IN_USE as isize,
+	ValueOverflow = crate::errno::VALUE_OVERFLOW as isize,
+	NotASocket = crate::errno::NOT_A_SOCKET as isize,
 }
 
 pub type Result<T> = result::Result<T, Error>;
@@ -70,7 +70,7 @@ pub trait Write {
 		while !buf.is_empty() {
 			match self.write(buf) {
 				Ok(0) => {
-					return Err(Error::EIO);
+					return Err(Error::IoError);
 				}
 				Ok(n) => buf = &buf[n..],
 				Err(e) => return Err(e),
@@ -112,7 +112,7 @@ pub trait Write {
 				if output.error.is_err() {
 					output.error
 				} else {
-					Err(Error::EINVAL)
+					Err(Error::InvalidArgument)
 				}
 			}
 		}

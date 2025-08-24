@@ -1,7 +1,7 @@
 //! Implements a simple virtual file system
 
 use crate::errno::*;
-use crate::file::descriptor::OpenOption;
+use crate::file::descriptor::OpenOptions;
 use crate::file::descriptor::{FileStatus, IoInterface};
 use crate::file::initial::{RamHandle, RomHandle};
 use crate::file::{check_path, NodeKind, SeekFrom, Vfs, VfsNode, VfsNodeDirectory, VfsNodeFile};
@@ -91,7 +91,7 @@ impl VfsNodeDirectory for VfsDirectory {
 	fn traverse_open(
 		&mut self,
 		components: &mut Vec<&str>,
-		flags: OpenOption,
+		flags: OpenOptions,
 	) -> Result<Arc<dyn IoInterface>> {
 		if let Some(component) = components.pop() {
 			let node_name = String::from(component);
@@ -104,7 +104,7 @@ impl VfsNodeDirectory for VfsDirectory {
 			}
 
 			if components.is_empty() == true {
-				if flags.contains(OpenOption::O_CREAT) {
+				if flags.contains(OpenOptions::CREATE) {
 					// Create file on demand
 					let file = Box::new(VfsFile::new());
 					let result = file.get_handle(flags);
@@ -185,7 +185,7 @@ impl VfsNode for VfsFile {
 }
 
 impl VfsNodeFile for VfsFile {
-	fn get_handle(&self, opt: OpenOption) -> Result<Arc<dyn IoInterface>> {
+	fn get_handle(&self, opt: OpenOptions) -> Result<Arc<dyn IoInterface>> {
 		match self.data {
 			DataHandle::RAM(ref data) => Ok(Arc::new(VfsFile {
 				data: DataHandle::RAM(data.get_handle(opt)),
@@ -217,7 +217,7 @@ impl IoInterface for VfsFile {
 	fn write(&self, buf: &[u8]) -> io::Result<usize> {
 		match self.data {
 			DataHandle::RAM(ref data) => data.write(buf),
-			_ => Err(io::Error::EBADF),
+			_ => Err(io::Error::BadFileDescriptor),
 		}
 	}
 
@@ -272,7 +272,7 @@ impl Vfs for Fs {
 		self.handle.lock().traverse_lsdir(String::from(""))
 	}
 
-	fn open(&mut self, path: &str, flags: OpenOption) -> Result<Arc<dyn IoInterface>> {
+	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn IoInterface>> {
 		if check_path(path) {
 			let mut components: Vec<&str> = path.split("/").collect();
 

@@ -160,7 +160,7 @@ impl Scheduler {
 				if !self.current_task.borrow().fd_map.contains_key(&fd) {
 					break Ok(fd);
 				} else if fd == FileDescriptor::MAX {
-					break Err(io::Error::EOVERFLOW);
+					break Err(io::Error::ValueOverflow);
 				}
 
 				fd = fd.saturating_add(1);
@@ -181,7 +181,7 @@ impl Scheduler {
 			.borrow_mut()
 			.fd_map
 			.remove(&fd)
-			.ok_or(io::Error::EBADF)
+			.ok_or(io::Error::BadFileDescriptor)
 	}
 
 	pub(crate) fn get_io_interface(
@@ -192,7 +192,7 @@ impl Scheduler {
 			if let Some(io_interface) = self.current_task.borrow().fd_map.get(&fd) {
 				Ok(io_interface.clone())
 			} else {
-				Err(crate::io::Error::ENOENT)
+				Err(crate::io::Error::FileNotFound)
 			}
 		};
 

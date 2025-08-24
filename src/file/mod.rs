@@ -6,7 +6,7 @@ mod initial;
 mod r#virtual;
 pub mod descriptor;
 
-use descriptor::{FileDescriptor, OpenOption};
+use descriptor::{FileDescriptor, OpenOptions};
 use descriptor::{IoInterface, SeekFrom};
 use crate::errno::*;
 use crate::file::r#virtual::Fs;
@@ -38,7 +38,7 @@ trait VfsNode: core::fmt::Debug + core::marker::Send + core::marker::Sync {
 /// VfsNodeFile represents a file node of the virtual file system.
 trait VfsNodeFile: VfsNode + core::fmt::Debug + core::marker::Send + core::marker::Sync {
 	/// Create an IO interface to the current file
-	fn get_handle(&self, _opt: OpenOption) -> Result<Arc<dyn IoInterface>>;
+	fn get_handle(&self, _opt: OpenOptions) -> Result<Arc<dyn IoInterface>>;
 }
 
 /// VfsNodeDirectory represents a directory node of the virtual file system.
@@ -53,7 +53,7 @@ trait VfsNodeDirectory: VfsNode + core::fmt::Debug + core::marker::Send + core::
 	fn traverse_open(
 		&mut self,
 		_components: &mut Vec<&str>,
-		_flags: OpenOption,
+		_flags: OpenOptions,
 	) -> Result<Arc<dyn IoInterface>>;
 
 	/// Mound memory region as file
@@ -70,7 +70,7 @@ trait Vfs: core::fmt::Debug + core::marker::Send + core::marker::Sync {
 
 	/// Open a file with the path `path`.
 	/// `path` must be an absolute path to the file, while `flags` defined
-	fn open(&mut self, path: &str, flags: OpenOption) -> Result<Arc<dyn IoInterface>>;
+	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn IoInterface>>;
 
 	/// Mound memory region as file
 	fn mount(&mut self, path: &String, slice: &'static [u8]) -> Result<()>;
@@ -93,7 +93,7 @@ pub fn mkdir(path: &String) -> Result<()> {
 /// Open a file with the path `path`.
 /// `path` must be an absolute path to the file, while `flags` defined
 /// if the file is writeable or created on demand.
-pub fn open(name: &str, flags: OpenOption) -> io::Result<FileDescriptor> {
+pub fn open(name: &str, flags: OpenOptions) -> io::Result<FileDescriptor> {
 	debug!("open {}, {:?}.", name, flags);
 
 	let fs = unsafe { VFS_ROOT.as_mut().unwrap() };
@@ -101,7 +101,7 @@ pub fn open(name: &str, flags: OpenOption) -> io::Result<FileDescriptor> {
 		let fd = insert_io_interface(file)?;
 		Ok(fd)
 	} else {
-		Err(io::Error::EINVAL)
+		Err(io::Error::InvalidArgument)
 	}
 }
 
@@ -130,7 +130,7 @@ pub struct File {
 impl File {
 	/// Attempts to create a file in read-write mode.
 	pub fn create(path: &str) -> io::Result<Self> {
-		let fd = open(path, OpenOption::O_RDWR | OpenOption::O_CREAT)?;
+		let fd = open(path, OpenOptions::READ_WRITE | OpenOptions::CREATE)?;
 
 		Ok(File {
 			fd,
@@ -140,7 +140,7 @@ impl File {
 
 	/// Attempts to open a file in read-write mode.
 	pub fn open(path: &str) -> io::Result<Self> {
-		let fd = open(path, OpenOption::O_RDWR)?;
+		let fd = open(path, OpenOptions::READ_WRITE)?;
 
 		Ok(File {
 			fd,
