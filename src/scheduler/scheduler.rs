@@ -1,6 +1,4 @@
-use crate::arch::drop_user_space;
 use crate::arch::memory::{PhysAddr, VirtAddr};
-use crate::arch::switch;
 use crate::collections::save_interrupt;
 use crate::consts::*;
 use crate::errno::*;
@@ -13,10 +11,12 @@ use alloc::rc::Rc;
 use alloc::sync::Arc;
 use core::cell::RefCell;
 use core::sync::atomic::{AtomicU32, Ordering};
+use crate::arch::kernel::scheduling::switch;
+use crate::arch::memory::paging::drop_user_space;
 
 static TID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
-pub(crate) struct Scheduler {
+pub struct Scheduler {
 	/// task id which is currently running
 	current_task: Rc<RefCell<Task>>,
 	/// task id of the idle task
@@ -150,7 +150,7 @@ impl Scheduler {
 		save_interrupt(closure);
 	}
 
-	pub(crate) fn insert_io_interface(
+	pub fn insert_io_interface(
 		&mut self,
 		io_interface: Arc<dyn IoInterface>,
 	) -> io::Result<FileDescriptor> {
@@ -184,7 +184,7 @@ impl Scheduler {
 			.ok_or(io::Error::BadFileDescriptor)
 	}
 
-	pub(crate) fn get_io_interface(
+	pub fn get_io_interface(
 		&self,
 		fd: FileDescriptor,
 	) -> crate::io::Result<Arc<dyn IoInterface>> {

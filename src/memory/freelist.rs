@@ -4,11 +4,11 @@ use alloc::collections::linked_list::LinkedList;
 use core::cmp::Ordering;
 
 #[derive(Copy, Clone, Debug)]
-pub(crate) enum FreeListError {
+pub enum FreeListError {
 	NoValidEntry,
 }
 
-pub(crate) struct FreeListEntry<
+pub struct FreeListEntry<
 	T: core::marker::Copy
 		+ core::cmp::PartialEq
 		+ core::cmp::PartialOrd
@@ -40,7 +40,7 @@ impl<
 	}
 }
 
-pub(crate) struct FreeList<
+pub struct FreeList<
 	T: core::marker::Copy
 		+ core::cmp::PartialEq
 		+ core::cmp::PartialOrd

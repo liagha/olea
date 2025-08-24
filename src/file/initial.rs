@@ -10,7 +10,7 @@ use core::ops::{Deref, DerefMut};
 use spinning_top::RwSpinlock;
 
 #[derive(Debug)]
-pub(crate) struct RomHandle {
+pub struct RomHandle {
 	/// Position within the file
 	pos: Spinlock<usize>,
 	/// File content
@@ -100,7 +100,7 @@ impl Clone for RomHandle {
 }
 
 #[derive(Debug)]
-pub(crate) struct RamHandle {
+pub struct RamHandle {
 	/// Is the file writeable?
 	writeable: bool,
 	/// Position within the file

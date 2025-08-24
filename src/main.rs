@@ -14,7 +14,7 @@ use {
 		logging::{LogLevel, LOGGER},
 	},
 };
-use olea::arch::x86::kernel::interrupts::hardware::interrupt_enable;
+use olea::arch::kernel::interrupts::hardware::interrupt_enable;
 
 extern "C" fn create_user() {
 	let path = String::from("/bin/demo");

@@ -22,7 +22,7 @@ static DEMO: &[u8] = include_bytes!("../../demo/hello");
 
 /// Type of the VfsNode
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub(crate) enum NodeKind {
+pub enum NodeKind {
 	/// Node represent a file
 	File,
 	/// Node represent a directory
@@ -172,7 +172,7 @@ impl Drop for File {
 	}
 }
 
-pub(crate) fn init() {
+pub fn init() {
 	let mut root = Fs::new();
 
 	root.mkdir(&String::from("/bin")).unwrap();

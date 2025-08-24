@@ -1,7 +1,7 @@
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use lock_api::{GuardSend, RawMutex, RawMutexFair};
-use crate::arch::processor::utilities::pause;
-use crate::arch::x86::kernel::interrupts::hardware::{interrupt_nested_disable, interrupt_nested_enable};
+use crate::arch::kernel::processor::utilities::pause;
+use crate::arch::kernel::interrupts::hardware::{interrupt_nested_disable, interrupt_nested_enable};
 
 /// A [fair] [ticket lock].
 ///

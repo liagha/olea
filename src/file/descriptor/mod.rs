@@ -1,4 +1,4 @@
-pub(crate) mod stdio;
+pub mod stdio;
 
 use crate::io;
 use crate::scheduler::get_io_interface;
@@ -88,7 +88,7 @@ bitflags! {
    }
 }
 
-pub(crate) fn read(descriptor: FileDescriptor, buffer: &mut [u8]) -> io::Result<usize> {
+pub fn read(descriptor: FileDescriptor, buffer: &mut [u8]) -> io::Result<usize> {
 	let object = get_io_interface(descriptor)?;
 
 	if buffer.is_empty() {
@@ -98,7 +98,7 @@ pub(crate) fn read(descriptor: FileDescriptor, buffer: &mut [u8]) -> io::Result<
 	object.read(buffer)
 }
 
-pub(crate) fn write(descriptor: FileDescriptor, buffer: &[u8]) -> io::Result<usize> {
+pub fn write(descriptor: FileDescriptor, buffer: &[u8]) -> io::Result<usize> {
 	let object = get_io_interface(descriptor)?;
 
 	if buffer.is_empty() {
@@ -108,6 +108,6 @@ pub(crate) fn write(descriptor: FileDescriptor, buffer: &[u8]) -> io::Result<usi
 	object.write(buffer)
 }
 
-pub(crate) fn fstat(descriptor: FileDescriptor) -> io::Result<FileStatus> {
+pub fn fstat(descriptor: FileDescriptor) -> io::Result<FileStatus> {
 	get_io_interface(descriptor)?.fstat()
 }

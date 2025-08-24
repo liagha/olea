@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 
 #[derive(Copy, Clone, Debug)]
-pub(crate) struct LinkedList {
+pub struct LinkedList {
 	head: *mut usize,
 }
 
@@ -57,7 +57,7 @@ impl LinkedList {
 }
 
 /// A simple iterator for the linked list
-pub(crate) struct Iter<'a> {
+pub struct Iter<'a> {
 	curr: *mut usize,
 	list: PhantomData<&'a LinkedList>,
 }
@@ -78,7 +78,7 @@ impl<'a> Iterator for Iter<'a> {
 }
 
 /// Represent a mutable node in `LinkedList`
-pub(crate) struct ListNode {
+pub struct ListNode {
 	prev: *mut usize,
 	curr: *mut usize,
 }
@@ -100,7 +100,7 @@ impl ListNode {
 }
 
 /// A mutable iterator over the linked list
-pub(crate) struct IterMut<'a> {
+pub struct IterMut<'a> {
 	list: PhantomData<&'a mut LinkedList>,
 	prev: *mut usize,
 	curr: *mut usize,

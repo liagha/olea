@@ -19,7 +19,7 @@ extern crate num_traits;
 
 use {
 	crate::{
-		arch::processor::shutdown,
+		arch::kernel::processor::shutdown,
 		consts::HEAP_SIZE,
 		memory::buddy::LockedHeap,
 	},
@@ -61,7 +61,7 @@ pub fn init() {
 		ALLOCATOR.init(ARENA.0.as_mut_ptr(), HEAP_SIZE);
 	}
 
-	arch::init();
+	arch::kernel::init();
 	memory::init();
 	scheduler::init();
 	file::init();

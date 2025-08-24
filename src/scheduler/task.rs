@@ -1,24 +1,39 @@
 #![allow(dead_code)]
 
-use crate::arch;
-use crate::arch::memory::PhysAddr;
-use crate::arch::memory::VirtAddr;
-use crate::arch::processor::utilities::most_significant_bit;
-use crate::arch::{BasePageSize, PageSize};
-use crate::consts::*;
-use crate::file::descriptor::stdio::{GenericStderr, GenericStdin, GenericStdout};
-use crate::file::descriptor::{FileDescriptor, IoInterface, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
-use crate::logging::*;
-use alloc::boxed::Box;
-use alloc::collections::{BTreeMap, VecDeque};
-use alloc::rc::Rc;
-use alloc::sync::Arc;
-use core::cell::RefCell;
-use core::fmt;
+use {
+	crate::{
+		consts::*,
+		logging::*,
+		file::{
+			descriptor::{
+				stdio::{GenericStderr, GenericStdin, GenericStdout},
+				FileDescriptor, IoInterface, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO,
+			},
+		},
+		arch::{
+			memory::{
+				PhysAddr, VirtAddr,
+				get_boot_stack,
+				physical::deallocate,
+				paging::{
+					get_kernel_root_page_table,
+					BasePageSize, PageSize,
+				},
+			},
+			kernel::processor::utilities::most_significant_bit,
+		},
+	},
+	alloc::{
+		rc::Rc, sync::Arc, boxed::Box,
+		collections::{BTreeMap, VecDeque},
+	},
+	core::fmt,
+	core::cell::RefCell,
+};
 
 /// The status of the task - used for scheduling
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub(crate) enum TaskStatus {
+pub enum TaskStatus {
 	Invalid,
 	Ready,
 	Running,
@@ -73,7 +88,7 @@ pub const NORMAL_PRIORITY: TaskPriority = TaskPriority::from(16);
 pub const LOW_PRIORITY: TaskPriority = TaskPriority::from(0);
 
 /// Realize a priority queue for tasks
-pub(crate) struct PriorityTaskQueue {
+pub struct PriorityTaskQueue {
 	queues: [VecDeque<Rc<RefCell<Task>>>; NO_PRIORITIES],
 	priority_bitmap: usize,
 }
@@ -129,7 +144,7 @@ impl PriorityTaskQueue {
 }
 
 #[allow(dead_code)]
-pub(crate) trait Stack {
+pub trait Stack {
 	fn top(&self) -> VirtAddr;
 	fn bottom(&self) -> VirtAddr;
 	fn interrupt_top(&self) -> VirtAddr;
@@ -138,7 +153,7 @@ pub(crate) trait Stack {
 
 #[derive(Copy, Clone)]
 #[repr(C, align(64))]
-pub(crate) struct TaskStack {
+pub struct TaskStack {
 	buffer: [u8; STACK_SIZE],
 	ist_buffer: [u8; INTERRUPT_STACK_SIZE],
 }
@@ -178,7 +193,7 @@ impl Stack for TaskStack {
 
 /// A task control block, which identifies either a process or a thread
 #[repr(align(64))]
-pub(crate) struct Task {
+pub struct Task {
 	/// The ID of this context
 	pub id: TaskId,
 	/// Task Priority
@@ -202,8 +217,8 @@ impl Task {
 			priority: LOW_PRIORITY,
 			status: TaskStatus::Idle,
 			last_stack_pointer: VirtAddr::zero(),
-			stack: Box::new(arch::memory::get_boot_stack()),
-			root_page_table: arch::get_kernel_root_page_table(),
+			stack: Box::new(get_boot_stack()),
+			root_page_table: get_kernel_root_page_table(),
 			fd_map: BTreeMap::new(),
 		}
 	}
@@ -226,25 +241,25 @@ impl Task {
 			status,
 			last_stack_pointer: VirtAddr::zero(),
 			stack: Box::new(TaskStack::new()),
-			root_page_table: arch::get_kernel_root_page_table(),
+			root_page_table: get_kernel_root_page_table(),
 			fd_map,
 		}
 	}
 }
 
-pub(crate) trait TaskFrame {
+pub trait TaskFrame {
 	/// Create the initial stack frame for a new task
 	fn create_stack_frame(&mut self, func: extern "C" fn());
 }
 
 impl Drop for Task {
 	fn drop(&mut self) {
-		if self.root_page_table != arch::get_kernel_root_page_table() {
+		if self.root_page_table != get_kernel_root_page_table() {
 			debug!(
 				"deallocate page table 0x{:x} of task {}.",
 				self.root_page_table, self.id
 			);
-			arch::memory::physical::deallocate(self.root_page_table, BasePageSize::SIZE);
+			deallocate(self.root_page_table, BasePageSize::SIZE);
 		}
 	}
 }

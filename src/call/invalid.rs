@@ -15,7 +15,7 @@ extern "C" fn invalid_syscall(sys_no: u64) -> ! {
 /// Extracts call number from rax and calls error handler
 #[allow(unused_assignments)]
 #[naked]
-pub(crate) unsafe extern "C" fn invalid() {
+pub unsafe extern "C" fn invalid() {
 	asm!(
 	"mov rdi, rax",    // Move call number from rax to rdi (1st argument)
 	"call {}",         // Call the invalid_syscall function

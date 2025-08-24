@@ -46,7 +46,7 @@ pub mod numbers {
 /// Aligned to 64-byte boundary for optimal cache performance
 #[repr(align(64))]  // Cache line alignment for performance
 #[repr(C)]          // C layout to ensure predictable memory layout
-pub(crate) struct CallTable {
+pub struct CallTable {
 	/// Array of function pointers, indexed by system call number
 	/// Each entry points to a system call handler function
 	handle: [*const usize; numbers::MAX_CALLS],
@@ -104,4 +104,4 @@ impl Default for CallTable {
 /// Global system call handler table
 /// This is accessed by the assembly code in the call entry point
 /// Static initialization ensures it's available at boot time
-pub(crate) static CALL_TABLE: CallTable = CallTable::default();
+pub static CALL_TABLE: CallTable = CallTable::default();

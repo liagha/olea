@@ -10,13 +10,13 @@ use core::ptr::NonNull;
 const MIN_ALLOC_SIZE: usize = 128;
 
 #[derive(Debug)]
-pub(crate) enum AllocatorError {
+pub enum AllocatorError {
 	OutOfMemory,
 	TooBig,
 }
 
 #[repr(align(64))]
-pub(crate) struct BuddySystem<const ORDER: usize> {
+pub struct BuddySystem<const ORDER: usize> {
 	free_list: [linked_list::LinkedList; ORDER],
 }
 
@@ -158,7 +158,7 @@ impl<const ORDER: usize> fmt::Debug for BuddySystem<ORDER> {
 
 /// A memory allocator that can be registered as default allocator through
 /// the #[global_allocator] attribute.
-pub(crate) struct LockedHeap<const ORDER: usize>(Spinlock<BuddySystem<ORDER>>);
+pub struct LockedHeap<const ORDER: usize>(Spinlock<BuddySystem<ORDER>>);
 
 impl<const ORDER: usize> LockedHeap<ORDER> {
 	/// Constructs an empty buddy system

@@ -240,7 +240,7 @@ impl IoInterface for VfsFile {
 
 /// Entrypoint of the in-memory file system
 #[derive(Debug)]
-pub(crate) struct Fs {
+pub struct Fs {
 	handle: Spinlock<VfsDirectory>,
 }
 

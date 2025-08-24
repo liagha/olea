@@ -13,17 +13,17 @@ use crate::scheduler::task::{Task, TaskPriority};
 use alloc::rc::Rc;
 use alloc::sync::Arc;
 use core::cell::RefCell;
-use crate::arch::x86::kernel::interrupts::hardware::{interrupt_nested_disable, interrupt_nested_enable};
+use crate::arch::kernel::interrupts::hardware::{interrupt_nested_disable, interrupt_nested_enable};
 
 static mut SCHEDULER: Option<scheduler::Scheduler> = None;
 
 /// Initialize module, must be called once, and only once
-pub(crate) fn init() {
+pub fn init() {
 	unsafe {
 		SCHEDULER = Some(scheduler::Scheduler::new());
 	}
 
-	arch::register_task();
+	arch::kernel::register_task();
 }
 
 /// Create a new kernel task
@@ -37,7 +37,7 @@ pub fn reschedule() {
 }
 
 /// Timer interrupt  call scheduler to switch to the next available task
-pub(crate) fn schedule() {
+pub fn schedule() {
 	unsafe { SCHEDULER.as_mut().unwrap().schedule() }
 }
 
@@ -53,43 +53,43 @@ pub fn abort() -> ! {
 	unsafe { SCHEDULER.as_mut().unwrap().abort() }
 }
 
-pub(crate) fn get_current_interrupt_stack() -> VirtAddr {
+pub fn get_current_interrupt_stack() -> VirtAddr {
 	unsafe { SCHEDULER.as_mut().unwrap().get_current_interrupt_stack() }
 }
 
-pub(crate) fn get_root_page_table() -> PhysAddr {
+pub fn get_root_page_table() -> PhysAddr {
 	unsafe { SCHEDULER.as_mut().unwrap().get_root_page_table() }
 }
 
-pub(crate) fn set_root_page_table(addr: PhysAddr) {
+pub fn set_root_page_table(addr: PhysAddr) {
 	unsafe {
 		SCHEDULER.as_mut().unwrap().set_root_page_table(addr);
 	}
 }
 
-pub(crate) fn block_current_task() -> Rc<RefCell<Task>> {
+pub fn block_current_task() -> Rc<RefCell<Task>> {
 	unsafe { SCHEDULER.as_mut().unwrap().block_current_task() }
 }
 
-pub(crate) fn wakeup_task(task: Rc<RefCell<Task>>) {
+pub fn wakeup_task(task: Rc<RefCell<Task>>) {
 	unsafe { SCHEDULER.as_mut().unwrap().wakeup_task(task) }
 }
 
-pub(crate) fn get_io_interface(fd: FileDescriptor) -> crate::io::Result<Arc<dyn IoInterface>> {
+pub fn get_io_interface(fd: FileDescriptor) -> crate::io::Result<Arc<dyn IoInterface>> {
 	let _preemption = DisabledPreemption::new();
 
 	unsafe { SCHEDULER.as_mut().unwrap().get_io_interface(fd) }
 }
 
 /// Insert IoInterface and create a new FileDescriptor
-pub(crate) fn insert_io_interface(obj: Arc<dyn IoInterface>) -> io::Result<FileDescriptor> {
+pub fn insert_io_interface(obj: Arc<dyn IoInterface>) -> io::Result<FileDescriptor> {
 	let _preemption = DisabledPreemption::new();
 
 	unsafe { SCHEDULER.as_mut().unwrap().insert_io_interface(obj) }
 }
 
 /// Remove a IO interface, which is named by the file descriptor
-pub(crate) fn remove_io_interface(fd: FileDescriptor) -> io::Result<Arc<dyn IoInterface>> {
+pub fn remove_io_interface(fd: FileDescriptor) -> io::Result<Arc<dyn IoInterface>> {
 	let _preemption = DisabledPreemption::new();
 
 	unsafe { SCHEDULER.as_mut().unwrap().remove_io_interface(fd) }
@@ -100,7 +100,7 @@ pub fn get_current_taskid() -> task::TaskId {
 	unsafe { SCHEDULER.as_ref().unwrap().get_current_taskid() }
 }
 
-pub(crate) struct DisabledPreemption {
+pub struct DisabledPreemption {
 	irq_enabled: bool,
 }
 

@@ -18,7 +18,7 @@ pub struct BufferSegment {
 /// - count: Number of BufferSegment structures in array
 ///
 /// Returns: Number of bytes written, or negative error code
-pub(crate) unsafe extern "C" fn write_vector(
+pub unsafe extern "C" fn write_vector(
 	descriptor: FileDescriptor,
 	pointer: *const BufferSegment,
 	count: i32,
@@ -62,7 +62,7 @@ pub(crate) unsafe extern "C" fn write_vector(
 /// - length: Number of bytes to write
 ///
 /// Returns: Number of bytes written, or negative error code
-pub(crate) unsafe extern "C" fn write(descriptor: FileDescriptor, buffer: *mut u8, length: usize) -> isize {
+pub unsafe extern "C" fn write(descriptor: FileDescriptor, buffer: *mut u8, length: usize) -> isize {
 	debug!("enter call write.");
 
 	// Convert raw pointer and length to safe Rust slice

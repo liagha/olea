@@ -6,7 +6,7 @@ use crate::file::descriptor::IoInterface;
 use crate::io;
 
 #[derive(Debug)]
-pub(crate) struct GenericStdin;
+pub struct GenericStdin;
 
 impl IoInterface for GenericStdin {}
 
@@ -17,7 +17,7 @@ impl GenericStdin {
 }
 
 #[derive(Debug)]
-pub(crate) struct GenericStdout;
+pub struct GenericStdout;
 
 impl IoInterface for GenericStdout {
 	fn write(&self, buf: &[u8]) -> io::Result<usize> {
@@ -40,7 +40,7 @@ impl GenericStdout {
 }
 
 #[derive(Debug)]
-pub(crate) struct GenericStderr;
+pub struct GenericStderr;
 
 impl IoInterface for GenericStderr {
 	fn write(&self, buf: &[u8]) -> io::Result<usize> {
