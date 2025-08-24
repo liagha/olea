@@ -40,7 +40,7 @@ pub mod io;
 pub mod memory;
 pub mod scheduler;
 pub mod sync;
-pub mod syscall;
+pub mod call;
 
 #[repr(align(256))]
 struct Arena([u8; HEAP_SIZE]);

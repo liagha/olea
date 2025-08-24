@@ -92,7 +92,7 @@ pub(crate) fn enable_features() {
     };
 
     if !has_syscall {
-        panic!("syscall support is missing.");
+        panic!("call support is missing.");
     }
 
     unsafe {
