@@ -7,7 +7,7 @@ use {
 		file::{
 			NodeKind,
 			handle::{RamHandle, RomHandle},
-			descriptor::{OpenOptions, FileStatus, IoInterface},
+			descriptor::{OpenOptions, FileStatus, Interface},
 			error::Error,
 		},
 		sync::spinlock::*,
@@ -22,36 +22,44 @@ use {
 	},
 };
 
-bitflags! {
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-    pub struct Permissions: u16 {
-        const OWNER_READ = 0o400;
-        const OWNER_WRITE = 0o200;
-        const OWNER_EXECUTE = 0o100;
-        const GROUP_READ = 0o040;
-        const GROUP_WRITE = 0o020;
-        const GROUP_EXECUTE = 0o010;
-        const OTHERS_READ = 0o004;
-        const OTHERS_WRITE = 0o002;
-        const OTHERS_EXECUTE = 0o001;
-    }
+#[derive(Debug, Clone, Copy)]
+pub struct Permissions {
+	owner_read: bool,
+	owner_write: bool,
+	owner_execute: bool,
+	group_read: bool,
+	group_write: bool,
+	group_execute: bool,
+	others_read: bool,
+	others_write: bool,
+	others_execute: bool,
 }
 
 impl Permissions {
 	pub fn new(mode: u16) -> Self {
-		Permissions::from_bits_truncate(mode)
+		Permissions {
+			owner_read: mode & 0o400 != 0,
+			owner_write: mode & 0o200 != 0,
+			owner_execute: mode & 0o100 != 0,
+			group_read: mode & 0o040 != 0,
+			group_write: mode & 0o020 != 0,
+			group_execute: mode & 0o010 != 0,
+			others_read: mode & 0o004 != 0,
+			others_write: mode & 0o002 != 0,
+			others_execute: mode & 0o001 != 0,
+		}
 	}
 
 	pub fn can_read(&self, _uid: u32, _gid: u32) -> bool {
-		self.contains(Self::OWNER_READ | Self::GROUP_READ | Self::OTHERS_READ)
+		self.owner_read || self.group_read || self.others_read
 	}
 
 	pub fn can_write(&self, _uid: u32, _gid: u32) -> bool {
-		self.contains(Self::OWNER_WRITE | Self::GROUP_WRITE | Self::OTHERS_WRITE)
+		self.owner_write || self.group_write || self.others_write
 	}
 
 	pub fn can_execute(&self, _uid: u32, _gid: u32) -> bool {
-		self.contains(Self::OWNER_EXECUTE | Self::GROUP_EXECUTE | Self::OTHERS_EXECUTE)
+		self.owner_execute || self.group_execute || self.others_execute
 	}
 }
 
@@ -84,13 +92,13 @@ pub trait Node: Debug + Send + Sync {
 }
 
 pub trait NodeFile: Node + Debug + Send + Sync {
-	fn get_handle(&self, _opt: OpenOptions) -> Result<Arc<dyn IoInterface>, Error>;
+	fn get_handle(&self, _opt: OpenOptions) -> Result<Arc<dyn Interface>, Error>;
 }
 
 pub trait NodeDirectory: Node + Debug + Send + Sync {
 	fn traverse_mkdir(&mut self, _components: &mut Vec<&str>, _metadata: Metadata) -> Result<(), Error>;
 	fn traverse_lsdir(&self, _tabs: String) -> Result<(), Error>;
-	fn traverse_open(&mut self, _components: &mut Vec<&str>, _flags: OpenOptions, _visited: &mut Vec<String>) -> Result<Arc<dyn IoInterface>, Error>;
+	fn traverse_open(&mut self, _components: &mut Vec<&str>, _flags: OpenOptions, _visited: &mut Vec<String>) -> Result<Arc<dyn Interface>, Error>;
 	fn traverse_mount(&mut self, _components: &mut Vec<&str>, slice: &'static [u8]) -> Result<(), Error>;
 	fn traverse_unlink(&mut self, _components: &mut Vec<&str>) -> Result<(), Error>;
 	fn traverse_rename(&mut self, _old_components: &mut Vec<&str>, _new_components: &mut Vec<&str>) -> Result<(), Error>;
@@ -100,14 +108,14 @@ pub trait NodeDirectory: Node + Debug + Send + Sync {
 pub trait VirtualSystem: Debug + Send + Sync {
 	fn mkdir(&mut self, path: &String) -> Result<(), Error>;
 	fn lsdir(&self) -> Result<(), Error>;
-	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn IoInterface>, Error>;
+	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn Interface>, Error>;
 	fn mount(&mut self, path: &String, slice: &'static [u8]) -> Result<(), Error>;
 	fn symlink(&mut self, target: &String, link: &String) -> Result<(), Error>;
 	fn unlink(&mut self, path: &String) -> Result<(), Error>;
 	fn rename(&mut self, old_path: &String, new_path: &String) -> Result<(), Error>;
 }
 
-pub static mut ROOT: Option<Fs> = None;
+pub static mut ROOT: Option<FileSystem> = None;
 
 #[derive(Debug)]
 struct Directory {
@@ -188,7 +196,7 @@ impl NodeDirectory for Directory {
 		Ok(())
 	}
 
-	fn traverse_open(&mut self, components: &mut Vec<&str>, flags: OpenOptions, visited: &mut Vec<String>) -> Result<Arc<dyn IoInterface>, Error> {
+	fn traverse_open(&mut self, components: &mut Vec<&str>, flags: OpenOptions, visited: &mut Vec<String>) -> Result<Arc<dyn Interface>, Error> {
 		if let Some(component) = components.pop() {
 			let node_name = String::from(component);
 			if visited.contains(&node_name) {
@@ -201,6 +209,7 @@ impl NodeDirectory for Directory {
 					}
 					return file.get_handle(flags);
 				}
+				// Check for symlink and extract target before mutable borrow
 				let symlink_target = self.get::<SymbolLink>(&node_name).map(|symlink| {
 					if !symlink.get_metadata().permissions.can_read(0, 0) {
 						None
@@ -212,6 +221,7 @@ impl NodeDirectory for Directory {
 					visited.push(node_name);
 					let mut target_components: Vec<&str> = target.split('/').filter(|&s| !s.is_empty()).collect();
 					target_components.reverse();
+					// Immutable borrow is dropped here, so mutable borrow is safe
 					return self.traverse_open(&mut target_components, flags, visited);
 				}
 				if flags.contains(OpenOptions::CREATE) {
@@ -225,11 +235,24 @@ impl NodeDirectory for Directory {
 				}
 				Err(Error::FileNotFound)
 			} else {
-				if let Some(directory) = self.get_mut::<Directory>(&node_name) {
-					directory.traverse_open(components, flags, visited)
-				} else {
-					Err(Error::NotADirectory)
+				// Check for symlink and extract target before mutable borrow
+				let symlink_target = self.get::<SymbolLink>(&node_name).map(|symlink| {
+					if !symlink.get_metadata().permissions.can_read(0, 0) {
+						None
+					} else {
+						Some(symlink.target.clone())
+					}
+				});
+				if let Some(Some(target)) = symlink_target {
+					visited.push(node_name);
+					let mut target_components: Vec<&str> = target.split('/').filter(|&s| !s.is_empty()).collect();
+					target_components.reverse();
+					// Immutable borrow is dropped here, so mutable borrow is safe
+					return self.traverse_open(&mut target_components, flags, visited);
 				}
+				self.get_mut::<Directory>(&node_name)
+					.ok_or(Error::NotADirectory)?
+					.traverse_open(components, flags, visited)
 			}
 		} else {
 			Err(Error::InvalidArgument)
@@ -243,9 +266,6 @@ impl NodeDirectory for Directory {
 		if let Some(component) = components.pop() {
 			let node_name = String::from(component);
 			if components.is_empty() {
-				if self.children.contains_key(&node_name) {
-					return Err(Error::AlreadyExists);
-				}
 				let file = Box::new(File::new_from_rom(slice));
 				self.children.insert(node_name, file);
 				Ok(())
@@ -267,6 +287,11 @@ impl NodeDirectory for Directory {
 			let node_name = String::from(component);
 			if components.is_empty() {
 				if self.children.contains_key(&node_name) {
+					if let Some(directory) = self.get::<Directory>(&node_name) {
+						if !directory.children.is_empty() {
+							return Err(Error::IsADirectory);
+						}
+					}
 					self.children.remove(&node_name);
 					Ok(())
 				} else {
@@ -377,7 +402,7 @@ impl Node for File {
 }
 
 impl NodeFile for File {
-	fn get_handle(&self, opt: OpenOptions) -> Result<Arc<dyn IoInterface>, Error> {
+	fn get_handle(&self, opt: OpenOptions) -> Result<Arc<dyn Interface>, Error> {
 		match self.data {
 			DataHandle::RAM(ref data) => Ok(Arc::new(File {
 				data: DataHandle::RAM(data.get_handle(opt)),
@@ -400,7 +425,7 @@ impl format::Write for File {
 	}
 }
 
-impl IoInterface for File {
+impl Interface for File {
 	fn read(&self, buf: &mut [u8]) -> Result<usize, Error> {
 		match self.data {
 			DataHandle::RAM(ref data) => data.read(buf),
@@ -457,19 +482,19 @@ impl Node for SymbolLink {
 }
 
 #[derive(Debug)]
-pub struct Fs {
+pub struct FileSystem {
 	handle: Spinlock<Directory>,
 }
 
-impl Fs {
-	pub fn new() -> Fs {
-		Fs {
+impl FileSystem {
+	pub fn new() -> FileSystem {
+		FileSystem {
 			handle: Spinlock::new(Directory::new()),
 		}
 	}
 }
 
-impl VirtualSystem for Fs {
+impl VirtualSystem for FileSystem {
 	fn mkdir(&mut self, path: &String) -> Result<(), Error> {
 		if check_path(path) {
 			let mut components: Vec<&str> = path.split("/").filter(|&s| !s.is_empty()).collect();
@@ -485,7 +510,7 @@ impl VirtualSystem for Fs {
 		self.handle.lock().traverse_lsdir(String::from(""))
 	}
 
-	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn IoInterface>, Error> {
+	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn Interface>, Error> {
 		if check_path(path) {
 			let mut components: Vec<&str> = path.split("/").filter(|&s| !s.is_empty()).collect();
 			components.reverse();

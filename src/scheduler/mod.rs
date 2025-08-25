@@ -3,10 +3,10 @@ pub mod task;
 
 use {
 	crate::{
-		io::Error,
-		scheduler::task::{Task, TaskPriority},
-		file::descriptor::{Descriptor, IoInterface},
-		arch::{
+        io::Error,
+        scheduler::task::{Task, TaskPriority},
+        file::descriptor::{Descriptor, Interface},
+        arch::{
 			memory::{PhysAddr, VirtAddr},
 			kernel::{
 				register_task,
@@ -88,19 +88,19 @@ pub fn wakeup_task(task: Rc<RefCell<Task>>) {
 	unsafe { SCHEDULER.as_mut().unwrap().wakeup_task(task) }
 }
 
-pub fn get_io_interface(fd: Descriptor) -> Result<Arc<dyn IoInterface>, Error> {
+pub fn get_io_interface(fd: Descriptor) -> Result<Arc<dyn Interface>, Error> {
 	let _preemption = DisabledPreemption::new();
 
 	unsafe { SCHEDULER.as_mut().unwrap().get_io_interface(fd) }
 }
 
-pub fn insert_io_interface(obj: Arc<dyn IoInterface>) -> Result<Descriptor, Error> {
+pub fn insert_io_interface(obj: Arc<dyn Interface>) -> Result<Descriptor, Error> {
 	let _preemption = DisabledPreemption::new();
 
 	unsafe { SCHEDULER.as_mut().unwrap().insert_io_interface(obj) }
 }
 
-pub fn remove_io_interface(fd: Descriptor) -> Result<Arc<dyn IoInterface>, Error> {
+pub fn remove_io_interface(fd: Descriptor) -> Result<Arc<dyn Interface>, Error> {
 	let _preemption = DisabledPreemption::new();
 
 	unsafe { SCHEDULER.as_mut().unwrap().remove_io_interface(fd) }

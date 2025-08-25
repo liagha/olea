@@ -5,13 +5,13 @@ use crate::arch::vga;
 
 use crate::file::{
 	error::Error,
-	descriptor::IoInterface,
+	descriptor::Interface,
 };
 
 #[derive(Debug)]
 pub struct GenericStdin;
 
-impl IoInterface for GenericStdin {}
+impl Interface for GenericStdin {}
 
 impl GenericStdin {
 	pub const fn new() -> Self {
@@ -22,7 +22,7 @@ impl GenericStdin {
 #[derive(Debug)]
 pub struct GenericStdout;
 
-impl IoInterface for GenericStdout {
+impl Interface for GenericStdout {
 	fn write(&self, buf: &[u8]) -> Result<usize, Error> {
 		cfg_if::cfg_if! {
             if #[cfg(feature = "vga")] {
@@ -44,7 +44,7 @@ impl GenericStdout {
 #[derive(Debug)]
 pub struct GenericStderr;
 
-impl IoInterface for GenericStderr {
+impl Interface for GenericStderr {
 	fn write(&self, buf: &[u8]) -> Result<usize, Error> {
 		cfg_if::cfg_if! {
             if #[cfg(feature = "vga")] {

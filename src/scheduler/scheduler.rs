@@ -1,7 +1,7 @@
 use crate::arch::memory::{PhysAddr, VirtAddr};
 use crate::scheduler::save_interrupt;
 use crate::consts::*;
-use crate::file::descriptor::{Descriptor, IoInterface};
+use crate::file::descriptor::{Descriptor, Interface};
 use crate::io::Error;
 use crate::scheduler::task::*;
 use alloc::collections::{BTreeMap, VecDeque};
@@ -142,8 +142,8 @@ impl Scheduler {
 	}
 
 	pub fn insert_io_interface(
-		&mut self,
-		io_interface: Arc<dyn IoInterface>,
+        &mut self,
+        io_interface: Arc<dyn Interface>,
 	) -> Result<Descriptor, Error> {
 		let new_fd = || -> Result<Descriptor, Error> {
 			let mut fd: Descriptor = 0;
@@ -167,7 +167,7 @@ impl Scheduler {
 		Ok(fd)
 	}
 
-	pub fn remove_io_interface(&self, fd: Descriptor) -> Result<Arc<dyn IoInterface>, Error> {
+	pub fn remove_io_interface(&self, fd: Descriptor) -> Result<Arc<dyn Interface>, Error> {
 		self.current_task
 			.borrow_mut()
 			.fd_map
@@ -178,7 +178,7 @@ impl Scheduler {
 	pub fn get_io_interface(
 		&self,
 		fd: Descriptor,
-	) -> Result<Arc<dyn IoInterface>, Error> {
+	) -> Result<Arc<dyn Interface>, Error> {
 		let closure = || {
 			if let Some(io_interface) = self.current_task.borrow().fd_map.get(&fd) {
 				Ok(io_interface.clone())

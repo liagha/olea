@@ -21,7 +21,7 @@ pub struct FileStatus {
 	pub file_size: usize,
 }
 
-pub trait IoInterface: Sync + Send + Debug {
+pub trait Interface: Sync + Send + Debug {
 	fn read(&self, _buf: &mut [u8]) -> Result<usize, Error> {
 		Err(Error::NotImplemented)
 	}

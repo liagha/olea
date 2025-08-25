@@ -16,7 +16,7 @@ use {
 		},
 		consts::*,
 		file::descriptor::{
-			Descriptor, IoInterface, STDERR, STDIN, STDOUT,
+            Descriptor, Interface, STDERR, STDIN, STDOUT,
 		},
 		format,
 	},
@@ -186,7 +186,7 @@ pub struct Task {
 	pub last_stack_pointer: VirtAddr,
 	pub stack: Box<dyn Stack>,
 	pub root_page_table: PhysAddr,
-	pub fd_map: BTreeMap<Descriptor, Arc<dyn IoInterface>>,
+	pub fd_map: BTreeMap<Descriptor, Arc<dyn Interface>>,
 }
 
 impl Task {
@@ -203,7 +203,7 @@ impl Task {
 	}
 
 	pub fn new(id: TaskId, status: TaskStatus, priority: TaskPriority) -> Task {
-		let mut fd_map: BTreeMap<Descriptor, Arc<dyn IoInterface>> = BTreeMap::new();
+		let mut fd_map: BTreeMap<Descriptor, Arc<dyn Interface>> = BTreeMap::new();
 		fd_map
 			.try_insert(STDIN, Arc::new(GenericStdin::new()))
 			.unwrap();

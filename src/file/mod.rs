@@ -124,7 +124,7 @@ impl Drop for File {
 }
 
 pub fn initialize() {
-	let mut root = vfs::Fs::new();
+	let mut root = vfs::FileSystem::new();
 	root.mkdir(&String::from("/bin")).unwrap();
 	root.mkdir(&String::from("/dev")).unwrap();
 	if DEMO.len() > 0 {
