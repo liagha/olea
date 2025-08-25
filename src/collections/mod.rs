@@ -1,4 +1,10 @@
-use crate::arch::kernel::interrupts::hardware::{interrupt_nested_disable, interrupt_nested_enable};
+use {
+	crate::{
+		arch::{
+			kernel::interrupts::{interrupt_nested_disable, interrupt_nested_enable},
+		},
+	},
+};
 
 #[inline]
 pub fn save_interrupt<F, R>(f: F) -> R

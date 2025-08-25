@@ -1,6 +1,6 @@
 pub mod exceptions;
-pub mod hardware;
 pub mod handlers;
+mod hardware;
 
 pub use {
     hardware::*,

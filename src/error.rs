@@ -119,6 +119,9 @@ pub mod numbers {
 	/// Too many symbolic links encountered
 	pub const TOO_MANY_SYMLINKS: i32 = 40;
 
+	/// Operation not supported
+	pub const OPERATION_NOT_PERMITTED_ON_OBJECT: i32 = 41;
+
 	/// Operation would block
 	pub const WOULD_BLOCK: i32 = TRY_AGAIN;
 
@@ -169,6 +172,9 @@ pub mod numbers {
 
 	/// Invalid slot
 	pub const INVALID_SLOT: i32 = 57;
+
+	/// Invalid message
+	pub const INVALID_MESSAGE: i32 = 58;
 
 	pub const DEADLOCK_ALIAS: i32 = DEADLOCK;
 
@@ -396,4 +402,58 @@ pub mod numbers {
 
 	/// Robust mutexes: Memory page has hardware error
 	pub const HARDWARE_POISON: i32 = 133;
+
+	/// Operation not possible due to inline data
+	pub const INLINE_DATA_ERROR: i32 = 134;
+
+	/// Filesystem quota exceeded for user
+	pub const USER_QUOTA_EXCEEDED: i32 = 135;
+
+	/// Filesystem quota exceeded for group
+	pub const GROUP_QUOTA_EXCEEDED: i32 = 136;
+
+	/// Filesystem quota exceeded for project
+	pub const PROJECT_QUOTA_EXCEEDED: i32 = 137;
+
+	/// Operation not supported on socket
+	pub const SOCKET_OPERATION_NOT_SUPPORTED: i32 = 138;
+
+	/// Inappropriate ioctl for device
+	pub const INAPPROPRIATE_IOCTL: i32 = 139;
+
+	/// No such attribute
+	pub const NO_SUCH_ATTRIBUTE: i32 = 140;
+
+	/// Attribute not found
+	pub const ATTRIBUTE_NOT_FOUND: i32 = 141;
+
+	/// Directory entry too large
+	pub const DIRECTORY_ENTRY_TOO_LARGE: i32 = 142;
+
+	/// Encryption not supported
+	pub const ENCRYPTION_NOT_SUPPORTED: i32 = 143;
+
+	/// Snapshot not supported
+	pub const SNAPSHOT_NOT_SUPPORTED: i32 = 144;
+
+	/// Filesystem does not support compression
+	pub const COMPRESSION_NOT_SUPPORTED: i32 = 145;
+
+	/// No data verification key
+	pub const NO_DATA_VERIFICATION_KEY: i32 = 146;
+
+	/// Filesystem does not support verity
+	pub const VERITY_NOT_SUPPORTED: i32 = 147;
+
+	/// Corrupted verity data
+	pub const VERITY_DATA_CORRUPTED: i32 = 148;
+
+	/// User not authorized for verity operation
+	pub const VERITY_NOT_AUTHORIZED: i32 = 149;
+
+	/// Missing verity file descriptor
+	pub const NO_VERITY_FILE_DESCRIPTOR: i32 = 150;
+
+	/// Operation not supported on filesystem
+	pub const FILESYSTEM_OPERATION_NOT_SUPPORTED: i32 = 151;
 }

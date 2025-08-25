@@ -15,24 +15,20 @@ pub use kernel::devices::serial;
 use {
     crate::{
         consts::*,
-        file,
-        io::{self, Read},
     },
     super::{
+        io::Error,
         arch::{
-            x86::cr3_write,
             kernel::calls::transition::to_user_mode,
             memory::{
                 physical::allocate,
                 paging::{
-                    create_usr_pgd, map,
-                    BasePageSize, PageSize, PageTableEntryFlags
+                    map, BasePageSize, PageSize, PageTableEntryFlags
                 },
             },
         },
     },
     alloc::{
-        string::String,
         vec::Vec,
     },
     core::{
@@ -52,56 +48,30 @@ use {
     },
 };
 
-pub fn load_application(path: &String) -> Result<(), io::Error> {
-    debug!("attempting to load application from path.");
-
-    unsafe {
-        cr3_write(create_usr_pgd().as_u64());
-    }
-
-    let mut file = file::File::open(path)?;
-    let length = file.len()?;
-
-    if length == 0 {
-        error!("file is empty.");
-        return Err(io::Error::InvalidArgument);
-    }
-
-    if length > usize::MAX {
-        error!("file size exceeds maximum supported size.");
-        return Err(io::Error::ValueOverflow);
-    }
-
-    debug!("file size is {} bytes.", length);
-    let mut buffer: Vec<u8> = Vec::new();
-
-    buffer.resize(length, 0);
-    file.read(&mut buffer)?;
-
+pub fn process_elf(buffer: Vec<u8>) -> Result<(), Error> {
     let elf = match Elf::parse(&buffer) {
         Ok(parsed) => parsed,
         Err(_) => {
             error!("failed to parse elf file format.");
-            return Err(io::Error::InvalidArgument);
+            return Err(Error::InvalidArgument);
         }
     };
 
-    drop(file);
     debug!("successfully parsed elf file.");
 
     if elf.is_lib {
         error!("file is a shared library, not an executable.");
-        return Err(io::Error::InvalidArgument);
+        return Err(Error::InvalidArgument);
     }
 
     if !elf.is_64 {
         error!("file is not a 64-bit executable.");
-        return Err(io::Error::InvalidArgument);
+        return Err(Error::InvalidArgument);
     }
 
     if !elf.libraries.is_empty() {
         error!("file has library dependencies which are not supported.");
-        return Err(io::Error::InvalidArgument);
+        return Err(Error::InvalidArgument);
     }
 
     let virtual_start: usize = 0;
@@ -114,13 +84,13 @@ pub fn load_application(path: &String) -> Result<(), io::Error> {
 
             if header.p_vaddr > usize::MAX as u64 || header.p_memsz > usize::MAX as u64 {
                 error!("program header addresses exceed supported range.");
-                return Err(io::Error::ValueOverflow);
+                return Err(Error::ValueOverflow);
             }
 
             let segment_end = header.p_vaddr as usize + header.p_memsz as usize;
             if segment_end < header.p_vaddr as usize {
                 error!("program header size causes integer overflow.");
-                return Err(io::Error::ValueOverflow);
+                return Err(Error::ValueOverflow);
             }
 
             size = align_up!(
@@ -135,13 +105,13 @@ pub fn load_application(path: &String) -> Result<(), io::Error> {
 
     if !has_loadable || size == 0 {
         error!("no loadable program segments found in elf file.");
-        return Err(io::Error::InvalidArgument);
+        return Err(Error::InvalidArgument);
     }
 
     let physical_address = allocate(size);
     if physical_address.as_u64() == 0 {
         error!("failed to allocate physical memory for executable.");
-        return Err(io::Error::NoBufferSpace);
+        return Err(Error::NoBufferSpace);
     }
 
     map::<BasePageSize>(
@@ -166,13 +136,13 @@ pub fn load_application(path: &String) -> Result<(), io::Error> {
                 header.p_filesz > buffer.len() as u64 ||
                 header.p_offset + header.p_filesz > buffer.len() as u64 {
                 error!("program header references data beyond file boundaries.");
-                return Err(io::Error::InvalidArgument);
+                return Err(Error::InvalidArgument);
             }
 
             let memory_offset = header.p_vaddr as usize - virtual_start;
             if memory_offset >= size {
                 error!("program header virtual address is outside allocated memory.");
-                return Err(io::Error::InvalidArgument);
+                return Err(Error::InvalidArgument);
             }
 
             let memory = (USER_ENTRY.as_usize() + memory_offset) as *mut u8;
@@ -195,13 +165,13 @@ pub fn load_application(path: &String) -> Result<(), io::Error> {
 
             if header.p_vaddr > usize::MAX as u64 {
                 error!("dynamic segment address exceeds supported range.");
-                return Err(io::Error::ValueOverflow);
+                return Err(Error::ValueOverflow);
             }
 
             let memory_offset = header.p_vaddr as usize - virtual_start;
             if memory_offset >= size {
                 error!("dynamic segment is outside allocated memory.");
-                return Err(io::Error::InvalidArgument);
+                return Err(Error::InvalidArgument);
             }
 
             let memory = (USER_ENTRY.as_u64() + memory_offset as u64) as *mut u8;
@@ -229,13 +199,13 @@ pub fn load_application(path: &String) -> Result<(), io::Error> {
         for reloc in relocations {
             if reloc.r_offset > usize::MAX as u64 {
                 error!("relocation offset exceeds supported range.");
-                return Err(io::Error::ValueOverflow);
+                return Err(Error::ValueOverflow);
             }
 
             let offset_addr = USER_ENTRY.as_usize() - virtual_start + reloc.r_offset as usize;
             if offset_addr + 8 > USER_ENTRY.as_usize() + size {
                 error!("relocation target is outside allocated memory.");
-                return Err(io::Error::InvalidArgument);
+                return Err(Error::InvalidArgument);
             }
 
             let offset = offset_addr as *mut u64;
@@ -252,7 +222,7 @@ pub fn load_application(path: &String) -> Result<(), io::Error> {
                 }
                 _ => {
                     error!("unsupported relocation type {}.", reloc_type);
-                    return Err(io::Error::InvalidArgument);
+                    return Err(Error::InvalidArgument);
                 }
             }
         }
@@ -260,18 +230,19 @@ pub fn load_application(path: &String) -> Result<(), io::Error> {
 
     if elf.entry > usize::MAX as u64 {
         error!("entry point address exceeds supported range.");
-        return Err(io::Error::ValueOverflow);
+        return Err(Error::ValueOverflow);
     }
 
     let entry = elf.entry as usize - virtual_start + USER_ENTRY.as_usize();
     if entry < USER_ENTRY.as_usize() || entry >= USER_ENTRY.as_usize() + size {
         error!("entry point is outside loaded executable memory.");
-        return Err(io::Error::InvalidArgument);
+        return Err(Error::InvalidArgument);
     }
 
     drop(buffer);
 
     debug!("transferring control to user application at 0x{:x}.", entry);
+    
     unsafe {
         to_user_mode(entry);
     }

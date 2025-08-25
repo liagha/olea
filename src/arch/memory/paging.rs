@@ -19,7 +19,7 @@ use {
 use crate::arch::kernel::{
     interrupts::{
         exceptions::ExceptionStackFrame,
-        hardware::{end_of_interrupt, interrupt_nested_disable, interrupt_nested_enable, MASTER},
+        end_of_interrupt, interrupt_nested_disable, interrupt_nested_enable, MASTER,
     },
     BOOT_INFO,
 };

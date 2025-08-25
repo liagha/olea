@@ -1,12 +1,16 @@
-use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use lock_api::{GuardSend, RawMutex, RawMutexFair};
-use crate::arch::kernel::processor::utilities::pause;
-use crate::arch::kernel::interrupts::hardware::{interrupt_nested_disable, interrupt_nested_enable};
+use {
+	crate::{
+		arch::{
+			kernel::{
+				processor::utilities::pause,
+				interrupts::{interrupt_nested_disable, interrupt_nested_enable},
+			},
+		},
+	},
+	lock_api::{GuardSend, RawMutex, RawMutexFair},
+	core::sync::atomic::{AtomicBool, AtomicUsize, Ordering},
+};
 
-/// A [fair] [ticket lock].
-///
-/// [fair]: https://en.wikipedia.org/wiki/Unbounded_nondeterminism
-/// [ticket lock]: https://en.wikipedia.org/wiki/Ticket_lock
 pub struct RawSpinlock {
 	queue: AtomicUsize,
 	dequeue: AtomicUsize,
@@ -74,16 +78,10 @@ unsafe impl RawMutexFair for RawSpinlock {
 	}
 }
 
-/// A [`lock_api::Mutex`] based on [`RawSpinlockMutex`].
 pub type Spinlock<T> = lock_api::Mutex<RawSpinlock, T>;
 
-/// A [`lock_api::MutexGuard`] based on [`RawSpinlockMutex`].
 pub type SpinlockGuard<'a, T> = lock_api::MutexGuard<'a, RawSpinlock, T>;
 
-/// A [fair] irqsave [ticket lock].
-///
-/// [fair]: https://en.wikipedia.org/wiki/Unbounded_nondeterminism
-/// [ticket lock]: https://en.wikipedia.org/wiki/Ticket_lock
 pub struct RawSpinlockIrqSave {
 	queue: AtomicUsize,
 	dequeue: AtomicUsize,
@@ -166,8 +164,6 @@ unsafe impl RawMutexFair for RawSpinlockIrqSave {
 	}
 }
 
-/// A [`lock_api::Mutex`] based on [`RawSpinlockMutex`].
 pub type SpinlockIrqSave<T> = lock_api::Mutex<RawSpinlockIrqSave, T>;
 
-/// A [`lock_api::MutexGuard`] based on [`RawSpinlockMutex`].
 pub type SpinlockIrqSaveGuard<'a, T> = lock_api::MutexGuard<'a, RawSpinlockIrqSave, T>;

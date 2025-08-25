@@ -17,19 +17,9 @@ pub enum Error {
 	NotImplemented = numbers::NOT_IMPLEMENTED as isize,
 	IoError = numbers::IO_ERROR as isize,
 	BadFileDescriptor = numbers::BAD_FILE_DESCRIPTOR as isize,
-	IsADirectory = numbers::IS_A_DIRECTORY as isize,
 	InvalidArgument = numbers::INVALID_ARGUMENT as isize,
-	TimerExpired = numbers::TIMER_EXPIRED as isize,
-	TryAgain = numbers::TRY_AGAIN as isize,
-	BadAddress = numbers::BAD_ADDRESS as isize,
 	NoBufferSpace = numbers::NO_BUFFER_SPACE as isize,
-	NotConnected = numbers::NOT_CONNECTED as isize,
-	NotADirectory = numbers::NOT_A_DIRECTORY as isize,
-	TooManyOpenFiles = numbers::TOO_MANY_OPEN_FILES as isize,
-	FileExists = numbers::FILE_EXISTS as isize,
-	AddressInUse = numbers::ADDRESS_IN_USE as isize,
 	ValueOverflow = numbers::VALUE_OVERFLOW as isize,
-	NotASocket = numbers::NOT_A_SOCKET as isize,
 }
 
 pub trait Read {

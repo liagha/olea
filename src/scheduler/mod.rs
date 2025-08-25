@@ -1,18 +1,25 @@
-//! Interface to the scheduler
-
 mod scheduler;
-/// task control block
 pub mod task;
 
-use crate::arch;
-use crate::arch::memory::{PhysAddr, VirtAddr};
-use crate::file::descriptor::{FileDescriptor, IoInterface};
-use crate::io::Error;
-use crate::scheduler::task::{Task, TaskPriority};
-use alloc::rc::Rc;
-use alloc::sync::Arc;
-use core::cell::RefCell;
-use crate::arch::kernel::interrupts::hardware::{interrupt_nested_disable, interrupt_nested_enable};
+use {
+	crate::{
+		io::Error,
+		scheduler::task::{Task, TaskPriority},
+		file::descriptor::{FileDescriptor, IoInterface},
+		arch::{
+			memory::{PhysAddr, VirtAddr},
+			kernel::{
+				register_task,
+				interrupts::{interrupt_nested_disable, interrupt_nested_enable},
+			},
+		},
+	},
+	core::cell::RefCell,
+	alloc::{
+		rc::Rc,
+		sync::Arc,
+	},
+};
 
 static mut SCHEDULER: Option<scheduler::Scheduler> = None;
 
@@ -22,7 +29,7 @@ pub fn init() {
 		SCHEDULER = Some(scheduler::Scheduler::new());
 	}
 
-	arch::kernel::register_task();
+	register_task();
 }
 
 /// Create a new kernel task
