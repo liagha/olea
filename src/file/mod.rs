@@ -5,21 +5,22 @@
 mod initial;
 mod r#virtual;
 pub mod descriptor;
+pub mod standard;
 
 use {
 	crate::{
-		io,
 		error::*,
 		file::r#virtual::Fs,
+		io,
 		scheduler::{insert_io_interface, remove_io_interface},
 	},
-	descriptor::{FileDescriptor, OpenOptions, SeekFrom, IoInterface},
 	alloc::{
+		string::{String, ToString},
 		sync::Arc,
-		vec::Vec,
-		string::{String, ToString}
+		vec::Vec
 	},
 	core::include_bytes,
+	descriptor::{FileDescriptor, IoInterface, OpenOptions, SeekFrom},
 };
 
 static DEMO: &[u8] = include_bytes!("../../demo/hello");

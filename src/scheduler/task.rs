@@ -2,33 +2,31 @@
 
 use {
 	crate::{
-		format,
-		consts::*,
-		file::{
-			descriptor::{
-				stdio::{GenericStderr, GenericStdin, GenericStdout},
-				FileDescriptor, IoInterface, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO,
-			},
-		},
 		arch::{
+			kernel::processor::utilities::most_significant_bit,
 			memory::{
-				PhysAddr, VirtAddr,
-				get_boot_stack,
-				physical::deallocate,
-				paging::{
+				get_boot_stack, paging::{
 					get_kernel_root_page_table,
 					BasePageSize, PageSize,
 				},
+				physical::deallocate,
+				PhysAddr,
+				VirtAddr,
 			},
-			kernel::processor::utilities::most_significant_bit,
 		},
+		consts::*,
+		file::descriptor::{
+			FileDescriptor, IoInterface, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO,
+		},
+		format,
 	},
 	alloc::{
-		rc::Rc, sync::Arc, boxed::Box,
-		collections::{BTreeMap, VecDeque},
+		boxed::Box, collections::{BTreeMap, VecDeque}, rc::Rc,
+		sync::Arc,
 	},
 	core::cell::RefCell,
 };
+use crate::file::standard::{GenericStderr, GenericStdin, GenericStdout};
 
 /// The status of the task - used for scheduling
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]

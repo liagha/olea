@@ -1,11 +1,7 @@
-pub mod stdio;
-
-use {
-	crate::{
-		io,
-		format,
-		scheduler::get_io_interface,
-	},
+use crate::{
+    format,
+    io,
+    scheduler::get_io_interface,
 };
 
 pub type FileDescriptor = i32;
