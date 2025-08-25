@@ -1,11 +1,21 @@
-use crate::file::descriptor::OpenOptions;
-use crate::file::SeekFrom;
-use crate::io;
-use crate::sync::spinlock::*;
-use alloc::sync::Arc;
-use alloc::vec::Vec;
-use core::ops::{Deref, DerefMut};
-use spinning_top::RwSpinlock;
+use {
+	crate::{
+		io::Error,
+		sync::spinlock::*,
+		file::{
+			SeekFrom,
+			descriptor::OpenOptions
+		},
+	},
+	spinning_top::RwSpinlock,
+	core::{
+		ops::{Deref, DerefMut},
+	},
+	alloc::{
+		sync::Arc,
+		vec::Vec,
+	},
+};
 
 #[derive(Debug)]
 pub struct RomHandle {
@@ -28,7 +38,7 @@ impl RomHandle {
 		}
 	}
 
-	pub fn read(&self, buf: &mut [u8]) -> Result<usize, io::Error> {
+	pub fn read(&self, buf: &mut [u8]) -> Result<usize, Error> {
 		let vec = self.data.read();
 		let mut pos_guard = self.pos.lock();
 		let pos = *pos_guard;
@@ -50,7 +60,7 @@ impl RomHandle {
 		Ok(len)
 	}
 
-	pub fn seek(&self, style: SeekFrom) -> Result<usize, io::Error> {
+	pub fn seek(&self, style: SeekFrom) -> Result<usize, Error> {
 		let mut pos_guard = self.pos.lock();
 
 		match style {
@@ -65,7 +75,7 @@ impl RomHandle {
 					*pos_guard = data as usize;
 					Ok(data as usize)
 				} else {
-					Err(io::Error::InvalidArgument)
+					Err(Error::InvalidArgument)
 				}
 			}
 			SeekFrom::Current(n) => {
@@ -74,7 +84,7 @@ impl RomHandle {
 					*pos_guard = pos as usize;
 					Ok(pos as usize)
 				} else {
-					Err(io::Error::InvalidArgument)
+					Err(Error::InvalidArgument)
 				}
 			}
 		}
@@ -97,11 +107,8 @@ impl Clone for RomHandle {
 
 #[derive(Debug)]
 pub struct RamHandle {
-	/// Is the file writeable?
 	writeable: bool,
-	/// Position within the file
 	pos: Spinlock<usize>,
-	/// File content
 	data: Arc<RwSpinlock<Vec<u8>>>,
 }
 
@@ -114,7 +121,7 @@ impl RamHandle {
 		}
 	}
 
-	pub fn read(&self, buf: &mut [u8]) -> Result<usize, io::Error> {
+	pub fn read(&self, buf: &mut [u8]) -> Result<usize, Error> {
 		let guard = self.data.read();
 		let vec = guard.deref();
 		let mut pos_guard = self.pos.lock();
@@ -137,9 +144,9 @@ impl RamHandle {
 		Ok(len)
 	}
 
-	pub fn write(&self, buf: &[u8]) -> Result<usize, io::Error> {
+	pub fn write(&self, buf: &[u8]) -> Result<usize, Error> {
 		if self.writeable == false {
-			return Err(io::Error::BadFileDescriptor);
+			return Err(Error::BadFileDescriptor);
 		}
 
 		let mut guard = self.data.write();
@@ -157,7 +164,7 @@ impl RamHandle {
 		Ok(buf.len())
 	}
 
-	pub fn seek(&self, style: SeekFrom) -> Result<usize, io::Error> {
+	pub fn seek(&self, style: SeekFrom) -> Result<usize, Error> {
 		let mut pos_guard = self.pos.lock();
 
 		match style {
@@ -173,7 +180,7 @@ impl RamHandle {
 					*pos_guard = data as usize;
 					Ok(data as usize)
 				} else {
-					Err(io::Error::InvalidArgument)
+					Err(Error::InvalidArgument)
 				}
 			}
 			SeekFrom::Current(n) => {
@@ -182,7 +189,7 @@ impl RamHandle {
 					*pos_guard = pos as usize;
 					Ok(pos as usize)
 				} else {
-					Err(io::Error::InvalidArgument)
+					Err(Error::InvalidArgument)
 				}
 			}
 		}

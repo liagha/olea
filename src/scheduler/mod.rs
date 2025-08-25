@@ -5,7 +5,7 @@ use {
 	crate::{
 		io::Error,
 		scheduler::task::{Task, TaskPriority},
-		file::descriptor::{FileDescriptor, IoInterface},
+		file::descriptor::{Descriptor, IoInterface},
 		arch::{
 			memory::{PhysAddr, VirtAddr},
 			kernel::{
@@ -23,7 +23,6 @@ use {
 
 static mut SCHEDULER: Option<scheduler::Scheduler> = None;
 
-/// Initialize module, must be called once, and only once
 pub fn init() {
 	unsafe {
 		SCHEDULER = Some(scheduler::Scheduler::new());
@@ -32,29 +31,24 @@ pub fn init() {
 	register_task();
 }
 
-/// Create a new kernel task
 pub fn spawn(func: extern "C" fn(), priority: TaskPriority) -> Result<task::TaskId, Error> {
 	unsafe { SCHEDULER.as_mut().unwrap().spawn(func, priority) }
 }
 
-/// Trigger the scheduler to switch to the next available task
 pub fn reschedule() {
 	unsafe { SCHEDULER.as_mut().unwrap().reschedule() }
 }
 
-/// Timer interrupt  call scheduler to switch to the next available task
 pub fn schedule() {
 	unsafe { SCHEDULER.as_mut().unwrap().schedule() }
 }
 
-/// Terminate the current running task
 pub fn do_exit() -> ! {
 	unsafe {
 		SCHEDULER.as_mut().unwrap().exit();
 	}
 }
 
-/// Terminate the current running task
 pub fn abort() -> ! {
 	unsafe { SCHEDULER.as_mut().unwrap().abort() }
 }
@@ -81,27 +75,24 @@ pub fn wakeup_task(task: Rc<RefCell<Task>>) {
 	unsafe { SCHEDULER.as_mut().unwrap().wakeup_task(task) }
 }
 
-pub fn get_io_interface(fd: FileDescriptor) -> Result<Arc<dyn IoInterface>, Error> {
+pub fn get_io_interface(fd: Descriptor) -> Result<Arc<dyn IoInterface>, Error> {
 	let _preemption = DisabledPreemption::new();
 
 	unsafe { SCHEDULER.as_mut().unwrap().get_io_interface(fd) }
 }
 
-/// Insert IoInterface and create a new FileDescriptor
-pub fn insert_io_interface(obj: Arc<dyn IoInterface>) -> Result<FileDescriptor, Error> {
+pub fn insert_io_interface(obj: Arc<dyn IoInterface>) -> Result<Descriptor, Error> {
 	let _preemption = DisabledPreemption::new();
 
 	unsafe { SCHEDULER.as_mut().unwrap().insert_io_interface(obj) }
 }
 
-/// Remove a IO interface, which is named by the file descriptor
-pub fn remove_io_interface(fd: FileDescriptor) -> Result<Arc<dyn IoInterface>, Error> {
+pub fn remove_io_interface(fd: Descriptor) -> Result<Arc<dyn IoInterface>, Error> {
 	let _preemption = DisabledPreemption::new();
 
 	unsafe { SCHEDULER.as_mut().unwrap().remove_io_interface(fd) }
 }
 
-/// Get the TaskID of the current running task
 pub fn get_current_taskid() -> task::TaskId {
 	unsafe { SCHEDULER.as_ref().unwrap().get_current_taskid() }
 }

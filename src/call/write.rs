@@ -1,4 +1,4 @@
-use crate::file::descriptor::FileDescriptor;
+use crate::file::descriptor::Descriptor;
 
 /// I/O Vector structure for vectored I/O operations
 /// Represents a single buffer in a scatter-gather I/O operation
@@ -18,9 +18,9 @@ pub struct BufferSegment {
 ///
 /// Returns: Number of bytes written, or negative error code
 pub unsafe extern "C" fn write_vector(
-	descriptor: FileDescriptor,
-	pointer: *const BufferSegment,
-	count: i32,
+    descriptor: Descriptor,
+    pointer: *const BufferSegment,
+    count: i32,
 ) -> isize {
 	debug!("enter call writev.");
 	let mut len: isize = 0;
@@ -61,7 +61,7 @@ pub unsafe extern "C" fn write_vector(
 /// - length: Number of bytes to write
 ///
 /// Returns: Number of bytes written, or negative error code
-pub unsafe extern "C" fn write(descriptor: FileDescriptor, buffer: *mut u8, length: usize) -> isize {
+pub unsafe extern "C" fn write(descriptor: Descriptor, buffer: *mut u8, length: usize) -> isize {
 	debug!("enter call write.");
 
 	// Convert raw pointer and length to safe Rust slice

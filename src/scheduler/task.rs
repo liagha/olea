@@ -16,7 +16,7 @@ use {
 		},
 		consts::*,
 		file::descriptor::{
-			FileDescriptor, IoInterface, STDERR, STDIN, STDOUT,
+			Descriptor, IoInterface, STDERR, STDIN, STDOUT,
 		},
 		format,
 	},
@@ -28,7 +28,6 @@ use {
 };
 use crate::file::standard::{GenericStderr, GenericStdin, GenericStdout};
 
-/// The status of the task - used for scheduling
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum TaskStatus {
 	Invalid,
@@ -39,7 +38,6 @@ pub enum TaskStatus {
 	Idle,
 }
 
-/// Unique identifier for a task (i.e. `pid`).
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy)]
 pub struct TaskId(u32);
 
@@ -59,7 +57,6 @@ impl format::Display for TaskId {
 	}
 }
 
-/// Priority of a task
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy)]
 pub struct TaskPriority(u8);
 
@@ -84,14 +81,12 @@ pub const HIGH_PRIORITY: TaskPriority = TaskPriority::from(24);
 pub const NORMAL_PRIORITY: TaskPriority = TaskPriority::from(16);
 pub const LOW_PRIORITY: TaskPriority = TaskPriority::from(0);
 
-/// Realize a priority queue for tasks
 pub struct PriorityTaskQueue {
 	queues: [VecDeque<Rc<RefCell<Task>>>; NO_PRIORITIES],
 	priority_bitmap: usize,
 }
 
 impl PriorityTaskQueue {
-	/// Creates an empty priority queue for tasks
 	pub const fn new() -> PriorityTaskQueue {
 		const VALUE: VecDeque<Rc<RefCell<Task>>> = VecDeque::new();
 
@@ -101,11 +96,8 @@ impl PriorityTaskQueue {
 		}
 	}
 
-	/// Add a task by its priority to the queue
 	pub fn push(&mut self, task: Rc<RefCell<Task>>) {
 		let i: usize = task.borrow().priority.into().into();
-		//assert!(i < NO_PRIORITIES, "Priority {} is too high", i);
-
 		self.priority_bitmap |= 1 << i;
 		self.queues[i].push_back(task.clone());
 	}
@@ -119,7 +111,6 @@ impl PriorityTaskQueue {
 		task
 	}
 
-	/// Pop the task with the highest priority from the queue
 	pub fn pop(&mut self) -> Option<Rc<RefCell<Task>>> {
 		if let Some(i) = most_significant_bit(self.priority_bitmap) {
 			return self.pop_from_queue(i);
@@ -128,7 +119,6 @@ impl PriorityTaskQueue {
 		None
 	}
 
-	/// Pop the next task, which has a higher or the same priority as `prio`
 	pub fn pop_with_priority(&mut self, priority: TaskPriority) -> Option<Rc<RefCell<Task>>> {
 		if let Some(i) = most_significant_bit(self.priority_bitmap) {
 			if i >= priority.into().into() {
@@ -188,23 +178,15 @@ impl Stack for TaskStack {
 	}
 }
 
-/// A task control block, which identifies either a process or a thread
 #[repr(align(64))]
 pub struct Task {
-	/// The ID of this context
 	pub id: TaskId,
-	/// Task Priority
 	pub priority: TaskPriority,
-	/// Status of a task, e.g. if the task is ready or blocked
 	pub status: TaskStatus,
-	/// Last stack pointer before a context switch to another task
 	pub last_stack_pointer: VirtAddr,
-	/// Stack of the task
 	pub stack: Box<dyn Stack>,
-	/// Physical address of the 1st level page table
 	pub root_page_table: PhysAddr,
-	/// Mapping between file descriptor and the referenced IO interface
-	pub fd_map: BTreeMap<FileDescriptor, Arc<dyn IoInterface>>,
+	pub fd_map: BTreeMap<Descriptor, Arc<dyn IoInterface>>,
 }
 
 impl Task {
@@ -221,7 +203,7 @@ impl Task {
 	}
 
 	pub fn new(id: TaskId, status: TaskStatus, priority: TaskPriority) -> Task {
-		let mut fd_map: BTreeMap<FileDescriptor, Arc<dyn IoInterface>> = BTreeMap::new();
+		let mut fd_map: BTreeMap<Descriptor, Arc<dyn IoInterface>> = BTreeMap::new();
 		fd_map
 			.try_insert(STDIN, Arc::new(GenericStdin::new()))
 			.unwrap();
@@ -245,7 +227,6 @@ impl Task {
 }
 
 pub trait TaskFrame {
-	/// Create the initial stack frame for a new task
 	fn create_stack_frame(&mut self, func: extern "C" fn());
 }
 

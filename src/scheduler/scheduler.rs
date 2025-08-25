@@ -1,7 +1,7 @@
 use crate::arch::memory::{PhysAddr, VirtAddr};
 use crate::collections::save_interrupt;
 use crate::consts::*;
-use crate::file::descriptor::{FileDescriptor, IoInterface};
+use crate::file::descriptor::{Descriptor, IoInterface};
 use crate::io::Error;
 use crate::scheduler::task::*;
 use alloc::collections::{BTreeMap, VecDeque};
@@ -15,15 +15,10 @@ use crate::arch::memory::paging::drop_user_space;
 static TID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 pub struct Scheduler {
-	/// task id which is currently running
 	current_task: Rc<RefCell<Task>>,
-	/// task id of the idle task
 	idle_task: Rc<RefCell<Task>>,
-	/// queue of tasks, which are ready
 	ready_queue: PriorityTaskQueue,
-	/// queue of tasks, which are finished and can be released
 	finished_tasks: VecDeque<TaskId>,
-	/// map between task id and task control block
 	tasks: BTreeMap<TaskId, Rc<RefCell<Task>>>,
 }
 
@@ -79,7 +74,6 @@ impl Scheduler {
 	}
 
 	fn cleanup(&mut self) {
-		// destroy user space
 		drop_user_space();
 
 		self.current_task.borrow_mut().status = TaskStatus::Finished;
@@ -116,7 +110,6 @@ impl Scheduler {
 
 		self.reschedule();
 
-		// we should never reach this point
 		panic!("abort failed!");
 	}
 
@@ -151,13 +144,13 @@ impl Scheduler {
 	pub fn insert_io_interface(
 		&mut self,
 		io_interface: Arc<dyn IoInterface>,
-	) -> Result<FileDescriptor, Error> {
-		let new_fd = || -> Result<FileDescriptor, Error> {
-			let mut fd: FileDescriptor = 0;
+	) -> Result<Descriptor, Error> {
+		let new_fd = || -> Result<Descriptor, Error> {
+			let mut fd: Descriptor = 0;
 			loop {
 				if !self.current_task.borrow().fd_map.contains_key(&fd) {
 					break Ok(fd);
-				} else if fd == FileDescriptor::MAX {
+				} else if fd == Descriptor::MAX {
 					break Err(Error::ValueOverflow);
 				}
 
@@ -174,7 +167,7 @@ impl Scheduler {
 		Ok(fd)
 	}
 
-	pub fn remove_io_interface(&self, fd: FileDescriptor) -> Result<Arc<dyn IoInterface>, Error> {
+	pub fn remove_io_interface(&self, fd: Descriptor) -> Result<Arc<dyn IoInterface>, Error> {
 		self.current_task
 			.borrow_mut()
 			.fd_map
@@ -184,7 +177,7 @@ impl Scheduler {
 
 	pub fn get_io_interface(
 		&self,
-		fd: FileDescriptor,
+		fd: Descriptor,
 	) -> Result<Arc<dyn IoInterface>, Error> {
 		let closure = || {
 			if let Some(io_interface) = self.current_task.borrow().fd_map.get(&fd) {
@@ -201,7 +194,6 @@ impl Scheduler {
 		save_interrupt(|| self.current_task.borrow().id)
 	}
 
-	/// Determines the start address of the stack
 	#[no_mangle]
 	pub fn get_current_interrupt_stack(&self) -> VirtAddr {
 		save_interrupt(|| (*self.current_task.borrow().stack).interrupt_top())
@@ -216,14 +208,12 @@ impl Scheduler {
 	}
 
 	pub fn schedule(&mut self) {
-		// do we have finished tasks? => drop tasks => deallocate implicitly the stack
 		if let Some(id) = self.finished_tasks.pop_front() {
 			if self.tasks.remove(&id).is_none() {
 				info!("unable to drop task {}.", id);
 			}
 		}
 
-		// Get information about the current task.
 		let (current_id, current_stack_pointer, current_priority, current_status) = {
 			let mut borrowed = self.current_task.borrow_mut();
 			(
@@ -234,7 +224,6 @@ impl Scheduler {
 			)
 		};
 
-		// do we have a task, which is ready?
 		let mut next_task;
 		if current_status == TaskStatus::Running {
 			next_task = self.ready_queue.pop_with_priority(current_priority);
@@ -247,8 +236,6 @@ impl Scheduler {
 			&& current_status != TaskStatus::Idle
 		{
 			debug!("switch to idle task.");
-			// current task isn't able to run and no other task available
-			// => switch to the idle task
 			next_task = Some(self.idle_task.clone());
 		}
 
@@ -266,9 +253,6 @@ impl Scheduler {
 			} else if current_status == TaskStatus::Finished {
 				debug!("task {} finished.", current_id);
 				self.current_task.borrow_mut().status = TaskStatus::Invalid;
-				// release the task later, because the stack is required
-				// to call the function "switch"
-				// => push id to a queue and release the task later
 				self.finished_tasks.push_back(current_id);
 			}
 

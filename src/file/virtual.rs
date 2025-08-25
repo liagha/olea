@@ -1,5 +1,3 @@
-//! Implements a simple virtual file system
-
 use {
 	crate::{
 		io::{Error},
@@ -14,6 +12,7 @@ use {
 		},
 		sync::spinlock::*,
 	},
+	core::any::Any,
 	alloc::{
 		boxed::Box,
 		collections::BTreeMap,
@@ -21,12 +20,10 @@ use {
 		sync::Arc,
 		vec::Vec,
 	},
-	core::any::Any,
 };
 
 #[derive(Debug)]
 struct VfsDirectory {
-	/// in principle, a map with all entries of the current directory
 	children: BTreeMap<String, Box<dyn Any + Send + Sync>>,
 }
 
@@ -53,7 +50,6 @@ impl VfsDirectory {
 }
 
 impl VfsNode for VfsDirectory {
-	/// Returns the node type
 	fn get_kind(&self) -> NodeKind {
 		NodeKind::Directory
 	}
@@ -105,7 +101,6 @@ impl VfsNodeDirectory for VfsDirectory {
 			let node_name = String::from(component);
 
 			if components.is_empty() == true {
-				// reach endpoint => reach file
 				if let Some(file) = self.get_mut::<VfsFile>(&node_name) {
 					return file.get_handle(flags);
 				}
@@ -113,7 +108,6 @@ impl VfsNodeDirectory for VfsDirectory {
 
 			if components.is_empty() == true {
 				if flags.contains(OpenOptions::CREATE) {
-					// Create file on demand
 					let file = Box::new(VfsFile::new());
 					let result = file.get_handle(flags);
 					self.children.insert(node_name, file);
@@ -123,7 +117,6 @@ impl VfsNodeDirectory for VfsDirectory {
 					Err(Error::InvalidArgument)
 				}
 			} else {
-				// traverse to the directories to the endpoint
 				if let Some(directory) = self.get_mut::<VfsDirectory>(&node_name) {
 					directory.traverse_open(components, flags)
 				} else {
@@ -140,13 +133,11 @@ impl VfsNodeDirectory for VfsDirectory {
 			let node_name = String::from(component);
 
 			if components.is_empty() == true {
-				// Create file on demand
 				let file = Box::new(VfsFile::new_from_rom(slice));
 				self.children.insert(node_name, file);
 
 				Ok(())
 			} else {
-				// traverse to the directories to the endpoint
 				if let Some(directory) = self.get_mut::<VfsDirectory>(&node_name) {
 					directory.traverse_mount(components, slice)
 				} else {
@@ -159,7 +150,6 @@ impl VfsNodeDirectory for VfsDirectory {
 	}
 }
 
-/// Enumeration of possible methods to seek within an I/O object.
 #[derive(Debug, Clone)]
 enum DataHandle {
 	RAM(RamHandle),
@@ -168,7 +158,6 @@ enum DataHandle {
 
 #[derive(Debug, Clone)]
 struct VfsFile {
-	/// File content
 	data: DataHandle,
 }
 
@@ -246,7 +235,6 @@ impl IoInterface for VfsFile {
 	}
 }
 
-/// Entrypoint of the in-memory file system
 #[derive(Debug)]
 pub struct Fs {
 	handle: Spinlock<VfsDirectory>,
@@ -293,7 +281,6 @@ impl Vfs for Fs {
 		}
 	}
 
-	/// Mound memory region as file
 	fn mount(&mut self, path: &String, slice: &'static [u8]) -> Result<(), Error> {
 		if check_path(path) {
 			let mut components: Vec<&str> = path.split("/").collect();

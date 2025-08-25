@@ -6,19 +6,18 @@ pub mod descriptor;
 pub mod standard;
 
 use {
-	crate::{
+    crate::{
 		format::Debug,
 		file::r#virtual::Fs,
 		io::{Write, Read, Error},
 		scheduler::{insert_io_interface, remove_io_interface},
 	},
-	alloc::{
+    alloc::{
 		string::{String, ToString},
 		sync::Arc,
 		vec::Vec
 	},
-	core::include_bytes,
-	descriptor::{FileDescriptor, IoInterface, OpenOptions, SeekFrom},
+    descriptor::{Descriptor, IoInterface, OpenOptions, SeekFrom},
 };
 
 static DEMO: &[u8] = include_bytes!("../../demo/hello");
@@ -71,7 +70,7 @@ pub fn mkdir(path: &String) -> Result<(), Error> {
 	unsafe { VFS_ROOT.as_mut().unwrap().mkdir(path) }
 }
 
-pub fn open(name: &str, flags: OpenOptions) -> Result<FileDescriptor, Error> {
+pub fn open(name: &str, flags: OpenOptions) -> Result<Descriptor, Error> {
 	debug!("open {}, {:?}.", name, flags);
 
 	let fs = unsafe { VFS_ROOT.as_mut().unwrap() };
@@ -99,7 +98,7 @@ fn check_path(path: &str) -> bool {
 
 #[derive(Debug)]
 pub struct File {
-	fd: FileDescriptor,
+	fd: Descriptor,
 	path: String,
 }
 

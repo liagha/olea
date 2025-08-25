@@ -2,8 +2,14 @@
 use crate::arch::serial;
 #[cfg(feature = "vga")]
 use crate::arch::vga;
-use crate::file::descriptor::IoInterface;
-use crate::io;
+
+
+use {
+	crate::{
+		io::Error,
+		file::descriptor::IoInterface,
+	},
+};
 
 #[derive(Debug)]
 pub struct GenericStdin;
@@ -20,7 +26,7 @@ impl GenericStdin {
 pub struct GenericStdout;
 
 impl IoInterface for GenericStdout {
-	fn write(&self, buf: &[u8]) -> Result<usize, io::Error> {
+	fn write(&self, buf: &[u8]) -> Result<usize, Error> {
 		cfg_if::cfg_if! {
 			if #[cfg(feature = "vga")] {
 				vga::VGA_SCREEN.lock().write_bytes(buf);
@@ -43,7 +49,7 @@ impl GenericStdout {
 pub struct GenericStderr;
 
 impl IoInterface for GenericStderr {
-	fn write(&self, buf: &[u8]) -> Result<usize, io::Error> {
+	fn write(&self, buf: &[u8]) -> Result<usize, Error> {
 		cfg_if::cfg_if! {
 			if #[cfg(feature = "vga")] {
 				vga::VGA_SCREEN.lock().write_bytes(buf);

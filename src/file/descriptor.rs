@@ -1,14 +1,16 @@
-use crate::{
-    format,
-    io,
-    scheduler::get_io_interface,
+use {
+	crate::{
+		io::{Error},
+		format::{Debug},
+		scheduler::get_io_interface,
+	}
 };
 
-pub type FileDescriptor = i32;
+pub type Descriptor = i32;
 
-pub const STDIN: FileDescriptor = 0;
-pub const STDOUT: FileDescriptor = 1;
-pub const STDERR: FileDescriptor = 2;
+pub const STDIN: Descriptor = 0;
+pub const STDOUT: Descriptor = 1;
+pub const STDERR: Descriptor = 2;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum SeekFrom {
@@ -22,21 +24,21 @@ pub struct FileStatus {
 }
 
 #[allow(dead_code)]
-pub trait IoInterface: Sync + Send + format::Debug {
-	fn read(&self, _buf: &mut [u8]) -> Result<usize, io::Error> {
-		Err(io::Error::NotImplemented)
+pub trait IoInterface: Sync + Send + Debug {
+	fn read(&self, _buf: &mut [u8]) -> Result<usize, Error> {
+		Err(Error::NotImplemented)
 	}
 
-	fn write(&self, _buf: &[u8]) -> Result<usize, io::Error> {
-		Err(io::Error::NotImplemented)
+	fn write(&self, _buf: &[u8]) -> Result<usize, Error> {
+		Err(Error::NotImplemented)
 	}
 
-	fn seek(&self, _offset: SeekFrom) -> Result<usize, io::Error> {
-		Err(io::Error::NotImplemented)
+	fn seek(&self, _offset: SeekFrom) -> Result<usize, Error> {
+		Err(Error::NotImplemented)
 	}
 
-	fn fstat(&self) -> Result<FileStatus, io::Error> {
-		Err(io::Error::NotImplemented)
+	fn fstat(&self) -> Result<FileStatus, Error> {
+		Err(Error::NotImplemented)
 	}
 }
 
@@ -63,7 +65,7 @@ bitflags! {
    }
 }
 
-pub fn read(descriptor: FileDescriptor, buffer: &mut [u8]) -> Result<usize, io::Error> {
+pub fn read(descriptor: Descriptor, buffer: &mut [u8]) -> Result<usize, Error> {
 	let object = get_io_interface(descriptor)?;
 
 	if buffer.is_empty() {
@@ -73,7 +75,7 @@ pub fn read(descriptor: FileDescriptor, buffer: &mut [u8]) -> Result<usize, io::
 	object.read(buffer)
 }
 
-pub fn write(descriptor: FileDescriptor, buffer: &[u8]) -> Result<usize, io::Error> {
+pub fn write(descriptor: Descriptor, buffer: &[u8]) -> Result<usize, Error> {
 	let object = get_io_interface(descriptor)?;
 
 	if buffer.is_empty() {
@@ -83,6 +85,6 @@ pub fn write(descriptor: FileDescriptor, buffer: &[u8]) -> Result<usize, io::Err
 	object.write(buffer)
 }
 
-pub fn fstat(descriptor: FileDescriptor) -> Result<FileStatus, io::Error> {
+pub fn fstat(descriptor: Descriptor) -> Result<FileStatus, Error> {
 	get_io_interface(descriptor)?.fstat()
 }
