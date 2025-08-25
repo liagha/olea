@@ -52,7 +52,7 @@ use {
     },
 };
 
-pub fn load_application(path: &String) -> io::Result<()> {
+pub fn load_application(path: &String) -> Result<(), io::Error> {
     debug!("attempting to load application from path.");
 
     unsafe {

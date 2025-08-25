@@ -1,33 +1,3 @@
-use {
-	crate::{format::{self, Display, Formatter}},
-	core::result,
-};
-
-pub type Result<T> = result::Result<T, Error>;
-
-#[derive(Debug, Clone)]
-pub enum Error {
-	BadPriority,
-	BadFsKind,
-	BadFsOperation,
-	BadFsPermission,
-	InvalidFsPath,
-	InvalidArgument,
-}
-
-impl Display for Error {
-	fn fmt(&self, f: &mut Formatter) -> format::Result {
-		match *self {
-			Error::BadPriority => write!(f, "invalid priority number."),
-			Error::BadFsKind => write!(f, "bad file system kind."),
-			Error::BadFsOperation => write!(f, "bad file system operation."),
-			Error::BadFsPermission => write!(f, "bad file permission."),
-			Error::InvalidFsPath => write!(f, "invalid file system path."),
-			Error::InvalidArgument => write!(f, "invalid argument."),
-		}
-	}
-}
-
 pub mod numbers {
 	/// Operation not permitted
 	pub const OPERATION_NOT_PERMITTED: i32 = 1;

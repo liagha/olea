@@ -1,5 +1,3 @@
-//! Definition a simple virtual file system
-
 #![allow(dead_code)]
 
 mod initial;
@@ -9,9 +7,9 @@ pub mod standard;
 
 use {
 	crate::{
-		error::*,
+		format::Debug,
 		file::r#virtual::Fs,
-		io,
+		io::{Write, Read, Error},
 		scheduler::{insert_io_interface, remove_io_interface},
 	},
 	alloc::{
@@ -25,80 +23,55 @@ use {
 
 static DEMO: &[u8] = include_bytes!("../../demo/hello");
 
-/// Type of the VfsNode
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum NodeKind {
-	/// Node represent a file
 	File,
-	/// Node represent a directory
 	Directory,
 }
 
-/// VfsNode represents an internal node of the virtual file system.
-trait VfsNode: core::fmt::Debug + core::marker::Send + core::marker::Sync {
-	/// Determines the current node type
+trait VfsNode: Debug + Send + Sync {
 	fn get_kind(&self) -> NodeKind;
 }
 
-/// VfsNodeFile represents a file node of the virtual file system.
-trait VfsNodeFile: VfsNode + core::fmt::Debug + core::marker::Send + core::marker::Sync {
-	/// Create an IO interface to the current file
-	fn get_handle(&self, _opt: OpenOptions) -> Result<Arc<dyn IoInterface>>;
+trait VfsNodeFile: VfsNode + Debug + Send + Sync {
+	fn get_handle(&self, _opt: OpenOptions) -> Result<Arc<dyn IoInterface>, Error>;
 }
 
-/// VfsNodeDirectory represents a directory node of the virtual file system.
-trait VfsNodeDirectory: VfsNode + core::fmt::Debug + core::marker::Send + core::marker::Sync {
-	/// Helper function to create a new dirctory node
-	fn traverse_mkdir(&mut self, _components: &mut Vec<&str>) -> Result<()>;
+trait VfsNodeDirectory: VfsNode + Debug + Send + Sync {
+	fn traverse_mkdir(&mut self, _components: &mut Vec<&str>) -> Result<(), Error>;
 
-	/// Helper function to print the current state of the file system
-	fn traverse_lsdir(&self, _tabs: String) -> Result<()>;
+	fn traverse_lsdir(&self, _tabs: String) -> Result<(), Error>;
 
-	/// Helper function to open a file
 	fn traverse_open(
 		&mut self,
 		_components: &mut Vec<&str>,
 		_flags: OpenOptions,
-	) -> Result<Arc<dyn IoInterface>>;
+	) -> Result<Arc<dyn IoInterface>, Error>;
 
-	/// Mound memory region as file
-	fn traverse_mount(&mut self, _components: &mut Vec<&str>, slice: &'static [u8]) -> Result<()>;
+	fn traverse_mount(&mut self, _components: &mut Vec<&str>, slice: &'static [u8]) -> Result<(), Error>;
 }
 
-/// The trait `Vfs` specifies all operation on the virtual file systems.
-trait Vfs: core::fmt::Debug + core::marker::Send + core::marker::Sync {
-	/// Create a directory node at the location `path`.
-	fn mkdir(&mut self, path: &String) -> Result<()>;
+trait Vfs: Debug + Send + Sync {
+	fn mkdir(&mut self, path: &String) -> Result<(), Error>;
 
-	/// Print the current state of the file system
-	fn lsdir(&self) -> Result<()>;
+	fn lsdir(&self) -> Result<(), Error>;
 
-	/// Open a file with the path `path`.
-	/// `path` must be an absolute path to the file, while `flags` defined
-	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn IoInterface>>;
+	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn IoInterface>, Error>;
 
-	/// Mound memory region as file
-	fn mount(&mut self, path: &String, slice: &'static [u8]) -> Result<()>;
+	fn mount(&mut self, path: &String, slice: &'static [u8]) -> Result<(), Error>;
 }
 
-/// Entrypoint of the file system
 static mut VFS_ROOT: Option<Fs> = None;
 
-/// List the current state of file system
-pub fn lsdir() -> Result<()> {
+pub fn lsdir() -> Result<(), Error> {
 	unsafe { VFS_ROOT.as_mut().unwrap().lsdir() }
 }
 
-/// Create a directory with the path `path`.
-/// `path` must be a absolete path to the direcory.
-pub fn mkdir(path: &String) -> Result<()> {
+pub fn mkdir(path: &String) -> Result<(), Error> {
 	unsafe { VFS_ROOT.as_mut().unwrap().mkdir(path) }
 }
 
-/// Open a file with the path `path`.
-/// `path` must be an absolute path to the file, while `flags` defined
-/// if the file is writeable or created on demand.
-pub fn open(name: &str, flags: OpenOptions) -> io::Result<FileDescriptor> {
+pub fn open(name: &str, flags: OpenOptions) -> Result<FileDescriptor, Error> {
 	debug!("open {}, {:?}.", name, flags);
 
 	let fs = unsafe { VFS_ROOT.as_mut().unwrap() };
@@ -106,16 +79,14 @@ pub fn open(name: &str, flags: OpenOptions) -> io::Result<FileDescriptor> {
 		let fd = insert_io_interface(file)?;
 		Ok(fd)
 	} else {
-		Err(io::Error::InvalidArgument)
+		Err(Error::InvalidArgument)
 	}
 }
 
-/// Mount slice to to `path`
-pub fn mount(path: &String, slice: &'static [u8]) -> Result<()> {
+pub fn mount(path: &String, slice: &'static [u8]) -> Result<(), Error> {
 	unsafe { VFS_ROOT.as_mut().unwrap().mount(path, slice) }
 }
 
-/// Help function to check if the argument is an abolute path
 fn check_path(path: &str) -> bool {
 	if let Some(pos) = path.find('/') {
 		if pos == 0 {
@@ -133,8 +104,7 @@ pub struct File {
 }
 
 impl File {
-	/// Attempts to create a file in read-write mode.
-	pub fn create(path: &str) -> io::Result<Self> {
+	pub fn create(path: &str) -> Result<Self, Error> {
 		let fd = open(path, OpenOptions::READ_WRITE | OpenOptions::CREATE)?;
 
 		Ok(File {
@@ -143,8 +113,7 @@ impl File {
 		})
 	}
 
-	/// Attempts to open a file in read-write mode.
-	pub fn open(path: &str) -> io::Result<Self> {
+	pub fn open(path: &str) -> Result<Self, Error> {
 		let fd = open(path, OpenOptions::READ_WRITE)?;
 
 		Ok(File {
@@ -153,20 +122,20 @@ impl File {
 		})
 	}
 
-	pub fn len(&self) -> io::Result<usize> {
+	pub fn len(&self) -> Result<usize, Error> {
 		let fstat = descriptor::fstat(self.fd)?;
 		Ok(fstat.file_size)
 	}
 }
 
-impl crate::io::Read for File {
-	fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+impl Read for File {
+	fn read(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
 		descriptor::read(self.fd, buf)
 	}
 }
 
-impl crate::io::Write for File {
-	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+impl Write for File {
+	fn write(&mut self, buf: &[u8]) -> Result<usize, Error> {
 		descriptor::write(self.fd, buf)
 	}
 }
@@ -194,7 +163,7 @@ pub fn init() {
 	}
 
 	root.lsdir().unwrap();
-	//info!("root {:?}", root);
+	
 	unsafe {
 		VFS_ROOT = Some(root);
 	}

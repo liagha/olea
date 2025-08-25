@@ -1,5 +1,4 @@
 use {
-	core::result,
 	crate::{
 		format::{self, Arguments},
 		error::numbers,
@@ -12,6 +11,8 @@ use {
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
+	BadPriority,
+	InvalidFsPath,
 	FileNotFound = numbers::FILE_NOT_FOUND as isize,
 	NotImplemented = numbers::NOT_IMPLEMENTED as isize,
 	IoError = numbers::IO_ERROR as isize,
@@ -31,16 +32,10 @@ pub enum Error {
 	NotASocket = numbers::NOT_A_SOCKET as isize,
 }
 
-pub type Result<T> = result::Result<T, Error>;
-
-/// The Read trait allows for reading bytes from a source.
-///
-/// The Read trait is derived from Rust's std library.
 pub trait Read {
-	fn read(&mut self, buf: &mut [u8]) -> Result<usize>;
+	fn read(&mut self, buf: &mut [u8]) -> Result<usize, Error>;
 
-	/// Read all bytes until EOF in this source, placing them into buf.
-	fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
+	fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize, Error> {
 		let start_len = buf.len();
 
 		loop {
@@ -56,23 +51,15 @@ pub trait Read {
 		}
 	}
 
-	/// Read all bytes until EOF in this source, appending them to `buf`.
-	///
-	/// If successful, this function returns the number of bytes which were read
-	/// and appended to `buf`.
-	fn read_to_string(&mut self, buf: &mut String) -> Result<usize> {
+	fn read_to_string(&mut self, buf: &mut String) -> Result<usize, Error> {
 		unsafe { self.read_to_end(buf.as_mut_vec()) }
 	}
 }
 
-/// The Write trait allows for reading bytes from a source.
-///
-/// The Write trait is derived from Rust's std library.
 pub trait Write {
-	fn write(&mut self, buf: &[u8]) -> Result<usize>;
+	fn write(&mut self, buf: &[u8]) -> Result<usize, Error>;
 
-	/// Attempts to write an entire buffer into this writer.
-	fn write_all(&mut self, mut buf: &[u8]) -> Result<()> {
+	fn write_all(&mut self, mut buf: &[u8]) -> Result<(), Error> {
 		while !buf.is_empty() {
 			match self.write(buf) {
 				Ok(0) => {
@@ -86,13 +73,10 @@ pub trait Write {
 		Ok(())
 	}
 
-	/// Writes a formatted string into this writer, returning any error encountered.
-	fn write_fmt(&mut self, fmt: Arguments<'_>) -> Result<()> {
-		// Create a shim which translates a Write to a fmt::Write and saves
-		// off I/O errors. instead of discarding them
+	fn write_fmt(&mut self, fmt: Arguments<'_>) -> Result<(), Error> {
 		struct Adapter<'a, T: ?Sized> {
 			inner: &'a mut T,
-			error: Result<()>,
+			error: Result<(), Error>,
 		}
 
 		impl<T: Write + ?Sized> format::Write for Adapter<'_, T> {
@@ -114,7 +98,6 @@ pub trait Write {
 		match format::write(&mut output, fmt) {
 			Ok(()) => Ok(()),
 			Err(..) => {
-				// check if the error came from the underlying `Write` or not
 				if output.error.is_err() {
 					output.error
 				} else {

@@ -2,9 +2,8 @@
 
 use {
 	crate::{
-		io,
+		io::{Error},
 		format,
-		error::*,
 		file::{
 			check_path, 
 			NodeKind, SeekFrom, Vfs, VfsNode, VfsNodeDirectory, VfsNodeFile,
@@ -61,7 +60,7 @@ impl VfsNode for VfsDirectory {
 }
 
 impl VfsNodeDirectory for VfsDirectory {
-	fn traverse_mkdir(&mut self, components: &mut Vec<&str>) -> Result<()> {
+	fn traverse_mkdir(&mut self, components: &mut Vec<&str>) -> Result<(), Error> {
 		if let Some(component) = components.pop() {
 			let node_name = String::from(component);
 
@@ -81,7 +80,7 @@ impl VfsNodeDirectory for VfsDirectory {
 		}
 	}
 
-	fn traverse_lsdir(&self, mut tabs: String) -> Result<()> {
+	fn traverse_lsdir(&self, mut tabs: String) -> Result<(), Error> {
 		tabs.push_str("  ");
 		for (name, node) in self.children.iter() {
 			if let Some(directory) = node.downcast_ref::<VfsDirectory>() {
@@ -101,7 +100,7 @@ impl VfsNodeDirectory for VfsDirectory {
 		&mut self,
 		components: &mut Vec<&str>,
 		flags: OpenOptions,
-	) -> Result<Arc<dyn IoInterface>> {
+	) -> Result<Arc<dyn IoInterface>, Error> {
 		if let Some(component) = components.pop() {
 			let node_name = String::from(component);
 
@@ -136,7 +135,7 @@ impl VfsNodeDirectory for VfsDirectory {
 		}
 	}
 
-	fn traverse_mount(&mut self, components: &mut Vec<&str>, slice: &'static [u8]) -> Result<()> {
+	fn traverse_mount(&mut self, components: &mut Vec<&str>, slice: &'static [u8]) -> Result<(), Error> {
 		if let Some(component) = components.pop() {
 			let node_name = String::from(component);
 
@@ -194,7 +193,7 @@ impl VfsNode for VfsFile {
 }
 
 impl VfsNodeFile for VfsFile {
-	fn get_handle(&self, opt: OpenOptions) -> Result<Arc<dyn IoInterface>> {
+	fn get_handle(&self, opt: OpenOptions) -> Result<Arc<dyn IoInterface>, Error> {
 		match self.data {
 			DataHandle::RAM(ref data) => Ok(Arc::new(VfsFile {
 				data: DataHandle::RAM(data.get_handle(opt)),
@@ -216,28 +215,28 @@ impl format::Write for VfsFile {
 }
 
 impl IoInterface for VfsFile {
-	fn read(&self, buf: &mut [u8]) -> io::Result<usize> {
+	fn read(&self, buf: &mut [u8]) -> Result<usize, Error> {
 		match self.data {
 			DataHandle::RAM(ref data) => data.read(buf),
 			DataHandle::ROM(ref data) => data.read(buf),
 		}
 	}
 
-	fn write(&self, buf: &[u8]) -> io::Result<usize> {
+	fn write(&self, buf: &[u8]) -> Result<usize, Error> {
 		match self.data {
 			DataHandle::RAM(ref data) => data.write(buf),
-			_ => Err(io::Error::BadFileDescriptor),
+			_ => Err(Error::BadFileDescriptor),
 		}
 	}
 
-	fn seek(&self, style: SeekFrom) -> io::Result<usize> {
+	fn seek(&self, style: SeekFrom) -> Result<usize, Error> {
 		match self.data {
 			DataHandle::RAM(ref data) => data.seek(style),
 			DataHandle::ROM(ref data) => data.seek(style),
 		}
 	}
 
-	fn fstat(&self) -> io::Result<FileStatus> {
+	fn fstat(&self) -> Result<FileStatus, Error> {
 		let file_size = match self.data {
 			DataHandle::RAM(ref data) => data.len(),
 			DataHandle::ROM(ref data) => data.len(),
@@ -262,7 +261,7 @@ impl Fs {
 }
 
 impl Vfs for Fs {
-	fn mkdir(&mut self, path: &String) -> Result<()> {
+	fn mkdir(&mut self, path: &String) -> Result<(), Error> {
 		if check_path(path) {
 			let mut components: Vec<&str> = path.split("/").collect();
 
@@ -275,13 +274,13 @@ impl Vfs for Fs {
 		}
 	}
 
-	fn lsdir(&self) -> Result<()> {
+	fn lsdir(&self) -> Result<(), Error> {
 		info!("/");
 
 		self.handle.lock().traverse_lsdir(String::from(""))
 	}
 
-	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn IoInterface>> {
+	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn IoInterface>, Error> {
 		if check_path(path) {
 			let mut components: Vec<&str> = path.split("/").collect();
 
@@ -295,7 +294,7 @@ impl Vfs for Fs {
 	}
 
 	/// Mound memory region as file
-	fn mount(&mut self, path: &String, slice: &'static [u8]) -> Result<()> {
+	fn mount(&mut self, path: &String, slice: &'static [u8]) -> Result<(), Error> {
 		if check_path(path) {
 			let mut components: Vec<&str> = path.split("/").collect();
 

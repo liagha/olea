@@ -6,9 +6,8 @@ pub mod task;
 
 use crate::arch;
 use crate::arch::memory::{PhysAddr, VirtAddr};
-use crate::error::*;
 use crate::file::descriptor::{FileDescriptor, IoInterface};
-use crate::io;
+use crate::io::Error;
 use crate::scheduler::task::{Task, TaskPriority};
 use alloc::rc::Rc;
 use alloc::sync::Arc;
@@ -27,7 +26,7 @@ pub fn init() {
 }
 
 /// Create a new kernel task
-pub fn spawn(func: extern "C" fn(), priority: TaskPriority) -> Result<task::TaskId> {
+pub fn spawn(func: extern "C" fn(), priority: TaskPriority) -> Result<task::TaskId, Error> {
 	unsafe { SCHEDULER.as_mut().unwrap().spawn(func, priority) }
 }
 
@@ -75,21 +74,21 @@ pub fn wakeup_task(task: Rc<RefCell<Task>>) {
 	unsafe { SCHEDULER.as_mut().unwrap().wakeup_task(task) }
 }
 
-pub fn get_io_interface(fd: FileDescriptor) -> crate::io::Result<Arc<dyn IoInterface>> {
+pub fn get_io_interface(fd: FileDescriptor) -> Result<Arc<dyn IoInterface>, Error> {
 	let _preemption = DisabledPreemption::new();
 
 	unsafe { SCHEDULER.as_mut().unwrap().get_io_interface(fd) }
 }
 
 /// Insert IoInterface and create a new FileDescriptor
-pub fn insert_io_interface(obj: Arc<dyn IoInterface>) -> io::Result<FileDescriptor> {
+pub fn insert_io_interface(obj: Arc<dyn IoInterface>) -> Result<FileDescriptor, Error> {
 	let _preemption = DisabledPreemption::new();
 
 	unsafe { SCHEDULER.as_mut().unwrap().insert_io_interface(obj) }
 }
 
 /// Remove a IO interface, which is named by the file descriptor
-pub fn remove_io_interface(fd: FileDescriptor) -> io::Result<Arc<dyn IoInterface>> {
+pub fn remove_io_interface(fd: FileDescriptor) -> Result<Arc<dyn IoInterface>, Error> {
 	let _preemption = DisabledPreemption::new();
 
 	unsafe { SCHEDULER.as_mut().unwrap().remove_io_interface(fd) }

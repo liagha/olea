@@ -1,9 +1,8 @@
 use crate::arch::memory::{PhysAddr, VirtAddr};
 use crate::collections::save_interrupt;
 use crate::consts::*;
-use crate::error::*;
 use crate::file::descriptor::{FileDescriptor, IoInterface};
-use crate::io;
+use crate::io::Error;
 use crate::scheduler::task::*;
 use alloc::collections::{BTreeMap, VecDeque};
 use alloc::rc::Rc;
@@ -55,7 +54,7 @@ impl Scheduler {
 		}
 	}
 
-	pub fn spawn(&mut self, func: extern "C" fn(), priority: TaskPriority) -> Result<TaskId> {
+	pub fn spawn(&mut self, func: extern "C" fn(), priority: TaskPriority) -> Result<TaskId, Error> {
 		let closure = || {
 			let priority_number: usize = priority.into().into();
 
@@ -152,14 +151,14 @@ impl Scheduler {
 	pub fn insert_io_interface(
 		&mut self,
 		io_interface: Arc<dyn IoInterface>,
-	) -> io::Result<FileDescriptor> {
-		let new_fd = || -> io::Result<FileDescriptor> {
+	) -> Result<FileDescriptor, Error> {
+		let new_fd = || -> Result<FileDescriptor, Error> {
 			let mut fd: FileDescriptor = 0;
 			loop {
 				if !self.current_task.borrow().fd_map.contains_key(&fd) {
 					break Ok(fd);
 				} else if fd == FileDescriptor::MAX {
-					break Err(io::Error::ValueOverflow);
+					break Err(Error::ValueOverflow);
 				}
 
 				fd = fd.saturating_add(1);
@@ -175,18 +174,18 @@ impl Scheduler {
 		Ok(fd)
 	}
 
-	pub fn remove_io_interface(&self, fd: FileDescriptor) -> io::Result<Arc<dyn IoInterface>> {
+	pub fn remove_io_interface(&self, fd: FileDescriptor) -> Result<Arc<dyn IoInterface>, Error> {
 		self.current_task
 			.borrow_mut()
 			.fd_map
 			.remove(&fd)
-			.ok_or(io::Error::BadFileDescriptor)
+			.ok_or(Error::BadFileDescriptor)
 	}
 
 	pub fn get_io_interface(
 		&self,
 		fd: FileDescriptor,
-	) -> crate::io::Result<Arc<dyn IoInterface>> {
+	) -> Result<Arc<dyn IoInterface>, Error> {
 		let closure = || {
 			if let Some(io_interface) = self.current_task.borrow().fd_map.get(&fd) {
 				Ok(io_interface.clone())

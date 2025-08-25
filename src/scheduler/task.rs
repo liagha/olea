@@ -16,7 +16,7 @@ use {
 		},
 		consts::*,
 		file::descriptor::{
-			FileDescriptor, IoInterface, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO,
+			FileDescriptor, IoInterface, STDERR, STDIN, STDOUT,
 		},
 		format,
 	},
@@ -223,13 +223,13 @@ impl Task {
 	pub fn new(id: TaskId, status: TaskStatus, priority: TaskPriority) -> Task {
 		let mut fd_map: BTreeMap<FileDescriptor, Arc<dyn IoInterface>> = BTreeMap::new();
 		fd_map
-			.try_insert(STDIN_FILENO, Arc::new(GenericStdin::new()))
+			.try_insert(STDIN, Arc::new(GenericStdin::new()))
 			.unwrap();
 		fd_map
-			.try_insert(STDOUT_FILENO, Arc::new(GenericStdout::new()))
+			.try_insert(STDOUT, Arc::new(GenericStdout::new()))
 			.unwrap();
 		fd_map
-			.try_insert(STDERR_FILENO, Arc::new(GenericStderr::new()))
+			.try_insert(STDERR, Arc::new(GenericStderr::new()))
 			.unwrap();
 
 		Task {

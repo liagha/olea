@@ -1,5 +1,3 @@
-//! Implements basic functions to realize a simple in-memory file system
-
 use crate::file::descriptor::OpenOptions;
 use crate::file::SeekFrom;
 use crate::io;
@@ -11,9 +9,7 @@ use spinning_top::RwSpinlock;
 
 #[derive(Debug)]
 pub struct RomHandle {
-	/// Position within the file
 	pos: Spinlock<usize>,
-	/// File content
 	data: Arc<RwSpinlock<&'static [u8]>>,
 }
 
@@ -32,7 +28,7 @@ impl RomHandle {
 		}
 	}
 
-	pub fn read(&self, buf: &mut [u8]) -> io::Result<usize> {
+	pub fn read(&self, buf: &mut [u8]) -> Result<usize, io::Error> {
 		let vec = self.data.read();
 		let mut pos_guard = self.pos.lock();
 		let pos = *pos_guard;
@@ -54,7 +50,7 @@ impl RomHandle {
 		Ok(len)
 	}
 
-	pub fn seek(&self, style: SeekFrom) -> io::Result<usize> {
+	pub fn seek(&self, style: SeekFrom) -> Result<usize, io::Error> {
 		let mut pos_guard = self.pos.lock();
 
 		match style {
@@ -86,7 +82,7 @@ impl RomHandle {
 
 	pub fn len(&self) -> usize {
 		let guard = self.data.read();
-		guard.len() as usize
+		guard.len()
 	}
 }
 
@@ -112,13 +108,13 @@ pub struct RamHandle {
 impl RamHandle {
 	pub fn new(writeable: bool) -> Self {
 		RamHandle {
-			writeable: writeable,
+			writeable,
 			pos: Spinlock::new(0),
 			data: Arc::new(RwSpinlock::new(Vec::new())),
 		}
 	}
 
-	pub fn read(&self, buf: &mut [u8]) -> io::Result<usize> {
+	pub fn read(&self, buf: &mut [u8]) -> Result<usize, io::Error> {
 		let guard = self.data.read();
 		let vec = guard.deref();
 		let mut pos_guard = self.pos.lock();
@@ -141,7 +137,7 @@ impl RamHandle {
 		Ok(len)
 	}
 
-	pub fn write(&self, buf: &[u8]) -> io::Result<usize> {
+	pub fn write(&self, buf: &[u8]) -> Result<usize, io::Error> {
 		if self.writeable == false {
 			return Err(io::Error::BadFileDescriptor);
 		}
@@ -161,12 +157,12 @@ impl RamHandle {
 		Ok(buf.len())
 	}
 
-	pub fn seek(&self, style: SeekFrom) -> io::Result<usize> {
+	pub fn seek(&self, style: SeekFrom) -> Result<usize, io::Error> {
 		let mut pos_guard = self.pos.lock();
 
 		match style {
 			SeekFrom::Start(n) => {
-				*pos_guard = n as usize;
+				*pos_guard = n;
 				Ok(n)
 			}
 			SeekFrom::End(n) => {
@@ -223,7 +219,7 @@ impl RamHandle {
 	pub fn len(&self) -> usize {
 		let guard = self.data.read();
 		let ref vec: &Vec<u8> = guard.deref();
-		vec.len() as usize
+		vec.len()
 	}
 }
 
