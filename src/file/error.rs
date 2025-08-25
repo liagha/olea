@@ -1,9 +1,5 @@
 use core::fmt::Formatter;
-use {
-    crate::{
-        format::Debug,
-    },
-};
+use crate::format::Debug;
 
 #[derive(PartialEq)]
 pub enum Error {
@@ -17,6 +13,9 @@ pub enum Error {
     IoError,
     OutOfMemory,
     AlreadyExists,
+    NotADirectory,
+    IsADirectory,
+    SymlinkLoop,
 }
 
 impl Debug for Error {
@@ -32,6 +31,9 @@ impl Debug for Error {
             Error::IoError => write!(f, "I/O error."),
             Error::OutOfMemory => write!(f, "out of memory."),
             Error::AlreadyExists => write!(f, "already exists."),
+            Error::NotADirectory => write!(f, "not a directory."),
+            Error::IsADirectory => write!(f, "is a directory."),
+            Error::SymlinkLoop => write!(f, "symlink loop detected."),
         }
     }
 }

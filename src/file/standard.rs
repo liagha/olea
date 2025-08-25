@@ -3,14 +3,9 @@ use crate::arch::serial;
 #[cfg(feature = "vga")]
 use crate::arch::vga;
 
-
-use {
-	crate::{
-		file::{
-			error::Error,
-			descriptor::IoInterface,
-		},
-	},
+use crate::file::{
+	error::Error,
+	descriptor::IoInterface,
 };
 
 #[derive(Debug)]
@@ -30,13 +25,12 @@ pub struct GenericStdout;
 impl IoInterface for GenericStdout {
 	fn write(&self, buf: &[u8]) -> Result<usize, Error> {
 		cfg_if::cfg_if! {
-			if #[cfg(feature = "vga")] {
-				vga::VGA_SCREEN.lock().write_bytes(buf);
-			} else {
-				serial::PORT.lock().write_bytes(buf);
-			}
-		}
-
+            if #[cfg(feature = "vga")] {
+                vga::VGA_SCREEN.lock().write_bytes(buf);
+            } else {
+                serial::PORT.lock().write_bytes(buf);
+            }
+        }
 		Ok(buf.len())
 	}
 }
@@ -53,13 +47,12 @@ pub struct GenericStderr;
 impl IoInterface for GenericStderr {
 	fn write(&self, buf: &[u8]) -> Result<usize, Error> {
 		cfg_if::cfg_if! {
-			if #[cfg(feature = "vga")] {
-				vga::VGA_SCREEN.lock().write_bytes(buf);
-			} else {
-				serial::PORT.lock().write_bytes(buf);
-			}
-		}
-
+            if #[cfg(feature = "vga")] {
+                vga::VGA_SCREEN.lock().write_bytes(buf);
+            } else {
+                serial::PORT.lock().write_bytes(buf);
+            }
+        }
 		Ok(buf.len())
 	}
 }

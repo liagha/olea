@@ -1,7 +1,3 @@
-/// Print formatted text to our console.
-///
-/// From http://blog.phil-opp.com/rust-os/printing-to-screen.html, but tweaked
-/// to work with our APIs.
 #[macro_export]
 macro_rules! print {
 	($($arg:tt)*) => ({
@@ -11,9 +7,6 @@ macro_rules! print {
 	});
 }
 
-/// Print formatted text to our console, followed by a newline.
-///
-/// From https://doc.rust-lang.org/nightly/std/macro.println!.html
 #[macro_export]
 macro_rules! println {
 	($fmt:expr) => (print!(concat!($fmt, "\n")));

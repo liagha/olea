@@ -2,15 +2,12 @@ use {
 	crate::{
 		sync::spinlock::*,
 		file::{
-			SeekFrom,
+			descriptor::OpenOptions,
 			error::Error,
-			descriptor::OpenOptions
 		},
 	},
 	spinning_top::RwSpinlock,
-	core::{
-		ops::{Deref, DerefMut},
-	},
+	core::ops::{Deref, DerefMut},
 	alloc::{
 		sync::Arc,
 		vec::Vec,
@@ -42,36 +39,29 @@ impl RomHandle {
 		let vec = self.data.read();
 		let mut pos_guard = self.pos.lock();
 		let pos = *pos_guard;
-
 		if pos >= vec.len() {
 			return Ok(0);
 		}
-
-		let len;
-		if vec.len() - pos < buf.len() {
-			len = vec.len() - pos
+		let len = if vec.len() - pos < buf.len() {
+			vec.len() - pos
 		} else {
-			len = buf.len()
-		}
-
+			buf.len()
+		};
 		buf[0..len].clone_from_slice(&vec[pos..pos + len]);
 		*pos_guard = pos + len;
-
 		Ok(len)
 	}
 
-	pub fn seek(&self, style: SeekFrom) -> Result<usize, Error> {
+	pub fn seek(&self, style: super::descriptor::SeekFrom) -> Result<usize, Error> {
 		let mut pos_guard = self.pos.lock();
-
 		match style {
-			SeekFrom::Start(n) => {
+			super::descriptor::SeekFrom::Start(n) => {
 				*pos_guard = n;
 				Ok(n)
 			}
-			SeekFrom::End(n) => {
+			super::descriptor::SeekFrom::End(n) => {
 				let guard = self.data.read();
 				let data = guard.len() as isize + n;
-				
 				if data >= 0 {
 					*pos_guard = data as usize;
 					Ok(data as usize)
@@ -79,7 +69,7 @@ impl RomHandle {
 					Err(Error::InvalidArgument)
 				}
 			}
-			SeekFrom::Current(n) => {
+			super::descriptor::SeekFrom::Current(n) => {
 				let pos = *pos_guard as isize + n;
 				if pos >= 0 {
 					*pos_guard = pos as usize;
@@ -127,53 +117,43 @@ impl RamHandle {
 		let vec = guard.deref();
 		let mut pos_guard = self.pos.lock();
 		let pos = *pos_guard;
-
 		if pos >= vec.len() {
 			return Ok(0);
 		}
-
-		let len;
-		if vec.len() - pos < buf.len() {
-			len = vec.len() - pos
+		let len = if vec.len() - pos < buf.len() {
+			vec.len() - pos
 		} else {
-			len = buf.len()
-		}
-
+			buf.len()
+		};
 		buf[0..len].clone_from_slice(&vec[pos..pos + len]);
 		*pos_guard = pos + len;
-
 		Ok(len)
 	}
 
 	pub fn write(&self, buf: &[u8]) -> Result<usize, Error> {
-		if self.writeable == false {
+		if !self.writeable {
 			return Err(Error::BadFileDescriptor);
 		}
-
 		let mut guard = self.data.write();
 		let vec = guard.deref_mut();
 		let mut pos_guard = self.pos.lock();
 		let pos = *pos_guard;
-
 		if pos + buf.len() > vec.len() {
 			vec.resize(pos + buf.len(), 0);
 		}
-
 		vec[pos..pos + buf.len()].clone_from_slice(buf);
 		*pos_guard = pos + buf.len();
-
 		Ok(buf.len())
 	}
 
-	pub fn seek(&self, style: SeekFrom) -> Result<usize, Error> {
+	pub fn seek(&self, style: super::descriptor::SeekFrom) -> Result<usize, Error> {
 		let mut pos_guard = self.pos.lock();
-
 		match style {
-			SeekFrom::Start(n) => {
+			super::descriptor::SeekFrom::Start(n) => {
 				*pos_guard = n;
 				Ok(n)
 			}
-			SeekFrom::End(n) => {
+			super::descriptor::SeekFrom::End(n) => {
 				let guard = self.data.read();
 				let vec = guard.deref();
 				let data = vec.len() as isize + n;
@@ -184,7 +164,7 @@ impl RamHandle {
 					Err(Error::InvalidArgument)
 				}
 			}
-			SeekFrom::Current(n) => {
+			super::descriptor::SeekFrom::Current(n) => {
 				let pos = *pos_guard as isize + n;
 				if pos >= 0 {
 					*pos_guard = pos as usize;
@@ -197,22 +177,18 @@ impl RamHandle {
 	}
 
 	pub fn write_str(&self, s: &str) -> core::fmt::Result {
-		if self.writeable == false {
+		if !self.writeable {
 			return Err(core::fmt::Error);
 		}
-
 		let mut guard = self.data.write();
 		let vec = guard.deref_mut();
 		let mut pos_guard = self.pos.lock();
 		let pos = *pos_guard;
-
 		if pos + s.len() > vec.len() {
 			vec.resize(pos + s.len(), 0);
 		}
-
 		vec[pos..pos + s.len()].clone_from_slice(s.as_bytes());
 		*pos_guard = pos + s.len();
-
 		Ok(())
 	}
 
@@ -226,7 +202,7 @@ impl RamHandle {
 
 	pub fn len(&self) -> usize {
 		let guard = self.data.read();
-		let ref vec: &Vec<u8> = guard.deref();
+		let vec: &Vec<u8> = guard.deref();
 		vec.len()
 	}
 }

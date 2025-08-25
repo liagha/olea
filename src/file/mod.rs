@@ -1,30 +1,25 @@
 #![allow(dead_code)]
 
-mod initial;
-mod r#virtual;
-pub mod descriptor;
+pub mod vfs;
+pub mod handle;
 pub mod standard;
-mod error;
+pub mod descriptor;
+pub mod error;
 
-pub use {
-	error::Error,
-};
+use alloc::format;
+pub use error::Error;
 
 use {
-    crate::{
+	crate::{
 		format::Debug,
+		file::vfs::VirtualSystem,
 		io::{self, Write, Read},
-		file::{
-			r#virtual::Fs,
-		},
 		scheduler::{insert_io_interface, remove_io_interface},
 	},
-    alloc::{
+	alloc::{
 		string::{String, ToString},
-		sync::Arc,
-		vec::Vec
+		vec::Vec,
 	},
-    descriptor::{Descriptor, IoInterface, OpenOptions, SeekFrom},
 };
 
 static DEMO: &[u8] = include_bytes!("../../demo/hello");
@@ -33,55 +28,23 @@ static DEMO: &[u8] = include_bytes!("../../demo/hello");
 pub enum NodeKind {
 	File,
 	Directory,
+	Symlink,
 }
-
-trait VfsNode: Debug + Send + Sync {
-	fn get_kind(&self) -> NodeKind;
-}
-
-trait VfsNodeFile: VfsNode + Debug + Send + Sync {
-	fn get_handle(&self, _opt: OpenOptions) -> Result<Arc<dyn IoInterface>, Error>;
-}
-
-trait VfsNodeDirectory: VfsNode + Debug + Send + Sync {
-	fn traverse_mkdir(&mut self, _components: &mut Vec<&str>) -> Result<(), Error>;
-
-	fn traverse_lsdir(&self, _tabs: String) -> Result<(), Error>;
-
-	fn traverse_open(
-		&mut self,
-		_components: &mut Vec<&str>,
-		_flags: OpenOptions,
-	) -> Result<Arc<dyn IoInterface>, Error>;
-
-	fn traverse_mount(&mut self, _components: &mut Vec<&str>, slice: &'static [u8]) -> Result<(), Error>;
-}
-
-trait Vfs: Debug + Send + Sync {
-	fn mkdir(&mut self, path: &String) -> Result<(), Error>;
-
-	fn lsdir(&self) -> Result<(), Error>;
-
-	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn IoInterface>, Error>;
-
-	fn mount(&mut self, path: &String, slice: &'static [u8]) -> Result<(), Error>;
-}
-
-static mut VFS_ROOT: Option<Fs> = None;
 
 pub fn lsdir() -> Result<(), Error> {
-	unsafe { VFS_ROOT.as_mut().unwrap().lsdir() }
+	unsafe { vfs::ROOT.as_mut().unwrap().lsdir() }
 }
 
 pub fn mkdir(path: &String) -> Result<(), Error> {
-	unsafe { VFS_ROOT.as_mut().unwrap().mkdir(path) }
+	let path = normalize_path(path)?;
+	unsafe { vfs::ROOT.as_mut().unwrap().mkdir(&path) }
 }
 
-pub fn open(name: &str, flags: OpenOptions) -> Result<Descriptor, Error> {
+pub fn open(name: &str, flags: descriptor::OpenOptions) -> Result<descriptor::Descriptor, Error> {
 	debug!("open {}, {:?}.", name, flags);
-
-	let fs = unsafe { VFS_ROOT.as_mut().unwrap() };
-	if let Ok(file) = fs.open(name, flags) {
+	let name = normalize_path(&name.to_string())?;
+	let fs = unsafe { vfs::ROOT.as_mut().unwrap() };
+	if let Ok(file) = fs.open(&name, flags) {
 		let fd = insert_io_interface(file).map_err(|_| Error::IoError)?;
 		Ok(fd)
 	} else {
@@ -90,29 +53,37 @@ pub fn open(name: &str, flags: OpenOptions) -> Result<Descriptor, Error> {
 }
 
 pub fn mount(path: &String, slice: &'static [u8]) -> Result<(), Error> {
-	unsafe { VFS_ROOT.as_mut().unwrap().mount(path, slice) }
+	let path = normalize_path(path)?;
+	unsafe { vfs::ROOT.as_mut().unwrap().mount(&path, slice) }
 }
 
-fn check_path(path: &str) -> bool {
-	if let Some(pos) = path.find('/') {
-		if pos == 0 {
-			return true;
-		}
-	}
+pub fn symlink(target: &String, link: &String) -> Result<(), Error> {
+	let target = normalize_path(target)?;
+	let link = normalize_path(link)?;
+	unsafe { vfs::ROOT.as_mut().unwrap().symlink(&target, &link) }
+}
 
-	false
+pub fn unlink(path: &String) -> Result<(), Error> {
+	let path = normalize_path(path)?;
+	unsafe { vfs::ROOT.as_mut().unwrap().unlink(&path) }
+}
+
+pub fn rename(old_path: &String, new_path: &String) -> Result<(), Error> {
+	let old_path = normalize_path(old_path)?;
+	let new_path = normalize_path(new_path)?;
+	unsafe { vfs::ROOT.as_mut().unwrap().rename(&old_path, &new_path) }
 }
 
 #[derive(Debug)]
 pub struct File {
-	fd: Descriptor,
+	fd: descriptor::Descriptor,
 	path: String,
 }
 
 impl File {
 	pub fn create(path: &str) -> Result<Self, Error> {
-		let fd = open(path, OpenOptions::READ_WRITE | OpenOptions::CREATE)?;
-
+		let path = normalize_path(&path.to_string())?;
+		let fd = open(&path, descriptor::OpenOptions::READ_WRITE | descriptor::OpenOptions::CREATE)?;
 		Ok(File {
 			fd,
 			path: path.to_string(),
@@ -120,8 +91,8 @@ impl File {
 	}
 
 	pub fn open(path: &str) -> Result<Self, Error> {
-		let fd = open(path, OpenOptions::READ_WRITE)?;
-
+		let path = normalize_path(&path.to_string())?;
+		let fd = open(&path, descriptor::OpenOptions::READ_WRITE)?;
 		Ok(File {
 			fd,
 			path: path.to_string(),
@@ -153,24 +124,43 @@ impl Drop for File {
 }
 
 pub fn initialize() {
-	let mut root = Fs::new();
-
+	let mut root = vfs::Fs::new();
 	root.mkdir(&String::from("/bin")).unwrap();
 	root.mkdir(&String::from("/dev")).unwrap();
-
 	if DEMO.len() > 0 {
-		info!(
-			"found mountable file at 0x{:x} (len 0x{:x}).",
-			DEMO.as_ptr() as u64,
-			DEMO.len()
-		);
 		root.mount(&String::from("/bin/demo"), &DEMO)
 			.expect("Unable to mount file");
 	}
-
 	root.lsdir().unwrap();
-	
 	unsafe {
-		VFS_ROOT = Some(root);
+		vfs::ROOT = Some(root);
 	}
+}
+
+fn normalize_path(path: &String) -> Result<String, Error> {
+	if path.is_empty() {
+		return Err(Error::InvalidFsPath);
+	}
+	let is_absolute = path.starts_with('/');
+	let components: Vec<&str> = path.split('/').filter(|&s| !s.is_empty()).collect();
+	let mut result = Vec::new();
+	for component in components {
+		match component {
+			"." => continue,
+			".." => {
+				if result.is_empty() && !is_absolute {
+					result.push("..");
+				} else if !result.is_empty() {
+					result.pop();
+				}
+			}
+			_ => result.push(component),
+		}
+	}
+	let normalized = if is_absolute {
+		format!("/{}", result.join("/"))
+	} else {
+		result.join("/")
+	};
+	Ok(if normalized.is_empty() { "/".to_string() } else { normalized })
 }
