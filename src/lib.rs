@@ -38,7 +38,7 @@ pub mod io;
 pub mod memory;
 pub mod scheduler;
 pub mod sync;
-pub mod call;
+pub mod invoke;
 pub mod format;
 
 #[repr(align(256))]
@@ -60,10 +60,10 @@ pub fn init() {
 		ALLOCATOR.init(ARENA.0.as_mut_ptr(), HEAP_SIZE);
 	}
 
-	arch::kernel::init();
-	memory::init();
-	scheduler::init();
-	file::init();
+	arch::kernel::initialize();
+	memory::initialize();
+	scheduler::initialize();
+	file::initialize();
 }
 
 #[cfg(not(test))]

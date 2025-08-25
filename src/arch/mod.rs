@@ -19,7 +19,7 @@ use {
     super::{
         io::Error,
         arch::{
-            kernel::calls::transition::to_user_mode,
+            kernel::invoke::transition::to_user_mode,
             memory::{
                 physical::allocate,
                 paging::{

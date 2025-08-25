@@ -3,7 +3,7 @@ use {
         arch::{
             asm,
             memory::get_boot_stack,
-            kernel::calls::call,
+            kernel::invoke::call,
             x86::*,
         },
         scheduler::task::Stack,
@@ -88,7 +88,7 @@ pub fn enable_features() {
     };
 
     if !has_syscall {
-        panic!("call support is missing.");
+        panic!("invoke support is missing.");
     }
 
     unsafe {

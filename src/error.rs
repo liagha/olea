@@ -8,7 +8,7 @@ pub mod numbers {
 	/// No such process
 	pub const PROCESS_NOT_FOUND: i32 = 3;
 
-	/// Interrupted system call
+	/// Interrupted system invoke
 	pub const INTERRUPTED: i32 = 4;
 
 	/// I/O error
@@ -256,7 +256,7 @@ pub mod numbers {
 	/// Illegal byte sequence
 	pub const ILLEGAL_BYTE_SEQUENCE: i32 = 84;
 
-	/// Interrupted system call should be restarted
+	/// Interrupted system invoke should be restarted
 	pub const RESTART_SYSCALL: i32 = 85;
 
 	/// Streams pipe error

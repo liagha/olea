@@ -23,7 +23,7 @@ use {
 
 static mut SCHEDULER: Option<scheduler::Scheduler> = None;
 
-pub fn init() {
+pub fn initialize() {
 	unsafe {
 		SCHEDULER = Some(scheduler::Scheduler::new());
 	}

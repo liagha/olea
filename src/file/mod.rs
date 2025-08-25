@@ -145,7 +145,7 @@ impl Drop for File {
 	}
 }
 
-pub fn init() {
+pub fn initialize() {
 	let mut root = Fs::new();
 
 	root.mkdir(&String::from("/bin")).unwrap();

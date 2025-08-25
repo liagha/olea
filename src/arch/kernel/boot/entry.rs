@@ -23,7 +23,7 @@ unsafe fn bss_init() {
 
 #[cfg(not(test))]
 unsafe extern "C" fn entry() -> ! {
-    arch::kernel::init();
+    arch::kernel::initialize();
 
     #[cfg(target_arch = "x86")]
     bss_init();

@@ -8,7 +8,7 @@ pub struct BufferSegment {
 	pub length: usize,       // Length of buffer
 }
 
-/// Handler for writev() system call - write data from multiple buffers
+/// Handler for writev() system invoke - write data from multiple buffers
 /// Implements scatter-gather write operation
 ///
 /// Arguments:
@@ -22,7 +22,7 @@ pub unsafe extern "C" fn write_vector(
     pointer: *const BufferSegment,
     count: i32,
 ) -> isize {
-	debug!("enter call writev.");
+	debug!("enter invoke writev.");
 	let mut len: isize = 0;
 
 	// Convert raw pointer and count to safe Rust slice
@@ -53,7 +53,7 @@ pub unsafe extern "C" fn write_vector(
 	len  // Return total bytes written
 }
 
-/// Handler for write() system call - write data from single buffer
+/// Handler for write() system invoke - write data from single buffer
 ///
 /// Arguments:
 /// - fd: File descriptor to write to
@@ -62,7 +62,7 @@ pub unsafe extern "C" fn write_vector(
 ///
 /// Returns: Number of bytes written, or negative error code
 pub unsafe extern "C" fn write(descriptor: Descriptor, buffer: *mut u8, length: usize) -> isize {
-	debug!("enter call write.");
+	debug!("enter invoke write.");
 
 	// Convert raw pointer and length to safe Rust slice
 	let slice = unsafe { core::slice::from_raw_parts(buffer, length) };

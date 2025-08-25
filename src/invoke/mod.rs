@@ -11,59 +11,59 @@ use {
 };
 
 pub mod numbers {
-	// These match the Linux x86-64 call numbers for compatibility
+	// These match the Linux x86-64 invoke numbers for compatibility
 
-	/// System call number for write() - output data to file descriptor
+	/// System invoke number for write() - output data to file descriptor
 	pub const WRITE: usize = 1;
 
-	/// System call number for close() - close file descriptor
+	/// System invoke number for close() - close file descriptor
 	pub const CLOSE: usize = 3;
 
-	/// System call number for ioctl() - device-specific input/output control
+	/// System invoke number for ioctl() - device-specific input/output control
 	pub const IO_CONTROL: usize = 16;
 
-	/// System call number for writev() - write data from multiple buffers
+	/// System invoke number for writev() - write data from multiple buffers
 	pub const WRITE_VECTOR: usize = 20;
 
-	/// System call number for exit() - terminate calling process
+	/// System invoke number for exit() - terminate calling process
 	pub const EXIT: usize = 60;
 
-	/// System call number for arch_prctl() - set architecture-specific thread state
+	/// System invoke number for arch_prctl() - set architecture-specific thread state
 	pub const ARCH_PROCESS_CONTROL: usize = 158;
 
-	/// System call number for set_tid_address() - set pointer to thread ID
+	/// System invoke number for set_tid_address() - set pointer to thread ID
 	pub const SET_THREAD_ID_ADDRESS: usize = 218;
 
-	/// System call number for exit_group() - exit all threads in a process
+	/// System invoke number for exit_group() - exit all threads in a process
 	pub const EXIT_GROUP: usize = 231;
 
-	/// Total number of possible system calls in the table
+	/// Total number of possible system invoke in the table
 	pub const MAX_CALLS: usize = 400;
 }
 
-/// System call dispatch table
-/// Maps system call numbers to their handler functions
+/// System invoke dispatch table
+/// Maps system invoke numbers to their handler functions
 /// Aligned to 64-byte boundary for optimal cache performance
 #[repr(align(64))]  // Cache line alignment for performance
 #[repr(C)]          // C layout to ensure predictable memory layout
 pub struct CallTable {
-	/// Array of function pointers, indexed by system call number
-	/// Each entry points to a system call handler function
+	/// Array of function pointers, indexed by system invoke number
+	/// Each entry points to a system invoke handler function
 	handle: [*const usize; numbers::MAX_CALLS],
 }
 
 impl CallTable {
-	/// Create a new system call table with all entries initialized
+	/// Create a new system invoke table with all entries initialized
 	/// This must be const fn to allow static initialization
 	pub const fn default() -> Self {
-		// Initialize all entries to point to invalid call handler
+		// Initialize all entries to point to invalid invoke handler
 		// This ensures that unimplemented syscalls are caught
 		let mut table = CallTable {
 			handle: [invalid as *const _; numbers::MAX_CALLS],
 		};
 
 		// Implemented Calls
-		// Map specific call numbers to their handler functions
+		// Map specific invoke numbers to their handler functions
 
 		// I/O operations
 		table.handle[numbers::WRITE] = write as *const _;                  // Write to file descriptor
@@ -101,7 +101,7 @@ impl Default for CallTable {
 	}
 }
 
-/// Global system call handler table
-/// This is accessed by the assembly code in the call entry point
+/// Global system invoke handler table
+/// This is accessed by the assembly code in the invoke entry point
 /// Static initialization ensures it's available at boot time
 pub static CALL_TABLE: CallTable = CallTable::default();

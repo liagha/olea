@@ -9,7 +9,7 @@ pub mod linked_list;
 #[cfg(not(test))]
 use alloc::alloc::Layout;
 
-pub fn init() {
+pub fn initialize() {
 	info!("memory size: {} MB.", get_memory_size() >> 20);
 
 	arch::memory::init();

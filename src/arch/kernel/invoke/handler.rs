@@ -1,16 +1,16 @@
 use {
     crate::{
         arch::naked_asm,
-        call::CALL_TABLE,
+        invoke::CALL_TABLE,
     },
 };
 
-/// Main system call entry point that handles ALL system calls
-/// This function is called by the CPU when userspace executes `call` instruction
+/// Main system invoke entry point that handles ALL system invoke
+/// This function is called by the CPU when userspace executes `invoke` instruction
 ///
-/// Register state on entry (set by CPU's call instruction):
-/// - rax: system call number
-/// - rdi, rsi, rdx, r10, r8, r9: call arguments 1-6
+/// Register state on entry (set by CPU's invoke instruction):
+/// - rax: system invoke number
+/// - rdi, rsi, rdx, r10, r8, r9: invoke arguments 1-6
 /// - rcx: userspace return address (saved by CPU)
 /// - r11: userspace flags register (saved by CPU)
 /// - rsp: still pointing to userspace stack
@@ -20,15 +20,15 @@ pub unsafe extern "C" fn call() {
     naked_asm!(
         // === SAVE USER CONTEXT ===
         // Save all caller-saved registers that might be clobbered
-        // Note: rax contains call number, so we don't save it yet
-        "push rcx",     // User return address (set by call instruction)
-        "push rdx",     // 3rd call argument
-        "push rsi",     // 2nd call argument
-        "push rdi",     // 1st call argument
-        "push r8",      // 5th call argument
-        "push r9",      // 6th call argument
-        "push r10",     // 4th call argument (will be moved to rcx later)
-        "push r11",     // User flags register (set by call instruction)
+        // Note: rax contains invoke number, so we don't save it yet
+        "push rcx",     // User return address (set by invoke instruction)
+        "push rdx",     // 3rd invoke argument
+        "push rsi",     // 2nd invoke argument
+        "push rdi",     // 1st invoke argument
+        "push r8",      // 5th invoke argument
+        "push r9",      // 6th invoke argument
+        "push r10",     // 4th invoke argument (will be moved to rcx later)
+        "push r11",     // User flags register (set by invoke instruction)
 
         // === SWITCH TO KERNEL CONTEXT ===
         // Switch GS segment register from user to kernel
@@ -50,8 +50,8 @@ pub unsafe extern "C" fn call() {
         // Re-enable interrupts (disabled during privilege switch)
         "sti",
 
-        // Call the appropriate system call handler
-        // rax contains call number, used as index into handler table
+        // Call the appropriate system invoke handler
+        // rax contains invoke number, used as index into handler table
         // Each entry is 8 bytes (pointer size), so multiply by 8
         "call [{sys_handler}+8*rax]",
 
@@ -79,7 +79,7 @@ pub unsafe extern "C" fn call() {
         "pop rcx",             // User return address (will be restored by sysretq)
 
         // === RETURN TO USERSPACE ===
-        // Special instruction to return from call to userspace
+        // Special instruction to return from invoke to userspace
         // Restores user CS/SS, jumps to address in rcx, restores flags from r11
         "sysretq",
 

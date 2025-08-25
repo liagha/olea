@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 pub mod boot;
-pub mod calls;
+pub mod invoke;
 pub mod descriptors;
 pub mod devices;
 pub mod interrupts;
@@ -24,6 +24,6 @@ pub fn register_task() {
 	}
 }
 
-pub fn init() {
+pub fn initialize() {
 	boot::early_init();
 }
