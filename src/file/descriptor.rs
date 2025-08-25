@@ -1,7 +1,9 @@
 use {
 	crate::{
-		io::{Error},
 		format::{Debug},
+		file::{
+			error::Error,
+		},
 		scheduler::get_io_interface,
 	}
 };
@@ -66,7 +68,7 @@ bitflags! {
 }
 
 pub fn read(descriptor: Descriptor, buffer: &mut [u8]) -> Result<usize, Error> {
-	let object = get_io_interface(descriptor)?;
+	let object = get_io_interface(descriptor).map_err(|_| Error::IoError)?;
 
 	if buffer.is_empty() {
 		return Ok(0);
@@ -76,7 +78,7 @@ pub fn read(descriptor: Descriptor, buffer: &mut [u8]) -> Result<usize, Error> {
 }
 
 pub fn write(descriptor: Descriptor, buffer: &[u8]) -> Result<usize, Error> {
-	let object = get_io_interface(descriptor)?;
+	let object = get_io_interface(descriptor).map_err(|_| Error::IoError)?;
 
 	if buffer.is_empty() {
 		return Ok(0);
@@ -86,5 +88,5 @@ pub fn write(descriptor: Descriptor, buffer: &[u8]) -> Result<usize, Error> {
 }
 
 pub fn fstat(descriptor: Descriptor) -> Result<FileStatus, Error> {
-	get_io_interface(descriptor)?.fstat()
+	get_io_interface(descriptor).map_err(|_| Error::IoError)?.fstat()
 }

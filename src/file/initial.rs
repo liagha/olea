@@ -1,9 +1,9 @@
 use {
 	crate::{
-		io::Error,
 		sync::spinlock::*,
 		file::{
 			SeekFrom,
+			error::Error,
 			descriptor::OpenOptions
 		},
 	},
@@ -71,6 +71,7 @@ impl RomHandle {
 			SeekFrom::End(n) => {
 				let guard = self.data.read();
 				let data = guard.len() as isize + n;
+				
 				if data >= 0 {
 					*pos_guard = data as usize;
 					Ok(data as usize)

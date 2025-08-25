@@ -23,6 +23,19 @@ use {
 
 static mut SCHEDULER: Option<scheduler::Scheduler> = None;
 
+#[inline]
+pub fn save_interrupt<F, R>(f: F) -> R
+where
+	F: FnOnce() -> R,
+{
+	let interrupt = interrupt_nested_disable();
+	let output = f();
+
+	interrupt_nested_enable(interrupt);
+
+	output
+}
+
 pub fn initialize() {
 	unsafe {
 		SCHEDULER = Some(scheduler::Scheduler::new());

@@ -1,5 +1,5 @@
 use crate::arch::memory::{PhysAddr, VirtAddr};
-use crate::collections::save_interrupt;
+use crate::scheduler::save_interrupt;
 use crate::consts::*;
 use crate::file::descriptor::{Descriptor, IoInterface};
 use crate::io::Error;

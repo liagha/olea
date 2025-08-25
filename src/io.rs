@@ -11,8 +11,6 @@ use {
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
-	BadPriority,
-	InvalidFsPath,
 	FileNotFound = numbers::FILE_NOT_FOUND as isize,
 	NotImplemented = numbers::NOT_IMPLEMENTED as isize,
 	IoError = numbers::IO_ERROR as isize,
@@ -20,6 +18,9 @@ pub enum Error {
 	InvalidArgument = numbers::INVALID_ARGUMENT as isize,
 	NoBufferSpace = numbers::NO_BUFFER_SPACE as isize,
 	ValueOverflow = numbers::VALUE_OVERFLOW as isize,
+	BadPriority,
+	InvalidFsPath,
+	FsError,
 }
 
 pub trait Read {

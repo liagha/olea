@@ -36,4 +36,4 @@ impl format::Write for SerialPort {
     }
 }
 
-pub static COM1: SpinlockIrqSave<SerialPort> = SpinlockIrqSave::new(SerialPort::new(0x3F8));
+pub static PORT: SpinlockIrqSave<SerialPort> = SpinlockIrqSave::new(SerialPort::new(0x3F8));

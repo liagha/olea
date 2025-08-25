@@ -4,12 +4,19 @@ mod initial;
 mod r#virtual;
 pub mod descriptor;
 pub mod standard;
+mod error;
+
+pub use {
+	error::Error,
+};
 
 use {
     crate::{
 		format::Debug,
-		file::r#virtual::Fs,
-		io::{Write, Read, Error},
+		io::{self, Write, Read},
+		file::{
+			r#virtual::Fs,
+		},
 		scheduler::{insert_io_interface, remove_io_interface},
 	},
     alloc::{
@@ -75,7 +82,7 @@ pub fn open(name: &str, flags: OpenOptions) -> Result<Descriptor, Error> {
 
 	let fs = unsafe { VFS_ROOT.as_mut().unwrap() };
 	if let Ok(file) = fs.open(name, flags) {
-		let fd = insert_io_interface(file)?;
+		let fd = insert_io_interface(file).map_err(|_| Error::IoError)?;
 		Ok(fd)
 	} else {
 		Err(Error::InvalidArgument)
@@ -128,14 +135,14 @@ impl File {
 }
 
 impl Read for File {
-	fn read(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
-		descriptor::read(self.fd, buf)
+	fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
+		descriptor::read(self.fd, buf).map_err(|_| io::Error::FsError)
 	}
 }
 
 impl Write for File {
-	fn write(&mut self, buf: &[u8]) -> Result<usize, Error> {
-		descriptor::write(self.fd, buf)
+	fn write(&mut self, buf: &[u8]) -> Result<usize, io::Error> {
+		descriptor::write(self.fd, buf).map_err(|_| io::Error::FsError)
 	}
 }
 

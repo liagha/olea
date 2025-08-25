@@ -6,8 +6,10 @@ use crate::arch::vga;
 
 use {
 	crate::{
-		io::Error,
-		file::descriptor::IoInterface,
+		file::{
+			error::Error,
+			descriptor::IoInterface,
+		},
 	},
 };
 
@@ -31,7 +33,7 @@ impl IoInterface for GenericStdout {
 			if #[cfg(feature = "vga")] {
 				vga::VGA_SCREEN.lock().write_bytes(buf);
 			} else {
-				serial::COM1.lock().write_bytes(buf);
+				serial::PORT.lock().write_bytes(buf);
 			}
 		}
 
@@ -54,7 +56,7 @@ impl IoInterface for GenericStderr {
 			if #[cfg(feature = "vga")] {
 				vga::VGA_SCREEN.lock().write_bytes(buf);
 			} else {
-				serial::COM1.lock().write_bytes(buf);
+				serial::PORT.lock().write_bytes(buf);
 			}
 		}
 
