@@ -10,22 +10,21 @@ use alloc::vec::Vec;
 use {
 	alloc::string::String,
 	olea::{
+		io::{self, Read},
+		file::vfs::File,
+		scheduler::{self, task::NORMAL_PRIORITY},
 		arch::{
 			process_elf,
 			kernel::interrupts::interrupt_enable,
 		},
-		scheduler::{self, task::NORMAL_PRIORITY},
 	},
 };
-use olea::io;
 
 extern "C" fn create_user() {
 	pub fn load_file(path: &String) -> Result<Vec<u8>, io::Error> {
-		use olea::io::Read;
-
 		debug!("attempting to load application from path.");
 
-		let mut file = olea::file::File::open(path).map_err(|_| io::Error::FsError)?;
+		let mut file = File::open(path).map_err(|_| io::Error::FsError)?;
 		let length = file.len().map_err(|_| io::Error::FsError)?;
 
 		if length == 0 {

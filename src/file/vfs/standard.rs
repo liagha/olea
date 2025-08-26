@@ -3,9 +3,11 @@ use crate::arch::serial;
 #[cfg(feature = "vga")]
 use crate::arch::vga;
 
-use crate::file::{
-	error::Error,
-	descriptor::Interface,
+use {
+	super::{
+		error::Error,
+		descriptor::Interface,
+	}
 };
 
 #[derive(Debug)]

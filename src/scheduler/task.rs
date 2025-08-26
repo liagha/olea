@@ -15,8 +15,14 @@ use {
 			},
 		},
 		consts::*,
-  file::descriptor::{
-            Descriptor, Interface, STANDARD_ERROR, STANDARD_INPUT, STANDARD_OUTPUT,
+		file::{
+			vfs::{
+				standard::{GenericStandardError, GenericStandardInput, GenericStandardOutput},
+				
+				descriptor::{
+					Descriptor, Interface, STANDARD_ERROR, STANDARD_INPUT, STANDARD_OUTPUT,
+				},
+			},
 		},
 		format,
 	},
@@ -26,7 +32,6 @@ use {
 	},
 	core::cell::RefCell,
 };
-use crate::file::standard::{GenericStandardError, GenericStandardInput, GenericStandardOutput};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum TaskStatus {

@@ -1,7 +1,11 @@
-use crate::{
-	format::Debug,
-	file::{error::Error, types::Metadata},
-	scheduler::get_io_interface,
+use {
+	super::{
+		error::Error, types::Metadata
+	},
+	crate::{
+		format::Debug,
+		scheduler::get_io_interface,
+	}
 };
 
 pub type Descriptor = i32;

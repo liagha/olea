@@ -1,16 +1,32 @@
-use crate::arch::memory::{PhysAddr, VirtAddr};
-use crate::scheduler::save_interrupt;
-use crate::consts::*;
-use crate::file::descriptor::{Descriptor, Interface};
-use crate::io::Error;
-use crate::scheduler::task::*;
-use alloc::collections::{BTreeMap, VecDeque};
-use alloc::rc::Rc;
-use alloc::sync::Arc;
-use core::cell::RefCell;
-use core::sync::atomic::{AtomicU32, Ordering};
-use crate::arch::kernel::scheduling::switch;
-use crate::arch::memory::paging::drop_user_space;
+use {
+	super::save_interrupt,
+	crate::{
+		io::Error,
+		consts::*,
+		scheduler::task::*,
+		file::{
+			vfs::{
+				descriptor::{Descriptor, Interface},
+			},
+		},
+		arch::{
+			memory::{
+				PhysAddr, VirtAddr,
+				paging::drop_user_space,
+			},
+			kernel::scheduling::switch,
+		},
+	},
+	core::{
+		cell::RefCell,
+		sync::atomic::{AtomicU32, Ordering},
+	},
+	alloc::{
+		rc::Rc,
+		sync::Arc,
+		collections::{BTreeMap, VecDeque}
+	},
+};
 
 static TID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
@@ -183,7 +199,7 @@ impl Scheduler {
 			if let Some(io_interface) = self.current_task.borrow().fd_map.get(&fd) {
 				Ok(io_interface.clone())
 			} else {
-				Err(crate::io::Error::FileNotFound)
+				Err(Error::FileNotFound)
 			}
 		};
 

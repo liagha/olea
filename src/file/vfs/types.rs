@@ -1,4 +1,8 @@
-use crate::file::NodeKind;
+use {
+    super::{
+        NodeKind,
+    },
+};
 
 bitflags! {
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]

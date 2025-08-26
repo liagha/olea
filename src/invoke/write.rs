@@ -1,4 +1,14 @@
-use crate::file::descriptor::Descriptor;
+use {
+	crate::{
+		file::{
+			vfs::{
+				descriptor::{
+					self, Descriptor
+				},
+			},
+		},
+	},
+};
 
 /// I/O Vector structure for vectored I/O operations
 /// Represents a single buffer in a scatter-gather I/O operation
@@ -34,7 +44,7 @@ pub unsafe extern "C" fn write_vector(
 		let slice = core::slice::from_raw_parts(i.base, i.length);
 
 		// Attempt to write this buffer
-		let tmp: isize = crate::file::descriptor::write(descriptor, slice).map_or_else(
+		let tmp: isize = descriptor::write(descriptor, slice).map_or_else(
 			// On error: return negative error code
 			|e| -(e as isize),
 			// On success: return number of bytes written
@@ -68,7 +78,7 @@ pub unsafe extern "C" fn write(descriptor: Descriptor, buffer: *mut u8, length: 
 	let slice = unsafe { core::slice::from_raw_parts(buffer, length) };
 
 	// Call the file descriptor write function
-	crate::file::descriptor::write(descriptor, slice).map_or_else(
+	descriptor::write(descriptor, slice).map_or_else(
 		|e| -(e as isize),
 		|v| v.try_into().unwrap(),
 	)

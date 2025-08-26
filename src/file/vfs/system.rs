@@ -1,15 +1,14 @@
-use alloc::string::ToString;
 use {
+	super::{
+		NodeKind,
+		handle::{RamHandle, RomHandle},
+		descriptor::{OpenOptions, State, Interface},
+		error::Error,
+		types::{Permission, Metadata},
+	},
 	crate::{
 		format::{
 			self, Debug,
-		},
-		file::{
-			NodeKind,
-			handle::{RamHandle, RomHandle},
-   descriptor::{OpenOptions, State, Interface},
-				error::Error,
-				types::Permission, 
 		},
 		sync::spinlock::*,
 	},
@@ -17,16 +16,11 @@ use {
 	alloc::{
 		boxed::Box,
 		collections::BTreeMap,
-		string::String,
+		string::{String, ToString},
 		sync::Arc,
 		vec::Vec,
 	},
 };
-
-type Permissions = Permission;
-
-pub type Metadata = crate::file::types::Metadata;
-
 
 pub trait Node: Debug + Send + Sync {
 	fn get_kind(&self) -> NodeKind;
@@ -382,7 +376,7 @@ impl Interface for File {
 		Ok(State { size })
 	}
 
-	fn metadata(&self) -> Result<crate::file::types::Metadata, Error> {
+	fn metadata(&self) -> Result<Metadata, Error> {
 		Ok(self.metadata)
 	}
 }

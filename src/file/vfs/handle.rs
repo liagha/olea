@@ -1,10 +1,10 @@
 use {
+	super::{
+		descriptor::OpenOptions,
+		error::Error,
+	},
 	crate::{
 		sync::spinlock::*,
-		file::{
-			descriptor::OpenOptions,
-			error::Error,
-		},
 	},
 	spinning_top::RwSpinlock,
 	core::ops::{Deref, DerefMut},

@@ -3,10 +3,14 @@ pub mod task;
 
 use {
 	crate::{
-        io::Error,
-        scheduler::task::{Task, TaskPriority},
-        file::descriptor::{Descriptor, Interface},
-        arch::{
+		io::Error,
+		scheduler::task::{Task, TaskPriority},
+		file::{
+			vfs::{
+				descriptor::{Descriptor, Interface},
+			},
+		},
+		arch::{
 			memory::{PhysAddr, VirtAddr},
 			kernel::{
 				register_task,
