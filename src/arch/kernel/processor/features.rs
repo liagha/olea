@@ -3,7 +3,7 @@ use {
         arch::{
             asm,
             memory::get_boot_stack,
-            kernel::invoke::call,
+            kernel::invoke::invoke_handler,
             x86::*,
         },
         scheduler::task::Stack,
@@ -94,7 +94,7 @@ pub fn enable_features() {
     unsafe {
         wrmsr(IA32_EFER, rdmsr(IA32_EFER) | LONG_MODE_ACTIVE | SYSTEM_CALL_ENABLE | NO_EXECUTE_ENABLE);
         wrmsr(IA32_STAR, (0x1Bu64 << 48) | (0x08u64 << 32));
-        wrmsr(IA32_LSTAR, (call as usize).try_into().unwrap());
+        wrmsr(IA32_LSTAR, (invoke_handler as usize).try_into().unwrap());
         wrmsr(IA32_FMASK, 1 << 9);
 
         wrmsr(IA32_GS_BASE, 0);

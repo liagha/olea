@@ -12,10 +12,10 @@ use {
 
 /// I/O Vector structure for vectored I/O operations
 /// Represents a single buffer in a scatter-gather I/O operation
-#[repr(C)]  // Use C layout for compatibility with userspace
+#[repr(C)]  
 pub struct BufferSegment {
-	pub base: *const u8,  // Pointer to buffer
-	pub length: usize,       // Length of buffer
+	pub base: *const u8,  
+	pub length: usize,  
 }
 
 /// Handler for writev() system invoke - write data from multiple buffers
@@ -33,34 +33,26 @@ pub unsafe extern "C" fn write_vector(
     count: i32,
 ) -> isize {
 	debug!("enter invoke writev.");
-	let mut len: isize = 0;
+	let mut length: isize = 0;
 
-	// Convert raw pointer and count to safe Rust slice
-	let iovec = core::slice::from_raw_parts(pointer, count as usize);
+	let segment = core::slice::from_raw_parts(pointer, count as usize);
 
-	// Process each I/O vector in the array
-	for i in iovec {
-		// Convert each buffer to a Rust slice
-		let slice = core::slice::from_raw_parts(i.base, i.length);
+	for buffer in segment {
+		let slice = core::slice::from_raw_parts(buffer.base, buffer.length);
 
-		// Attempt to write this buffer
-		let tmp: isize = descriptor::write(descriptor, slice).map_or_else(
-			// On error: return negative error code
-			|e| -(e as isize),
-			// On success: return number of bytes written
-			|v| v.try_into().unwrap(),
+		let temporary: isize = descriptor::write(descriptor, slice).map_or_else(
+			|error| -(error as isize),
+			|vector| vector.try_into().unwrap(),
 		);
 
-		len += tmp;
+		length += temporary;
 
-		// If we wrote fewer bytes than requested, stop processing
-		// This indicates the output buffer is full or an error occurred
-		if tmp < i.length as isize {
+		if temporary < buffer.length as isize {
 			break;
 		}
 	}
 
-	len  // Return total bytes written
+	length  
 }
 
 /// Handler for write() system invoke - write data from single buffer
@@ -74,12 +66,10 @@ pub unsafe extern "C" fn write_vector(
 pub unsafe extern "C" fn write(descriptor: Descriptor, buffer: *mut u8, length: usize) -> isize {
 	debug!("enter invoke write.");
 
-	// Convert raw pointer and length to safe Rust slice
 	let slice = unsafe { core::slice::from_raw_parts(buffer, length) };
 
-	// Call the file descriptor write function
 	descriptor::write(descriptor, slice).map_or_else(
-		|e| -(e as isize),
-		|v| v.try_into().unwrap(),
+		|error| -(error as isize),
+		|vector| vector.try_into().unwrap(),
 	)
 }

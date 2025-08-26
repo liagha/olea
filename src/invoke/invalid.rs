@@ -9,8 +9,8 @@ use {
 /// Takes invoke number as parameter and terminates the process
 extern "C" fn invalid_syscall(sys_no: u64) -> ! {
 	error!("invalid invoke {}.", sys_no);
-	// Terminate process that made invalid invoke
-	do_exit();
+	
+	exit();
 }
 
 /// Handler for invalid/unimplemented system invoke

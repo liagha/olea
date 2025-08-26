@@ -25,7 +25,7 @@ use {
 	},
 };
 
-static DEMO: &[u8] = include_bytes!("../../../demo/hello");
+static DEMO: &[u8] = include_bytes!("../../../demo/hello_kernel");
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum NodeKind {

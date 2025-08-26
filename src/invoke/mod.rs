@@ -38,70 +38,45 @@ pub mod numbers {
 	pub const EXIT_GROUP: usize = 231;
 
 	/// Total number of possible system invoke in the table
-	pub const MAX_CALLS: usize = 400;
+	pub const MAX_INVOKES: usize = 400;
 }
 
-/// System invoke dispatch table
-/// Maps system invoke numbers to their handler functions
-/// Aligned to 64-byte boundary for optimal cache performance
-#[repr(align(64))]  // Cache line alignment for performance
-#[repr(C)]          // C layout to ensure predictable memory layout
-pub struct CallTable {
-	/// Array of function pointers, indexed by system invoke number
-	/// Each entry points to a system invoke handler function
-	handle: [*const usize; numbers::MAX_CALLS],
+#[repr(align(64))]
+#[repr(C)]       
+pub struct InvokeTable {
+	handle: [*const usize; numbers::MAX_INVOKES],
 }
 
-impl CallTable {
-	/// Create a new system invoke table with all entries initialized
-	/// This must be const fn to allow static initialization
+impl InvokeTable {
 	pub const fn default() -> Self {
-		// Initialize all entries to point to invalid invoke handler
-		// This ensures that unimplemented syscalls are caught
-		let mut table = CallTable {
-			handle: [invalid as *const _; numbers::MAX_CALLS],
+		let mut table = InvokeTable {
+			handle: [invalid as *const _; numbers::MAX_INVOKES],
 		};
 
-		// Implemented Calls
-		// Map specific invoke numbers to their handler functions
+		table.handle[numbers::WRITE] = write as *const _;             
+		table.handle[numbers::WRITE_VECTOR] = write_vector as *const _;  
 
-		// I/O operations
-		table.handle[numbers::WRITE] = write as *const _;                  // Write to file descriptor
-		table.handle[numbers::WRITE_VECTOR] = write_vector as *const _;    // Vectored write
+		table.handle[numbers::CLOSE] = nothing as *const _;     
+		table.handle[numbers::IO_CONTROL] = nothing as *const _;  
 
-		// File operations (stubbed out)
-		table.handle[numbers::CLOSE] = nothing as *const _;         // Close file (no-op)
-		table.handle[numbers::IO_CONTROL] = nothing as *const _;    // I/O control (no-op)
+		table.handle[numbers::EXIT] = exit as *const _;  
+		table.handle[numbers::EXIT_GROUP] = exit as *const _; 
 
-		// Process control
-		table.handle[numbers::EXIT] = exit as *const _;        // Exit process
-		table.handle[numbers::EXIT_GROUP] = exit as *const _;  // Exit all threads
-
-		// Thread/architecture control (stubbed out)
-		table.handle[numbers::ARCH_PROCESS_CONTROL] = nothing as *const _;       // Arch control (no-op)
-		table.handle[numbers::SET_THREAD_ID_ADDRESS] = nothing as *const _;      // Set TID address (no-op)
+		table.handle[numbers::ARCH_PROCESS_CONTROL] = nothing as *const _;  
+		table.handle[numbers::SET_THREAD_ID_ADDRESS] = nothing as *const _;   
 
 		table
 	}
 }
 
-// Safety Implementations
-// These are required because the table contains raw function pointers
-// We assert that the table can be safely shared between threads
+unsafe impl Send for InvokeTable {}
 
-/// Safe to send between threads because function pointers are immutable
-unsafe impl Send for CallTable {}
+unsafe impl Sync for InvokeTable {}
 
-/// Safe to share references between threads because table is read-only after init
-unsafe impl Sync for CallTable {}
-
-impl Default for CallTable {
+impl Default for InvokeTable {
 	fn default() -> Self {
 		Self::default()
 	}
 }
 
-/// Global system invoke handler table
-/// This is accessed by the assembly code in the invoke entry point
-/// Static initialization ensures it's available at boot time
-pub static CALL_TABLE: CallTable = CallTable::default();
+pub static INVOKE_TABLE: InvokeTable = InvokeTable::default();

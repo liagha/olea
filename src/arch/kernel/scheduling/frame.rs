@@ -4,7 +4,7 @@ use {
         arch::memory::VirtAddr,
         scheduler::{
             task::*,
-            do_exit, get_current_taskid,
+            exit, get_current_taskid,
         },
     },
     core::{
@@ -56,7 +56,7 @@ struct State {
 extern "C" fn leave_task() -> ! {
     debug!("finished task {}.", get_current_taskid());
 
-    do_exit();
+    exit();
 }
 
 impl TaskFrame for Task {

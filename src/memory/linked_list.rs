@@ -14,23 +14,19 @@ impl LinkedList {
 		}
 	}
 
-	/// check if the list is empty
 	pub fn is_empty(&self) -> bool {
 		self.head.is_null()
 	}
 
-	/// add address to the front of the list
 	pub unsafe fn push(&mut self, item: *mut usize) {
 		*item = self.head as usize;
 		self.head = item;
 	}
 
-	/// Try to remove the first item in the list
 	pub fn pop(&mut self) -> Option<*mut usize> {
 		match self.is_empty() {
 			true => None,
 			false => {
-				// Advance head pointer
 				let item = self.head;
 				self.head = unsafe { *item as *mut usize };
 				Some(item)
@@ -38,7 +34,6 @@ impl LinkedList {
 		}
 	}
 
-	/// Return an iterator over the items in the list
 	pub fn iter(&self) -> Iter {
 		Iter {
 			curr: self.head,
@@ -46,7 +41,6 @@ impl LinkedList {
 		}
 	}
 
-	/// Return an mutable iterator over the items in the list
 	pub fn iter_mut(&mut self) -> IterMut {
 		IterMut {
 			prev: &mut self.head as *mut *mut usize as *mut usize,
@@ -56,7 +50,6 @@ impl LinkedList {
 	}
 }
 
-/// A simple iterator for the linked list
 pub struct Iter<'a> {
 	curr: *mut usize,
 	list: PhantomData<&'a LinkedList>,
@@ -77,29 +70,24 @@ impl<'a> Iterator for Iter<'a> {
 	}
 }
 
-/// Represent a mutable node in `LinkedList`
 pub struct ListNode {
 	prev: *mut usize,
 	curr: *mut usize,
 }
 
 impl ListNode {
-	/// Remove the current node from the list
 	pub fn remove(self) -> *mut usize {
-		// Skip the current one
 		unsafe {
 			*(self.prev) = *(self.curr);
 		}
 		self.curr
 	}
 
-	/// Returns the pointed address
 	pub fn value(&self) -> *mut usize {
 		self.curr
 	}
 }
 
-/// A mutable iterator over the linked list
 pub struct IterMut<'a> {
 	list: PhantomData<&'a mut LinkedList>,
 	prev: *mut usize,

@@ -6,7 +6,6 @@ use core::cmp::{max, min};
 use core::fmt;
 use core::ptr::NonNull;
 
-/// Minimal size of an allocated memory block
 const MIN_ALLOC_SIZE: usize = 128;
 
 #[derive(Debug)]
@@ -21,16 +20,12 @@ pub struct BuddySystem<const ORDER: usize> {
 }
 
 impl<const ORDER: usize> BuddySystem<ORDER> {
-	/// Constructs an empty buddy system.
 	pub const fn new() -> Self {
 		Self {
 			free_list: [linked_list::LinkedList::new(); ORDER],
 		}
 	}
 
-	/// Initialize buddy system. `start` specifies the
-	/// start address of the heap, while `len` specifies#
-	/// the heap size.
 	pub unsafe fn init(&mut self, start: *mut u8, len: usize) {
 		assert!(
 			len.is_power_of_two(),
@@ -52,10 +47,6 @@ impl<const ORDER: usize> BuddySystem<ORDER> {
 		}
 	}
 
-	/// Allocates memory as described by the given `layout`.
-	///
-	/// Returns as result a pointer to newly-allocated memory,
-	/// or an error, which describes the reason of the error.
 	pub fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocatorError> {
 		let size = max(
 			layout.size().next_power_of_two(),
@@ -68,10 +59,7 @@ impl<const ORDER: usize> BuddySystem<ORDER> {
 		}
 
 		for i in order..self.free_list.len() {
-			// Find the first non-empty list, which handles a block of
-			// memory with an equal or a larger size as the requested size
 			if !self.free_list[i].is_empty() {
-				// Split larger blocks in two buddies
 				for j in (order + 1..i + 1).rev() {
 					if let Some(block) = self.free_list[j].pop() {
 						unsafe {
@@ -95,7 +83,6 @@ impl<const ORDER: usize> BuddySystem<ORDER> {
 		Err(AllocatorError::OutOfMemory)
 	}
 
-	/// Deallocates the block of memory at the given `ptr` pointer with the given layout.
 	pub fn dealloc(&mut self, ptr: NonNull<u8>, layout: Layout) {
 		let size = max(
 			layout.size().next_power_of_two(),
@@ -104,25 +91,19 @@ impl<const ORDER: usize> BuddySystem<ORDER> {
 		let order: usize = size.trailing_zeros().try_into().unwrap();
 
 		unsafe {
-			// add block to free list
 			self.free_list[order].push(ptr.as_ptr() as *mut usize);
 
-			// Try to merge two buddies to one buddy
 			let mut current_ptr = ptr.as_ptr() as usize;
 			let mut current_order = order;
 
 			'outer: while current_order < self.free_list.len() - 1 {
 				let block_size = 1 << current_order;
 
-				// the list is unordered => check all nodes to find a buddy
 				for block in self.free_list[current_order].iter_mut() {
 					let buddy = block.value() as usize;
 					if buddy == current_ptr + block_size || buddy == current_ptr - block_size {
-						// remove current block from the list
 						block.remove();
-						// the first node of the list includes `ptr`
 						self.free_list[current_order].pop().unwrap();
-						// merge buddies
 						current_ptr = min(current_ptr, buddy);
 						current_order += 1;
 						self.free_list[current_order].push(current_ptr as *mut usize);
@@ -130,7 +111,6 @@ impl<const ORDER: usize> BuddySystem<ORDER> {
 					}
 				}
 
-				// no buddy merged => leave while loop
 				break;
 			}
 		}
@@ -138,7 +118,6 @@ impl<const ORDER: usize> BuddySystem<ORDER> {
 }
 
 impl<const ORDER: usize> fmt::Debug for BuddySystem<ORDER> {
-	/// Print all elements of the lists
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		for order in (0..self.free_list.len()).rev() {
 			if !self.free_list[order].is_empty() {
@@ -156,12 +135,9 @@ impl<const ORDER: usize> fmt::Debug for BuddySystem<ORDER> {
 	}
 }
 
-/// A memory allocator that can be registered as default allocator through
-/// the #[global_allocator] attribute.
 pub struct LockedHeap<const ORDER: usize>(Spinlock<BuddySystem<ORDER>>);
 
 impl<const ORDER: usize> LockedHeap<ORDER> {
-	/// Constructs an empty buddy system
 	pub const fn new() -> Self {
 		LockedHeap(Spinlock::new(BuddySystem::<ORDER>::new()))
 	}

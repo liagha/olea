@@ -97,7 +97,6 @@ impl InterruptDescriptorTable {
                     0,
                 );
             } else {
-                // send  eoi to the master and to the slave
                 self.interrupts[int_no] = InterruptEntry::new(
                     VAddr::from_usize(unhandled_irq2 as usize),
                     KERNEL_CODE_SELECTOR,

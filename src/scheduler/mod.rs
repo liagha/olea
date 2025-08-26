@@ -60,7 +60,7 @@ pub fn schedule() {
 	unsafe { SCHEDULER.as_mut().unwrap().schedule() }
 }
 
-pub fn do_exit() -> ! {
+pub fn exit() -> ! {
 	unsafe {
 		SCHEDULER.as_mut().unwrap().exit();
 	}

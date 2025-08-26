@@ -1,7 +1,7 @@
 use {
     crate::{
         arch::naked_asm,
-        invoke::CALL_TABLE,
+        invoke::INVOKE_TABLE,
     },
 };
 
@@ -16,7 +16,7 @@ use {
 /// - rsp: still pointing to userspace stack
 /// - CS/SS: switched to kernel segments by CPU
 #[naked]
-pub unsafe extern "C" fn call() {
+pub unsafe extern "C" fn invoke_handler() {
     naked_asm!(
         // === SAVE USER CONTEXT ===
         // Save all caller-saved registers that might be clobbered
@@ -84,7 +84,7 @@ pub unsafe extern "C" fn call() {
         "sysretq",
 
         // Tell assembler that SYSHANDLER_TABLE symbol should be used
-        sys_handler = sym CALL_TABLE,
+        sys_handler = sym INVOKE_TABLE,
         options(noreturn)  // This function never returns normally
     );
 }
