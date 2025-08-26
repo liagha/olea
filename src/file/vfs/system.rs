@@ -26,8 +26,8 @@ pub trait Node: Debug + Send + Sync {
 	fn get_kind(&self) -> NodeKind;
 	fn get_metadata(&self) -> Metadata;
 	fn get_handle(&self, _opt: OpenOptions) -> Result<Arc<dyn Interface>, Error> { Err(Error::NotImplemented) }
-	fn traverse_mkdir(&mut self, _components: &mut Vec<&str>, _metadata: Metadata) -> Result<(), Error> { Err(Error::NotImplemented) }
-	fn traverse_lsdir(&self, _tabs: String) -> Result<(), Error> { Err(Error::NotImplemented) }
+	fn traverse_make(&mut self, _components: &mut Vec<&str>, _metadata: Metadata) -> Result<(), Error> { Err(Error::NotImplemented) }
+	fn traverse_list(&self, _tabs: String) -> Result<(), Error> { Err(Error::NotImplemented) }
 	fn traverse_open(&mut self, _components: &mut Vec<&str>, _flags: OpenOptions, _visited: &mut Vec<String>) -> Result<Arc<dyn Interface>, Error> { Err(Error::NotImplemented) }
 	fn traverse_mount(&mut self, _components: &mut Vec<&str>, _slice: &'static [u8]) -> Result<(), Error> { Err(Error::NotImplemented) }
 	fn traverse_unlink(&mut self, _components: &mut Vec<&str>) -> Result<(), Error> { Err(Error::NotImplemented) }
@@ -36,8 +36,8 @@ pub trait Node: Debug + Send + Sync {
 }
 
 pub trait VirtualSystem: Debug + Send + Sync {
-	fn mkdir(&mut self, path: &String) -> Result<(), Error>;
-	fn lsdir(&self) -> Result<(), Error>;
+	fn make(&mut self, path: &String) -> Result<(), Error>;
+	fn list(&self) -> Result<(), Error>;
 	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn Interface>, Error>;
 	fn mount(&mut self, path: &String, slice: &'static [u8]) -> Result<(), Error>;
 	fn symlink(&mut self, target: &String, link: &String) -> Result<(), Error>;
@@ -83,20 +83,20 @@ impl Node for Directory {
 }
 
 impl Directory {
-	fn traverse_mkdir(&mut self, components: &mut Vec<&str>, metadata: Metadata) -> Result<(), Error> {
+	fn traverse_make_directory(&mut self, components: &mut Vec<&str>, metadata: Metadata) -> Result<(), Error> {
 		if !self.metadata.permission.can_write() {
 			return Err(Error::PermissionDenied);
 		}
 		if let Some(component) = components.pop() {
 			let node_name = String::from(component);
 			if let Some(directory) = self.get_mut::<Directory>(&node_name) {
-				return directory.traverse_mkdir(components, metadata);
+				return directory.traverse_make_directory(components, metadata);
 			}
 			let mut directory = Box::new(Directory {
 				children: BTreeMap::new(),
 				metadata,
 			});
-			let result = directory.traverse_mkdir(components, metadata);
+			let result = directory.traverse_make_directory(components, metadata);
 			self.children.insert(node_name, directory);
 			result
 		} else {
@@ -104,12 +104,12 @@ impl Directory {
 		}
 	}
 
-	fn traverse_lsdir(&self, mut tabs: String) -> Result<(), Error> {
+	fn traverse_list_directory(&self, mut tabs: String) -> Result<(), Error> {
 		tabs.push_str("  ");
 		for (name, node) in self.children.iter() {
 			if let Some(directory) = node.downcast_ref::<Directory>() {
 				info!("{}{} ({:?})", tabs, name, directory.get_kind());
-				directory.traverse_lsdir(tabs.clone())?;
+				directory.traverse_list_directory(tabs.clone())?;
 			} else if let Some(file) = node.downcast_ref::<File>() {
 				info!("{}{} ({:?})", tabs, name, file.get_kind());
 			} else if let Some(symlink) = node.downcast_ref::<SymbolLink>() {
@@ -420,19 +420,19 @@ impl FileSystem {
 }
 
 impl VirtualSystem for FileSystem {
-	fn mkdir(&mut self, path: &String) -> Result<(), Error> {
+	fn make(&mut self, path: &String) -> Result<(), Error> {
 		if check_path(path) {
 			let mut components: Vec<&str> = path.split("/").filter(|&s| !s.is_empty()).collect();
 			components.reverse();
-			self.handle.lock().traverse_mkdir(&mut components, Metadata::new(NodeKind::Directory))
+			self.handle.lock().traverse_make_directory(&mut components, Metadata::new(NodeKind::Directory))
 		} else {
 			Err(Error::InvalidFsPath)
 		}
 	}
 
-	fn lsdir(&self) -> Result<(), Error> {
+	fn list(&self) -> Result<(), Error> {
 		info!("/");
-		self.handle.lock().traverse_lsdir(String::from(""))
+		self.handle.lock().traverse_list_directory(String::from(""))
 	}
 
 	fn open(&mut self, path: &str, flags: OpenOptions) -> Result<Arc<dyn Interface>, Error> {

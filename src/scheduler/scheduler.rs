@@ -31,26 +31,26 @@ use {
 static TID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 pub struct Scheduler {
-	current_task: Rc<RefCell<Task>>,
-	idle_task: Rc<RefCell<Task>>,
-	ready_queue: PriorityTaskQueue,
-	finished_tasks: VecDeque<TaskId>,
+	current: Rc<RefCell<Task>>,
+	idle: Rc<RefCell<Task>>,
+	ready: PriorityTaskQueue,
+	finished: VecDeque<TaskId>,
 	tasks: BTreeMap<TaskId, Rc<RefCell<Task>>>,
 }
 
 impl Scheduler {
 	pub fn new() -> Scheduler {
-		let tid = TaskId::from(TID_COUNTER.fetch_add(1, Ordering::SeqCst));
-		let idle_task = Rc::new(RefCell::new(Task::new_idle(tid)));
+		let task_id = TaskId::from(TID_COUNTER.fetch_add(1, Ordering::SeqCst));
+		let idle = Rc::new(RefCell::new(Task::new_idle(task_id)));
 		let mut tasks = BTreeMap::new();
 
-		tasks.insert(tid, idle_task.clone());
+		tasks.insert(task_id, idle.clone());
 
 		Scheduler {
-			current_task: idle_task.clone(),
-			idle_task: idle_task.clone(),
-			ready_queue: PriorityTaskQueue::new(),
-			finished_tasks: VecDeque::<TaskId>::new(),
+			current: idle.clone(),
+			idle: idle.clone(),
+			ready: PriorityTaskQueue::new(),
+			finished: VecDeque::<TaskId>::new(),
 			tasks,
 		}
 	}
@@ -78,7 +78,7 @@ impl Scheduler {
 
 			task.borrow_mut().create_stack_frame(func);
 
-			self.ready_queue.push(task.clone());
+			self.ready.push(task.clone());
 			self.tasks.insert(tid, task);
 
 			info!("creating task {}.", tid);
@@ -92,13 +92,13 @@ impl Scheduler {
 	fn cleanup(&mut self) {
 		drop_user_space();
 
-		self.current_task.borrow_mut().status = TaskStatus::Finished;
+		self.current.borrow_mut().status = TaskStatus::Finished;
 	}
 
 	pub fn exit(&mut self) -> ! {
 		let closure = || {
-			if self.current_task.borrow().status != TaskStatus::Idle {
-				info!("finished task with id {}.", self.current_task.borrow().id);
+			if self.current.borrow().status != TaskStatus::Idle {
+				info!("finished task with id {}.", self.current.borrow().id);
 				self.cleanup();
 			} else {
 				panic!("unable to terminate idle task.");
@@ -114,8 +114,8 @@ impl Scheduler {
 
 	pub fn abort(&mut self) -> ! {
 		let closure = || {
-			if self.current_task.borrow().status != TaskStatus::Idle {
-				info!("abort task with id {}.", self.current_task.borrow().id);
+			if self.current.borrow().status != TaskStatus::Idle {
+				info!("abort task with id {}.", self.current.borrow().id);
 				self.cleanup();
 			} else {
 				panic!("unable to terminate idle task.");
@@ -131,13 +131,13 @@ impl Scheduler {
 
 	pub fn block_current_task(&mut self) -> Rc<RefCell<Task>> {
 		let closure = || {
-			if self.current_task.borrow().status == TaskStatus::Running {
-				debug!("block task {}.", self.current_task.borrow().id);
+			if self.current.borrow().status == TaskStatus::Running {
+				debug!("block task {}.", self.current.borrow().id);
 
-				self.current_task.borrow_mut().status = TaskStatus::Blocked;
-				self.current_task.clone()
+				self.current.borrow_mut().status = TaskStatus::Blocked;
+				self.current.clone()
 			} else {
-				panic!("unable to block task {}.", self.current_task.borrow().id);
+				panic!("unable to block task {}.", self.current.borrow().id);
 			}
 		};
 
@@ -150,7 +150,7 @@ impl Scheduler {
 				debug!("wakeup task {}.", task.borrow().id);
 
 				task.borrow_mut().status = TaskStatus::Ready;
-				self.ready_queue.push(task.clone());
+				self.ready.push(task.clone());
 			}
 		};
 
@@ -164,7 +164,7 @@ impl Scheduler {
 		let new_fd = || -> Result<Descriptor, Error> {
 			let mut fd: Descriptor = 0;
 			loop {
-				if !self.current_task.borrow().fd_map.contains_key(&fd) {
+				if !self.current.borrow().fd_map.contains_key(&fd) {
 					break Ok(fd);
 				} else if fd == Descriptor::MAX {
 					break Err(Error::ValueOverflow);
@@ -175,7 +175,7 @@ impl Scheduler {
 		};
 
 		let fd = new_fd()?;
-		self.current_task
+		self.current
 			.borrow_mut()
 			.fd_map
 			.insert(fd, io_interface.clone());
@@ -184,7 +184,7 @@ impl Scheduler {
 	}
 
 	pub fn remove_io_interface(&self, fd: Descriptor) -> Result<Arc<dyn Interface>, Error> {
-		self.current_task
+		self.current
 			.borrow_mut()
 			.fd_map
 			.remove(&fd)
@@ -196,7 +196,7 @@ impl Scheduler {
 		fd: Descriptor,
 	) -> Result<Arc<dyn Interface>, Error> {
 		let closure = || {
-			if let Some(io_interface) = self.current_task.borrow().fd_map.get(&fd) {
+			if let Some(io_interface) = self.current.borrow().fd_map.get(&fd) {
 				Ok(io_interface.clone())
 			} else {
 				Err(Error::FileNotFound)
@@ -207,31 +207,31 @@ impl Scheduler {
 	}
 
 	pub fn get_current_taskid(&self) -> TaskId {
-		save_interrupt(|| self.current_task.borrow().id)
+		save_interrupt(|| self.current.borrow().id)
 	}
 
 	#[no_mangle]
 	pub fn get_current_interrupt_stack(&self) -> VirtAddr {
-		save_interrupt(|| (*self.current_task.borrow().stack).interrupt_top())
+		save_interrupt(|| (*self.current.borrow().stack).interrupt_top())
 	}
 
 	pub fn get_root_page_table(&self) -> PhysAddr {
-		self.current_task.borrow().root_page_table
+		self.current.borrow().root_page_table
 	}
 
 	pub fn set_root_page_table(&self, addr: PhysAddr) {
-		self.current_task.borrow_mut().root_page_table = addr;
+		self.current.borrow_mut().root_page_table = addr;
 	}
 
 	pub fn schedule(&mut self) {
-		if let Some(id) = self.finished_tasks.pop_front() {
+		if let Some(id) = self.finished.pop_front() {
 			if self.tasks.remove(&id).is_none() {
 				info!("unable to drop task {}.", id);
 			}
 		}
 
 		let (current_id, current_stack_pointer, current_priority, current_status) = {
-			let mut borrowed = self.current_task.borrow_mut();
+			let mut borrowed = self.current.borrow_mut();
 			(
 				borrowed.id,
 				&mut borrowed.last_stack_pointer as *mut VirtAddr,
@@ -242,9 +242,9 @@ impl Scheduler {
 
 		let mut next_task;
 		if current_status == TaskStatus::Running {
-			next_task = self.ready_queue.pop_with_priority(current_priority);
+			next_task = self.ready.pop_with_priority(current_priority);
 		} else {
-			next_task = self.ready_queue.pop();
+			next_task = self.ready.pop();
 		}
 
 		if next_task.is_none()
@@ -252,7 +252,7 @@ impl Scheduler {
 			&& current_status != TaskStatus::Idle
 		{
 			debug!("switch to idle task.");
-			next_task = Some(self.idle_task.clone());
+			next_task = Some(self.idle.clone());
 		}
 
 		if let Some(new_task) = next_task {
@@ -264,12 +264,12 @@ impl Scheduler {
 
 			if current_status == TaskStatus::Running {
 				debug!("add task {} to ready queue.", current_id);
-				self.current_task.borrow_mut().status = TaskStatus::Ready;
-				self.ready_queue.push(self.current_task.clone());
+				self.current.borrow_mut().status = TaskStatus::Ready;
+				self.ready.push(self.current.clone());
 			} else if current_status == TaskStatus::Finished {
 				debug!("task {} finished.", current_id);
-				self.current_task.borrow_mut().status = TaskStatus::Invalid;
-				self.finished_tasks.push_back(current_id);
+				self.current.borrow_mut().status = TaskStatus::Invalid;
+				self.finished.push_back(current_id);
 			}
 
 			debug!(
@@ -280,7 +280,7 @@ impl Scheduler {
 				new_stack_pointer
 			);
 
-			self.current_task = new_task;
+			self.current = new_task;
 
 			unsafe {
 				switch::perform_context_switch(current_stack_pointer, new_stack_pointer);

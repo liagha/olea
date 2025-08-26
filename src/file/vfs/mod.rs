@@ -7,7 +7,6 @@ pub mod descriptor;
 pub mod error;
 pub mod types;
 
-use alloc::format;
 pub use error::Error;
 
 use {
@@ -20,8 +19,9 @@ use {
 		scheduler::{insert_io_interface, remove_io_interface},
 	},
 	alloc::{
-		string::{String, ToString},
+		format,
 		vec::Vec,
+		string::{String, ToString},
 	},
 };
 
@@ -34,13 +34,13 @@ pub enum NodeKind {
 	Symlink,
 }
 
-pub fn lsdir() -> Result<(), Error> {
-	unsafe { system::ROOT.as_mut().unwrap().lsdir() }
+pub fn list() -> Result<(), Error> {
+	unsafe { system::ROOT.as_mut().unwrap().list() }
 }
 
-pub fn mkdir(path: &String) -> Result<(), Error> {
+pub fn make(path: &String) -> Result<(), Error> {
 	let path = normalize_path(path)?;
-	unsafe { system::ROOT.as_mut().unwrap().mkdir(&path) }
+	unsafe { system::ROOT.as_mut().unwrap().make(&path) }
 }
 
 pub fn open(name: &str, flags: descriptor::OpenOptions) -> Result<descriptor::Descriptor, Error> {
@@ -128,13 +128,13 @@ impl Drop for File {
 
 pub fn initialize() {
 	let mut root = system::FileSystem::new();
-	root.mkdir(&String::from("/bin")).unwrap();
-	root.mkdir(&String::from("/dev")).unwrap();
+	root.make(&String::from("/bin")).unwrap();
+	root.make(&String::from("/dev")).unwrap();
 	if DEMO.len() > 0 {
 		root.mount(&String::from("/bin/demo"), &DEMO)
 			.expect("Unable to mount file");
 	}
-	root.lsdir().unwrap();
+	root.list().unwrap();
 	unsafe {
 		system::ROOT = Some(root);
 	}
