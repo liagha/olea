@@ -7,7 +7,7 @@ use {
 		file::{
 			NodeKind,
 			handle::{RamHandle, RomHandle},
-			descriptor::{OpenOptions, FileStatus, Interface},
+			descriptor::{OpenOptions, Status, Interface},
 			error::Error,
 		},
 		sync::spinlock::*,
@@ -89,20 +89,14 @@ impl Metadata {
 pub trait Node: Debug + Send + Sync {
 	fn get_kind(&self) -> NodeKind;
 	fn get_metadata(&self) -> Metadata;
-}
-
-pub trait NodeFile: Node + Debug + Send + Sync {
-	fn get_handle(&self, _opt: OpenOptions) -> Result<Arc<dyn Interface>, Error>;
-}
-
-pub trait NodeDirectory: Node + Debug + Send + Sync {
-	fn traverse_mkdir(&mut self, _components: &mut Vec<&str>, _metadata: Metadata) -> Result<(), Error>;
-	fn traverse_lsdir(&self, _tabs: String) -> Result<(), Error>;
-	fn traverse_open(&mut self, _components: &mut Vec<&str>, _flags: OpenOptions, _visited: &mut Vec<String>) -> Result<Arc<dyn Interface>, Error>;
-	fn traverse_mount(&mut self, _components: &mut Vec<&str>, slice: &'static [u8]) -> Result<(), Error>;
-	fn traverse_unlink(&mut self, _components: &mut Vec<&str>) -> Result<(), Error>;
-	fn traverse_rename(&mut self, _old_components: &mut Vec<&str>, _new_components: &mut Vec<&str>) -> Result<(), Error>;
-	fn traverse_symlink(&mut self, _target_components: &mut Vec<&str>, _link_components: &mut Vec<&str>) -> Result<(), Error>;
+	fn get_handle(&self, _opt: OpenOptions) -> Result<Arc<dyn Interface>, Error> { Err(Error::NotImplemented) }
+	fn traverse_mkdir(&mut self, _components: &mut Vec<&str>, _metadata: Metadata) -> Result<(), Error> { Err(Error::NotImplemented) }
+	fn traverse_lsdir(&self, _tabs: String) -> Result<(), Error> { Err(Error::NotImplemented) }
+	fn traverse_open(&mut self, _components: &mut Vec<&str>, _flags: OpenOptions, _visited: &mut Vec<String>) -> Result<Arc<dyn Interface>, Error> { Err(Error::NotImplemented) }
+	fn traverse_mount(&mut self, _components: &mut Vec<&str>, _slice: &'static [u8]) -> Result<(), Error> { Err(Error::NotImplemented) }
+	fn traverse_unlink(&mut self, _components: &mut Vec<&str>) -> Result<(), Error> { Err(Error::NotImplemented) }
+	fn traverse_rename(&mut self, _old_components: &mut Vec<&str>, _new_components: &mut Vec<&str>) -> Result<(), Error> { Err(Error::NotImplemented) }
+	fn traverse_symlink(&mut self, _target_components: &mut Vec<&str>, _link_components: &mut Vec<&str>) -> Result<(), Error> { Err(Error::NotImplemented) }
 }
 
 pub trait VirtualSystem: Debug + Send + Sync {
@@ -157,7 +151,7 @@ impl Node for Directory {
 	}
 }
 
-impl NodeDirectory for Directory {
+impl Directory {
 	fn traverse_mkdir(&mut self, components: &mut Vec<&str>, metadata: Metadata) -> Result<(), Error> {
 		if !self.metadata.permissions.can_write(0, 0) {
 			return Err(Error::PermissionDenied);
@@ -209,7 +203,6 @@ impl NodeDirectory for Directory {
 					}
 					return file.get_handle(flags);
 				}
-				// Check for symlink and extract target before mutable borrow
 				let symlink_target = self.get::<SymbolLink>(&node_name).map(|symlink| {
 					if !symlink.get_metadata().permissions.can_read(0, 0) {
 						None
@@ -221,7 +214,6 @@ impl NodeDirectory for Directory {
 					visited.push(node_name);
 					let mut target_components: Vec<&str> = target.split('/').filter(|&s| !s.is_empty()).collect();
 					target_components.reverse();
-					// Immutable borrow is dropped here, so mutable borrow is safe
 					return self.traverse_open(&mut target_components, flags, visited);
 				}
 				if flags.contains(OpenOptions::CREATE) {
@@ -235,7 +227,6 @@ impl NodeDirectory for Directory {
 				}
 				Err(Error::FileNotFound)
 			} else {
-				// Check for symlink and extract target before mutable borrow
 				let symlink_target = self.get::<SymbolLink>(&node_name).map(|symlink| {
 					if !symlink.get_metadata().permissions.can_read(0, 0) {
 						None
@@ -247,7 +238,6 @@ impl NodeDirectory for Directory {
 					visited.push(node_name);
 					let mut target_components: Vec<&str> = target.split('/').filter(|&s| !s.is_empty()).collect();
 					target_components.reverse();
-					// Immutable borrow is dropped here, so mutable borrow is safe
 					return self.traverse_open(&mut target_components, flags, visited);
 				}
 				self.get_mut::<Directory>(&node_name)
@@ -401,7 +391,7 @@ impl Node for File {
 	}
 }
 
-impl NodeFile for File {
+impl File {
 	fn get_handle(&self, opt: OpenOptions) -> Result<Arc<dyn Interface>, Error> {
 		match self.data {
 			DataHandle::RAM(ref data) => Ok(Arc::new(File {
@@ -447,12 +437,12 @@ impl Interface for File {
 		}
 	}
 
-	fn fstat(&self) -> Result<FileStatus, Error> {
-		let file_size = match self.data {
+ fn fstat(&self) -> Result<Status, Error> {
+		let size = match self.data {
 			DataHandle::RAM(ref data) => data.len(),
 			DataHandle::ROM(ref data) => data.len(),
 		};
-		Ok(FileStatus { file_size })
+		Ok(Status { size })
 	}
 }
 

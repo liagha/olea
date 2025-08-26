@@ -6,9 +6,9 @@ use crate::{
 
 pub type Descriptor = i32;
 
-pub const STDIN: Descriptor = 0;
-pub const STDOUT: Descriptor = 1;
-pub const STDERR: Descriptor = 2;
+pub const STANDARD_INPUT: Descriptor = 0;
+pub const STANDARD_OUTPUT: Descriptor = 1;
+pub const STANDARD_ERROR: Descriptor = 2;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum SeekFrom {
@@ -17,8 +17,8 @@ pub enum SeekFrom {
 	Current(isize),
 }
 
-pub struct FileStatus {
-	pub file_size: usize,
+pub struct Status {
+	pub size: usize,
 }
 
 pub trait Interface: Sync + Send + Debug {
@@ -31,7 +31,7 @@ pub trait Interface: Sync + Send + Debug {
 	fn seek(&self, _offset: SeekFrom) -> Result<usize, Error> {
 		Err(Error::NotImplemented)
 	}
-	fn fstat(&self) -> Result<FileStatus, Error> {
+	fn fstat(&self) -> Result<Status, Error> {
 		Err(Error::NotImplemented)
 	}
 }
@@ -68,6 +68,6 @@ pub fn write(descriptor: Descriptor, buffer: &[u8]) -> Result<usize, Error> {
 	object.write(buffer)
 }
 
-pub fn fstat(descriptor: Descriptor) -> Result<FileStatus, Error> {
+pub fn fstat(descriptor: Descriptor) -> Result<Status, Error> {
 	get_io_interface(descriptor).map_err(|_| Error::IoError)?.fstat()
 }

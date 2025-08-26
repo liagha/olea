@@ -9,20 +9,20 @@ use crate::file::{
 };
 
 #[derive(Debug)]
-pub struct GenericStdin;
+pub struct GenericStandardInput;
 
-impl Interface for GenericStdin {}
+impl Interface for GenericStandardInput {}
 
-impl GenericStdin {
+impl GenericStandardInput {
 	pub const fn new() -> Self {
 		Self {}
 	}
 }
 
 #[derive(Debug)]
-pub struct GenericStdout;
+pub struct GenericStandardOutput;
 
-impl Interface for GenericStdout {
+impl Interface for GenericStandardOutput {
 	fn write(&self, buf: &[u8]) -> Result<usize, Error> {
 		cfg_if::cfg_if! {
             if #[cfg(feature = "vga")] {
@@ -35,16 +35,16 @@ impl Interface for GenericStdout {
 	}
 }
 
-impl GenericStdout {
+impl GenericStandardOutput {
 	pub const fn new() -> Self {
 		Self {}
 	}
 }
 
 #[derive(Debug)]
-pub struct GenericStderr;
+pub struct GenericStandardError;
 
-impl Interface for GenericStderr {
+impl Interface for GenericStandardError {
 	fn write(&self, buf: &[u8]) -> Result<usize, Error> {
 		cfg_if::cfg_if! {
             if #[cfg(feature = "vga")] {
@@ -57,7 +57,7 @@ impl Interface for GenericStderr {
 	}
 }
 
-impl GenericStderr {
+impl GenericStandardError {
 	pub const fn new() -> Self {
 		Self {}
 	}

@@ -100,8 +100,8 @@ impl File {
 	}
 
 	pub fn len(&self) -> Result<usize, Error> {
-		let fstat = descriptor::fstat(self.fd)?;
-		Ok(fstat.file_size)
+		let st = descriptor::fstat(self.fd)?;
+		Ok(st.size)
 	}
 }
 

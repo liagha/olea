@@ -15,8 +15,8 @@ use {
 			},
 		},
 		consts::*,
-		file::descriptor::{
-            Descriptor, Interface, STDERR, STDIN, STDOUT,
+  file::descriptor::{
+            Descriptor, Interface, STANDARD_ERROR, STANDARD_INPUT, STANDARD_OUTPUT,
 		},
 		format,
 	},
@@ -26,7 +26,7 @@ use {
 	},
 	core::cell::RefCell,
 };
-use crate::file::standard::{GenericStderr, GenericStdin, GenericStdout};
+use crate::file::standard::{GenericStandardError, GenericStandardInput, GenericStandardOutput};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum TaskStatus {
@@ -205,13 +205,13 @@ impl Task {
 	pub fn new(id: TaskId, status: TaskStatus, priority: TaskPriority) -> Task {
 		let mut fd_map: BTreeMap<Descriptor, Arc<dyn Interface>> = BTreeMap::new();
 		fd_map
-			.try_insert(STDIN, Arc::new(GenericStdin::new()))
+			.try_insert(STANDARD_INPUT, Arc::new(GenericStandardInput::new()))
 			.unwrap();
 		fd_map
-			.try_insert(STDOUT, Arc::new(GenericStdout::new()))
+			.try_insert(STANDARD_OUTPUT, Arc::new(GenericStandardOutput::new()))
 			.unwrap();
 		fd_map
-			.try_insert(STDERR, Arc::new(GenericStderr::new()))
+			.try_insert(STANDARD_ERROR, Arc::new(GenericStandardError::new()))
 			.unwrap();
 
 		Task {
