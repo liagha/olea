@@ -5,6 +5,7 @@ pub mod handle;
 pub mod standard;
 pub mod descriptor;
 pub mod error;
+pub mod types;
 
 use alloc::format;
 pub use error::Error;

@@ -1,6 +1,6 @@
 use crate::{
 	format::Debug,
-	file::error::Error,
+	file::{error::Error, types::Metadata},
 	scheduler::get_io_interface,
 };
 
@@ -17,7 +17,7 @@ pub enum SeekFrom {
 	Current(isize),
 }
 
-pub struct Status {
+pub struct State {
 	pub size: usize,
 }
 
@@ -31,7 +31,10 @@ pub trait Interface: Sync + Send + Debug {
 	fn seek(&self, _offset: SeekFrom) -> Result<usize, Error> {
 		Err(Error::NotImplemented)
 	}
-	fn fstat(&self) -> Result<Status, Error> {
+	fn fstat(&self) -> Result<State, Error> {
+		Err(Error::NotImplemented)
+	}
+	fn metadata(&self) -> Result<Metadata, Error> {
 		Err(Error::NotImplemented)
 	}
 }
@@ -68,6 +71,10 @@ pub fn write(descriptor: Descriptor, buffer: &[u8]) -> Result<usize, Error> {
 	object.write(buffer)
 }
 
-pub fn fstat(descriptor: Descriptor) -> Result<Status, Error> {
+pub fn fstat(descriptor: Descriptor) -> Result<State, Error> {
 	get_io_interface(descriptor).map_err(|_| Error::IoError)?.fstat()
+}
+
+pub fn metadata(descriptor: Descriptor) -> Result<Metadata, Error> {
+	get_io_interface(descriptor).map_err(|_| Error::IoError)?.metadata()
 }

@@ -7,8 +7,9 @@ use {
 		file::{
 			NodeKind,
 			handle::{RamHandle, RomHandle},
-			descriptor::{OpenOptions, Status, Interface},
-			error::Error,
+   descriptor::{OpenOptions, State, Interface},
+				error::Error,
+				types::Permission, 
 		},
 		sync::spinlock::*,
 	},
@@ -22,69 +23,10 @@ use {
 	},
 };
 
-#[derive(Debug, Clone, Copy)]
-pub struct Permissions {
-	owner_read: bool,
-	owner_write: bool,
-	owner_execute: bool,
-	group_read: bool,
-	group_write: bool,
-	group_execute: bool,
-	others_read: bool,
-	others_write: bool,
-	others_execute: bool,
-}
+type Permissions = Permission;
 
-impl Permissions {
-	pub fn new(mode: u16) -> Self {
-		Permissions {
-			owner_read: mode & 0o400 != 0,
-			owner_write: mode & 0o200 != 0,
-			owner_execute: mode & 0o100 != 0,
-			group_read: mode & 0o040 != 0,
-			group_write: mode & 0o020 != 0,
-			group_execute: mode & 0o010 != 0,
-			others_read: mode & 0o004 != 0,
-			others_write: mode & 0o002 != 0,
-			others_execute: mode & 0o001 != 0,
-		}
-	}
+pub type Metadata = crate::file::types::Metadata;
 
-	pub fn can_read(&self, _uid: u32, _gid: u32) -> bool {
-		self.owner_read || self.group_read || self.others_read
-	}
-
-	pub fn can_write(&self, _uid: u32, _gid: u32) -> bool {
-		self.owner_write || self.group_write || self.others_write
-	}
-
-	pub fn can_execute(&self, _uid: u32, _gid: u32) -> bool {
-		self.owner_execute || self.group_execute || self.others_execute
-	}
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct Metadata {
-	permissions: Permissions,
-	uid: u32,
-	gid: u32,
-	atime: u64,
-	mtime: u64,
-	ctime: u64,
-}
-
-impl Metadata {
-	pub fn new() -> Self {
-		Metadata {
-			permissions: Permissions::new(0o644),
-			uid: 0,
-			gid: 0,
-			atime: 0,
-			mtime: 0,
-			ctime: 0,
-		}
-	}
-}
 
 pub trait Node: Debug + Send + Sync {
 	fn get_kind(&self) -> NodeKind;
@@ -119,16 +61,11 @@ struct Directory {
 
 impl Directory {
 	pub fn new() -> Self {
+		let mut m = Metadata::new(NodeKind::Directory);
+		m.permission = Permission::from_mode(0o755);
 		Directory {
 			children: BTreeMap::new(),
-			metadata: Metadata {
-				permissions: Permissions::new(0o755),
-				uid: 0,
-				gid: 0,
-				atime: 0,
-				mtime: 0,
-				ctime: 0,
-			},
+			metadata: m,
 		}
 	}
 
@@ -153,7 +90,7 @@ impl Node for Directory {
 
 impl Directory {
 	fn traverse_mkdir(&mut self, components: &mut Vec<&str>, metadata: Metadata) -> Result<(), Error> {
-		if !self.metadata.permissions.can_write(0, 0) {
+		if !self.metadata.permission.can_write() {
 			return Err(Error::PermissionDenied);
 		}
 		if let Some(component) = components.pop() {
@@ -198,13 +135,13 @@ impl Directory {
 			}
 			if components.is_empty() {
 				if let Some(file) = self.get_mut::<File>(&node_name) {
-					if !file.get_metadata().permissions.can_read(0, 0) {
+ 				if !file.get_metadata().permission.can_read() {
 						return Err(Error::PermissionDenied);
 					}
 					return file.get_handle(flags);
 				}
 				let symlink_target = self.get::<SymbolLink>(&node_name).map(|symlink| {
-					if !symlink.get_metadata().permissions.can_read(0, 0) {
+					if !symlink.get_metadata().permission.can_read() {
 						None
 					} else {
 						Some(symlink.target.clone())
@@ -217,7 +154,7 @@ impl Directory {
 					return self.traverse_open(&mut target_components, flags, visited);
 				}
 				if flags.contains(OpenOptions::CREATE) {
-					if !self.metadata.permissions.can_write(0, 0) {
+					if !self.metadata.permission.can_write() {
 						return Err(Error::PermissionDenied);
 					}
 					let file = Box::new(File::new());
@@ -228,7 +165,7 @@ impl Directory {
 				Err(Error::FileNotFound)
 			} else {
 				let symlink_target = self.get::<SymbolLink>(&node_name).map(|symlink| {
-					if !symlink.get_metadata().permissions.can_read(0, 0) {
+					if !symlink.get_metadata().permission.can_read() {
 						None
 					} else {
 						Some(symlink.target.clone())
@@ -250,7 +187,7 @@ impl Directory {
 	}
 
 	fn traverse_mount(&mut self, components: &mut Vec<&str>, slice: &'static [u8]) -> Result<(), Error> {
-		if !self.metadata.permissions.can_write(0, 0) {
+		if !self.metadata.permission.can_write() {
 			return Err(Error::PermissionDenied);
 		}
 		if let Some(component) = components.pop() {
@@ -270,7 +207,7 @@ impl Directory {
 	}
 
 	fn traverse_unlink(&mut self, components: &mut Vec<&str>) -> Result<(), Error> {
-		if !self.metadata.permissions.can_write(0, 0) {
+		if !self.metadata.permission.can_write() {
 			return Err(Error::PermissionDenied);
 		}
 		if let Some(component) = components.pop() {
@@ -298,7 +235,7 @@ impl Directory {
 	}
 
 	fn traverse_rename(&mut self, old_components: &mut Vec<&str>, new_components: &mut Vec<&str>) -> Result<(), Error> {
-		if !self.metadata.permissions.can_write(0, 0) {
+		if !self.metadata.permission.can_write() {
 			return Err(Error::PermissionDenied);
 		}
 		if let Some(old_component) = old_components.pop() {
@@ -329,7 +266,7 @@ impl Directory {
 	}
 
 	fn traverse_symlink(&mut self, target_components: &mut Vec<&str>, link_components: &mut Vec<&str>) -> Result<(), Error> {
-		if !self.metadata.permissions.can_write(0, 0) {
+		if !self.metadata.permission.can_write() {
 			return Err(Error::PermissionDenied);
 		}
 		if let Some(link_component) = link_components.pop() {
@@ -369,14 +306,14 @@ impl File {
 	pub fn new() -> Self {
 		File {
 			data: DataHandle::RAM(RamHandle::new(true)),
-			metadata: Metadata::new(),
+			metadata: Metadata::new(NodeKind::File),
 		}
 	}
 
 	pub fn new_from_rom(slice: &'static [u8]) -> Self {
 		File {
 			data: DataHandle::ROM(RomHandle::new(slice)),
-			metadata: Metadata::new(),
+			metadata: Metadata::new(NodeKind::File),
 		}
 	}
 }
@@ -437,12 +374,16 @@ impl Interface for File {
 		}
 	}
 
- fn fstat(&self) -> Result<Status, Error> {
+	fn fstat(&self) -> Result<State, Error> {
 		let size = match self.data {
 			DataHandle::RAM(ref data) => data.len(),
 			DataHandle::ROM(ref data) => data.len(),
 		};
-		Ok(Status { size })
+		Ok(State { size })
+	}
+
+	fn metadata(&self) -> Result<crate::file::types::Metadata, Error> {
+		Ok(self.metadata)
 	}
 }
 
@@ -456,7 +397,7 @@ impl SymbolLink {
 	pub fn new(target: &str) -> Self {
 		SymbolLink {
 			target: target.to_string(),
-			metadata: Metadata::new(),
+			metadata: Metadata::new(NodeKind::Symlink),
 		}
 	}
 }
@@ -489,7 +430,7 @@ impl VirtualSystem for FileSystem {
 		if check_path(path) {
 			let mut components: Vec<&str> = path.split("/").filter(|&s| !s.is_empty()).collect();
 			components.reverse();
-			self.handle.lock().traverse_mkdir(&mut components, Metadata::new())
+			self.handle.lock().traverse_mkdir(&mut components, Metadata::new(NodeKind::Directory))
 		} else {
 			Err(Error::InvalidFsPath)
 		}
