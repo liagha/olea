@@ -11,7 +11,7 @@ use {
 		},
 		arch::{
 			memory::{
-				PhysAddr, VirtAddr,
+				PhysicalAddress, VirtualAddress,
 				paging::drop_user_space,
 			},
 			kernel::scheduling::switch,
@@ -211,15 +211,15 @@ impl Scheduler {
 	}
 
 	#[no_mangle]
-	pub fn get_current_interrupt_stack(&self) -> VirtAddr {
+	pub fn get_current_interrupt_stack(&self) -> VirtualAddress {
 		save_interrupt(|| (*self.current.borrow().stack).interrupt_top())
 	}
 
-	pub fn get_root_page_table(&self) -> PhysAddr {
+	pub fn get_root_page_table(&self) -> PhysicalAddress {
 		self.current.borrow().root_page_table
 	}
 
-	pub fn set_root_page_table(&self, addr: PhysAddr) {
+	pub fn set_root_page_table(&self, addr: PhysicalAddress) {
 		self.current.borrow_mut().root_page_table = addr;
 	}
 
@@ -234,7 +234,7 @@ impl Scheduler {
 			let mut borrowed = self.current.borrow_mut();
 			(
 				borrowed.id,
-				&mut borrowed.last_stack_pointer as *mut VirtAddr,
+				&mut borrowed.last_stack_pointer as *mut VirtualAddress,
 				borrowed.priority,
 				borrowed.status,
 			)

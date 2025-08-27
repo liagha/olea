@@ -2,7 +2,7 @@ use {
     crate::{
         arch::{
             x86::*,
-            memory::{get_boot_stack, VirtAddr}
+            memory::{get_boot_stack, VirtualAddress}
         },
         scheduler::{self, task::Stack},
     },
@@ -151,13 +151,13 @@ pub fn init() {
 
 #[cfg(target_arch = "x86_64")]
 #[inline(always)]
-unsafe fn set_kernel_stack(stack: VirtAddr) {
+unsafe fn set_kernel_stack(stack: VirtualAddress) {
     TASK_STATE_SEGMENT_WRAPPER.0.rsp[0] = stack.as_u64();
 }
 
 #[cfg(target_arch = "x86")]
 #[inline(always)]
-unsafe fn set_kernel_stack(stack: VirtAddr) {
+unsafe fn set_kernel_stack(stack: VirtualAddress) {
     TASK_STATE_SEGMENT_WRAPPER.0.esp = stack.as_u32();
 }
 

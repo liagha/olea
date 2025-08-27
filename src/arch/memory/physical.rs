@@ -8,10 +8,10 @@ use {
 use crate::arch::kernel::BOOT_INFO;
 use crate::arch::memory::{
     paging::{BasePageSize, PageSize},
-    PhysAddr,
+    PhysicalAddress,
 };
 
-static mut PHYSICAL_FREE_LIST: FreeList<PhysAddr> = FreeList::new();
+static mut PHYSICAL_FREE_LIST: FreeList<PhysicalAddress> = FreeList::new();
 
 pub fn init() {
 	unsafe {
@@ -31,7 +31,7 @@ pub fn init() {
 	}
 }
 
-pub fn allocate(size: usize) -> PhysAddr {
+pub fn allocate(size: usize) -> PhysicalAddress {
 	assert!(size > 0);
 	assert_eq!(size % BasePageSize::SIZE, 0, "size `{:#X}` is not a multiple of `{:#X}`.", size, BasePageSize::SIZE);
 
@@ -41,7 +41,7 @@ pub fn allocate(size: usize) -> PhysAddr {
 	result.unwrap()
 }
 
-pub fn allocate_aligned(size: usize, alignment: usize) -> PhysAddr {
+pub fn allocate_aligned(size: usize, alignment: usize) -> PhysicalAddress {
 	assert!(size > 0);
 	assert!(alignment > 0);
 	assert_eq!(size % alignment, 0, "size `{:#X}` is not a multiple of the given alignment `{:#X}`.", size, alignment);
@@ -53,7 +53,7 @@ pub fn allocate_aligned(size: usize, alignment: usize) -> PhysAddr {
 	result.unwrap()
 }
 
-pub fn deallocate(physical_address: PhysAddr, size: usize) {
+pub fn deallocate(physical_address: PhysicalAddress, size: usize) {
 	assert!(size > 0);
 	assert_eq!(size % BasePageSize::SIZE, 0, "size `{:#X}` is not a multiple of `{:#X}`.", size, BasePageSize::SIZE);
 

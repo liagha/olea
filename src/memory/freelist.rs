@@ -1,6 +1,6 @@
 use {
 	crate::{
-		arch::memory::{PhysAddr, VirtAddr},
+		arch::memory::{PhysicalAddress, VirtualAddress},
 	},
 	alloc::collections::linked_list::LinkedList,
 	core::cmp::Ordering,
@@ -197,12 +197,12 @@ fn deallocate() {
 	}
 }
 
-impl FreeList<PhysAddr> {
+impl FreeList<PhysicalAddress> {
 	pub fn allocate(
 		&mut self,
 		size: usize,
 		alignment: Option<usize>,
-	) -> Result<PhysAddr, FreeListError> {
+	) -> Result<PhysicalAddress, FreeListError> {
 		debug!(
 			"allocating {} bytes from Free List {:#X}.",
 			size, self as *const Self as usize
@@ -221,7 +221,7 @@ impl FreeList<PhysAddr> {
 			match region_size.as_usize().cmp(&new_size) {
 				Ordering::Greater => {
 					if let Some(align) = alignment {
-						let new_addr = PhysAddr::from(align_up!(region_start.as_usize(), align));
+						let new_addr = PhysicalAddress::from(align_up!(region_start.as_usize(), align));
 						node.start += (new_addr - region_start) + size as u64;
 						if new_addr != region_start {
 							let new_entry = FreeListEntry::new(region_start, new_addr);
@@ -235,7 +235,7 @@ impl FreeList<PhysAddr> {
 				}
 				Ordering::Equal => {
 					if let Some(align) = alignment {
-						let new_addr = PhysAddr::from(align_up!(region_start.as_usize(), align));
+						let new_addr = PhysicalAddress::from(align_up!(region_start.as_usize(), align));
 						if new_addr != region_start {
 							node.end = new_addr;
 						}
@@ -255,12 +255,12 @@ impl FreeList<PhysAddr> {
 	}
 }
 
-impl FreeList<VirtAddr> {
+impl FreeList<VirtualAddress> {
 	pub fn allocate(
 		&mut self,
 		size: usize,
 		alignment: Option<usize>,
-	) -> Result<VirtAddr, FreeListError> {
+	) -> Result<VirtualAddress, FreeListError> {
 		debug!(
 			"allocating {} bytes from Free List {:#X}.",
 			size, self as *const Self as usize
@@ -279,7 +279,7 @@ impl FreeList<VirtAddr> {
 			match region_size.as_usize().cmp(&new_size) {
 				Ordering::Greater => {
 					if let Some(align) = alignment {
-						let new_addr = VirtAddr::from(align_up!(region_start.as_usize(), align));
+						let new_addr = VirtualAddress::from(align_up!(region_start.as_usize(), align));
 						node.start += (new_addr - region_start) + size as u64;
 						if new_addr != region_start {
 							let new_entry = FreeListEntry::new(region_start, new_addr);
@@ -293,7 +293,7 @@ impl FreeList<VirtAddr> {
 				}
 				Ordering::Equal => {
 					return if let Some(align) = alignment {
-						let new_addr = VirtAddr::from(align_up!(region_start.as_usize(), align));
+						let new_addr = VirtualAddress::from(align_up!(region_start.as_usize(), align));
 						if new_addr != region_start {
 							node.end = new_addr;
 						}

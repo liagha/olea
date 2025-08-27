@@ -4,16 +4,16 @@ use crate::{
 };
 use crate::arch::memory::{
     paging::{BasePageSize, PageSize},
-    VirtAddr,
+    VirtualAddress,
 };
 
-static mut KERNEL_FREE_LIST: FreeList<VirtAddr> = FreeList::new();
+static mut KERNEL_FREE_LIST: FreeList<VirtualAddress> = FreeList::new();
 
-pub const KERNEL_VIRTUAL_MEMORY_START: VirtAddr = VirtAddr(0x8000_0000u64);
+pub const KERNEL_VIRTUAL_MEMORY_START: VirtualAddress = VirtualAddress(0x8000_0000u64);
 
-pub const KERNEL_VIRTUAL_MEMORY_END: VirtAddr = VirtAddr(0x800_0000_0000u64);
+pub const KERNEL_VIRTUAL_MEMORY_END: VirtualAddress = VirtualAddress(0x800_0000_0000u64);
 
-const TASK_VIRTUAL_MEMORY_END: VirtAddr = VirtAddr(0x8000_0000_0000u64);
+const TASK_VIRTUAL_MEMORY_END: VirtualAddress = VirtualAddress(0x8000_0000_0000u64);
 
 pub fn init() {
 	let entry = FreeListEntry {
@@ -26,7 +26,7 @@ pub fn init() {
 }
 
 #[allow(dead_code)]
-pub fn allocate(size: usize) -> VirtAddr {
+pub fn allocate(size: usize) -> VirtualAddress {
 	assert!(size > 0);
 	assert_eq!(size % BasePageSize::SIZE, 0, "size `{:#X}` is not a multiple of `{:#X}`.", size, BasePageSize::SIZE);
 
@@ -40,7 +40,7 @@ pub fn allocate(size: usize) -> VirtAddr {
 	result.unwrap()
 }
 
-pub fn allocate_aligned(size: usize, alignment: usize) -> VirtAddr {
+pub fn allocate_aligned(size: usize, alignment: usize) -> VirtualAddress {
 	assert!(size > 0);
 	assert!(alignment > 0);
 	assert_eq!(size % alignment, 0, "size `{:#X}` is not a multiple of the given alignment `{:#X}`.", size, alignment);
@@ -57,7 +57,7 @@ pub fn allocate_aligned(size: usize, alignment: usize) -> VirtAddr {
 	result.unwrap()
 }
 
-pub fn deallocate(virtual_address: VirtAddr, size: usize) {
+pub fn deallocate(virtual_address: VirtualAddress, size: usize) {
 	assert!(
 		virtual_address < KERNEL_VIRTUAL_MEMORY_END,
 		"virtual address `{:#X}` is not smaller than `KERNEL_VIRTUAL_MEMORY_END`.",
@@ -74,11 +74,11 @@ pub fn deallocate(virtual_address: VirtAddr, size: usize) {
 }
 
 #[allow(dead_code)]
-pub fn task_heap_start() -> VirtAddr {
+pub fn task_heap_start() -> VirtualAddress {
 	KERNEL_VIRTUAL_MEMORY_END
 }
 
 #[allow(dead_code)]
-pub fn task_heap_end() -> VirtAddr {
+pub fn task_heap_end() -> VirtualAddress {
 	TASK_VIRTUAL_MEMORY_END
 }

@@ -2,7 +2,7 @@
 
 use {
     crate::{
-        arch::memory::VirtAddr,
+        arch::memory::VirtualAddress,
     }
 };
 
@@ -17,6 +17,6 @@ pub const NO_PRIORITIES: usize = 32;
 
 pub const TIMER_FREQ: u32 = 100;
 
-pub const USER_ENTRY: VirtAddr = VirtAddr(0x20000000000u64);
+pub const USER_ENTRY: VirtualAddress = VirtualAddress(0x20000000000u64);
 
 pub const HEAP_SIZE: usize = 8 * 1024 * 1024;

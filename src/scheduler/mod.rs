@@ -12,7 +12,7 @@ use {
 			},
 		},
 		arch::{
-			memory::{PhysAddr, VirtAddr},
+			memory::{PhysicalAddress, VirtualAddress},
 			kernel::{
 				register_task,
 				interrupts::{interrupt_nested_disable, interrupt_nested_enable},
@@ -71,15 +71,15 @@ pub fn abort() -> ! {
 	unsafe { SCHEDULER.as_mut().unwrap().abort() }
 }
 
-pub fn get_current_interrupt_stack() -> VirtAddr {
+pub fn get_current_interrupt_stack() -> VirtualAddress {
 	unsafe { SCHEDULER.as_mut().unwrap().get_current_interrupt_stack() }
 }
 
-pub fn get_root_page_table() -> PhysAddr {
+pub fn get_root_page_table() -> PhysicalAddress {
 	unsafe { SCHEDULER.as_mut().unwrap().get_root_page_table() }
 }
 
-pub fn set_root_page_table(addr: PhysAddr) {
+pub fn set_root_page_table(addr: PhysicalAddress) {
 	unsafe {
 		SCHEDULER.as_mut().unwrap().set_root_page_table(addr);
 	}

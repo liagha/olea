@@ -2,7 +2,7 @@ use {
     crate::{
         arch::{
             naked_asm,
-            memory::VirtAddr,
+            memory::VirtualAddress,
             kernel::descriptors::global::set_current_kernel_stack,
         }
     },
@@ -65,7 +65,7 @@ macro_rules! restore_context {
 
 #[cfg(target_arch = "x86_64")]
 #[naked]
-pub unsafe extern "C" fn perform_context_switch(_old_stack: *mut VirtAddr, _new_stack: VirtAddr) {
+pub unsafe extern "C" fn perform_context_switch(_old_stack: *mut VirtualAddress, _new_stack: VirtualAddress) {
     naked_asm!(
         save_context!(),
         "rdfsbase rax",

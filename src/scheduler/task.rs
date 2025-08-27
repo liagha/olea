@@ -10,8 +10,8 @@ use {
 					BasePageSize, PageSize,
 				},
 				physical::deallocate,
-				PhysAddr,
-				VirtAddr,
+				PhysicalAddress,
+				VirtualAddress,
 			},
 		},
 		consts::*,
@@ -137,10 +137,10 @@ impl PriorityTaskQueue {
 
 #[allow(dead_code)]
 pub trait Stack {
-	fn top(&self) -> VirtAddr;
-	fn bottom(&self) -> VirtAddr;
-	fn interrupt_top(&self) -> VirtAddr;
-	fn interrupt_bottom(&self) -> VirtAddr;
+	fn top(&self) -> VirtualAddress;
+	fn bottom(&self) -> VirtualAddress;
+	fn interrupt_top(&self) -> VirtualAddress;
+	fn interrupt_bottom(&self) -> VirtualAddress;
 }
 
 #[derive(Copy, Clone)]
@@ -166,20 +166,20 @@ impl TaskStack {
 }
 
 impl Stack for TaskStack {
-	fn top(&self) -> VirtAddr {
-		VirtAddr::from(self.buffer.as_ptr() as usize + STACK_SIZE - 16)
+	fn top(&self) -> VirtualAddress {
+		VirtualAddress::from(self.buffer.as_ptr() as usize + STACK_SIZE - 16)
 	}
 
-	fn bottom(&self) -> VirtAddr {
-		VirtAddr::from(self.buffer.as_ptr() as usize)
+	fn bottom(&self) -> VirtualAddress {
+		VirtualAddress::from(self.buffer.as_ptr() as usize)
 	}
 
-	fn interrupt_top(&self) -> VirtAddr {
-		VirtAddr::from(self.ist_buffer.as_ptr() as usize + INTERRUPT_STACK_SIZE - 16)
+	fn interrupt_top(&self) -> VirtualAddress {
+		VirtualAddress::from(self.ist_buffer.as_ptr() as usize + INTERRUPT_STACK_SIZE - 16)
 	}
 
-	fn interrupt_bottom(&self) -> VirtAddr {
-		VirtAddr::from(self.ist_buffer.as_ptr() as usize)
+	fn interrupt_bottom(&self) -> VirtualAddress {
+		VirtualAddress::from(self.ist_buffer.as_ptr() as usize)
 	}
 }
 
@@ -188,9 +188,9 @@ pub struct Task {
 	pub id: TaskId,
 	pub priority: TaskPriority,
 	pub status: TaskStatus,
-	pub last_stack_pointer: VirtAddr,
+	pub last_stack_pointer: VirtualAddress,
 	pub stack: Box<dyn Stack>,
-	pub root_page_table: PhysAddr,
+	pub root_page_table: PhysicalAddress,
 	pub fd_map: BTreeMap<Descriptor, Arc<dyn Interface>>,
 }
 
@@ -200,7 +200,7 @@ impl Task {
 			id,
 			priority: LOW_PRIORITY,
 			status: TaskStatus::Idle,
-			last_stack_pointer: VirtAddr::zero(),
+			last_stack_pointer: VirtualAddress::zero(),
 			stack: Box::new(get_boot_stack()),
 			root_page_table: get_kernel_root_page_table(),
 			fd_map: BTreeMap::new(),
@@ -223,7 +223,7 @@ impl Task {
 			id,
 			priority,
 			status,
-			last_stack_pointer: VirtAddr::zero(),
+			last_stack_pointer: VirtualAddress::zero(),
 			stack: Box::new(TaskStack::new()),
 			root_page_table: get_kernel_root_page_table(),
 			fd_map,

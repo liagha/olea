@@ -1,7 +1,7 @@
 use {
     crate::{
         consts::*,
-        arch::memory::VirtAddr,
+        arch::memory::VirtualAddress,
         scheduler::{
             task::*,
             exit, get_current_taskid,
@@ -83,7 +83,7 @@ impl TaskFrame for Task {
             (*state).rip = (func as *const ()) as u64;
             (*state).rflags = 0x1202u64;
 
-            self.last_stack_pointer = VirtAddr(stack as u64);
+            self.last_stack_pointer = VirtualAddress(stack as u64);
         }
     }
 
