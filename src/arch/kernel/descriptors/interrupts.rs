@@ -3,10 +3,9 @@ use {
         sync::lock::WaitLockIrqSave,
         arch::{
             x86::*,
-            memory::paging::page_fault_handler,
             kernel::{
                 interrupts::{
-                    handlers::{timer_handler, unhandled_irq1, unhandled_irq2},
+                    handlers::{timer, unhandled_irq1, unhandled_irq2, page_fault},
                     exceptions::{alignment_check, bad_tss, coprocessor_segment_overrun, debug, double_fault, floating_point, general_protection, divide_by_zero, int_zero, int_three, invalid_opcode, machine_check, non_maskable, no_coprocessor, out_of_bound, reserved, segment_not_present, stack_fault, ExceptionStackFrame}
                 }
             },
@@ -125,7 +124,7 @@ impl InterruptDescriptorTable {
         self.interrupts[11] = InterruptEntry::new(VAddr::from_usize(segment_not_present as usize), KERNEL_CODE_SELECTOR, Ring::Ring0, SystemDescriptorTypes64::InterruptGate, 0);
         self.interrupts[12] = InterruptEntry::new(VAddr::from_usize(stack_fault as usize), KERNEL_CODE_SELECTOR, Ring::Ring0, SystemDescriptorTypes64::InterruptGate, 0);
         self.interrupts[13] = InterruptEntry::new(VAddr::from_usize(general_protection as usize), KERNEL_CODE_SELECTOR, Ring::Ring0, SystemDescriptorTypes64::InterruptGate, 0);
-        self.interrupts[14] = InterruptEntry::new(VAddr::from_usize(page_fault_handler as usize), KERNEL_CODE_SELECTOR, Ring::Ring0, SystemDescriptorTypes64::InterruptGate, 0);
+        self.interrupts[14] = InterruptEntry::new(VAddr::from_usize(page_fault as usize), KERNEL_CODE_SELECTOR, Ring::Ring0, SystemDescriptorTypes64::InterruptGate, 0);
         self.interrupts[15] = InterruptEntry::new(VAddr::from_usize(reserved as usize), KERNEL_CODE_SELECTOR, Ring::Ring0, SystemDescriptorTypes64::InterruptGate, 0);
         self.interrupts[16] = InterruptEntry::new(VAddr::from_usize(floating_point as usize), KERNEL_CODE_SELECTOR, Ring::Ring0, SystemDescriptorTypes64::InterruptGate, 0);
         self.interrupts[17] = InterruptEntry::new(VAddr::from_usize(alignment_check as usize), KERNEL_CODE_SELECTOR, Ring::Ring0, SystemDescriptorTypes64::InterruptGate, 0);
@@ -133,7 +132,7 @@ impl InterruptDescriptorTable {
         for i in 19..32 {
             self.interrupts[i] = InterruptEntry::new(VAddr::from_usize(reserved as usize), KERNEL_CODE_SELECTOR, Ring::Ring0, SystemDescriptorTypes64::InterruptGate, 0);
         }
-        self.interrupts[32] = InterruptEntry::new(VAddr::from_usize(timer_handler as usize), KERNEL_CODE_SELECTOR, Ring::Ring0, SystemDescriptorTypes64::InterruptGate, 0);
+        self.interrupts[32] = InterruptEntry::new(VAddr::from_usize(timer as usize), KERNEL_CODE_SELECTOR, Ring::Ring0, SystemDescriptorTypes64::InterruptGate, 0);
 
         for i in 33..40 {
             self.interrupts[i] = InterruptEntry::new(VAddr::from_usize(unhandled_irq1 as usize), KERNEL_CODE_SELECTOR, Ring::Ring0, SystemDescriptorTypes64::InterruptGate, 0);
