@@ -5,7 +5,7 @@ use {
 		error::Error,
 	},
 	crate::{
-		sync::spinlock::*,
+		sync::lock::*,
 	},
 	alloc::{
 		sync::Arc,
@@ -15,21 +15,21 @@ use {
 
 #[derive(Debug)]
 pub struct RomHandle {
-	pos: Spinlock<usize>,
-	data: Arc<RwSpinlock<&'static [u8]>>,
+	pos: WaitLock<usize>,
+	data: Arc<SharedWaitLock<&'static [u8]>>,
 }
 
 impl RomHandle {
 	pub fn new(slice: &'static [u8]) -> Self {
 		RomHandle {
-			pos: Spinlock::new(0),
-			data: Arc::new(RwSpinlock::new(slice)),
+			pos: WaitLock::new(0),
+			data: Arc::new(SharedWaitLock::new(slice)),
 		}
 	}
 
 	pub fn get_handle(&self, _opt: OpenOptions) -> RomHandle {
 		RomHandle {
-			pos: Spinlock::new(0),
+			pos: WaitLock::new(0),
 			data: self.data.clone(),
 		}
 	}
@@ -89,7 +89,7 @@ impl RomHandle {
 impl Clone for RomHandle {
 	fn clone(&self) -> Self {
 		RomHandle {
-			pos: Spinlock::new(*self.pos.lock()),
+			pos: WaitLock::new(*self.pos.lock()),
 			data: self.data.clone(),
 		}
 	}
@@ -98,16 +98,16 @@ impl Clone for RomHandle {
 #[derive(Debug)]
 pub struct RamHandle {
 	writeable: bool,
-	pos: Spinlock<usize>,
-	data: Arc<RwSpinlock<Vec<u8>>>,
+	pos: WaitLock<usize>,
+	data: Arc<SharedWaitLock<Vec<u8>>>,
 }
 
 impl RamHandle {
 	pub fn new(writeable: bool) -> Self {
 		RamHandle {
 			writeable,
-			pos: Spinlock::new(0),
-			data: Arc::new(RwSpinlock::new(Vec::new())),
+			pos: WaitLock::new(0),
+			data: Arc::new(SharedWaitLock::new(Vec::new())),
 		}
 	}
 
@@ -194,7 +194,7 @@ impl RamHandle {
 	pub fn get_handle(&self, opt: OpenOptions) -> RamHandle {
 		RamHandle {
 			writeable: opt.contains(OpenOptions::READ_WRITE),
-			pos: Spinlock::new(0),
+			pos: WaitLock::new(0),
 			data: self.data.clone(),
 		}
 	}
@@ -210,7 +210,7 @@ impl Clone for RamHandle {
 	fn clone(&self) -> Self {
 		RamHandle {
 			writeable: self.writeable,
-			pos: Spinlock::new(*self.pos.lock()),
+			pos: WaitLock::new(*self.pos.lock()),
 			data: self.data.clone(),
 		}
 	}

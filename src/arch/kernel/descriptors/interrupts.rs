@@ -1,6 +1,6 @@
 use {
     crate::{
-        sync::spinlock::SpinlockIrqSave,
+        sync::lock::WaitLockIrqSave,
         arch::{
             x86::*,
             memory::paging::page_fault_handler,
@@ -52,8 +52,8 @@ impl InterruptEntry {
     }
 }
 
-pub static INTERRUPT_HANDLER: SpinlockIrqSave<InterruptDescriptorTable> =
-    SpinlockIrqSave::new(InterruptDescriptorTable::new());
+pub static INTERRUPT_HANDLER: WaitLockIrqSave<InterruptDescriptorTable> =
+    WaitLockIrqSave::new(InterruptDescriptorTable::new());
 
 pub struct InterruptDescriptorTable {
     interrupts: [InterruptEntry; INTERRUPT_ENTRIES],

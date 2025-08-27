@@ -1,7 +1,7 @@
 use {
     crate::{
         format,
-        sync::spinlock::SpinlockIrqSave,
+        sync::lock::WaitLockIrqSave,
         arch::x86::outb,
     },
 };
@@ -36,4 +36,4 @@ impl format::Write for SerialPort {
     }
 }
 
-pub static PORT: SpinlockIrqSave<SerialPort> = SpinlockIrqSave::new(SerialPort::new(0x3F8));
+pub static PORT: WaitLockIrqSave<SerialPort> = WaitLockIrqSave::new(SerialPort::new(0x3F8));

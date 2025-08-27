@@ -1,5 +1,5 @@
 use crate::memory::linked_list;
-use crate::sync::spinlock::Spinlock;
+use crate::sync::lock::WaitLock;
 use core::alloc::GlobalAlloc;
 use core::alloc::Layout;
 use core::cmp::{max, min};
@@ -135,11 +135,11 @@ impl<const ORDER: usize> fmt::Debug for BuddySystem<ORDER> {
 	}
 }
 
-pub struct LockedHeap<const ORDER: usize>(Spinlock<BuddySystem<ORDER>>);
+pub struct LockedHeap<const ORDER: usize>(WaitLock<BuddySystem<ORDER>>);
 
 impl<const ORDER: usize> LockedHeap<ORDER> {
 	pub const fn new() -> Self {
-		LockedHeap(Spinlock::new(BuddySystem::<ORDER>::new()))
+		LockedHeap(WaitLock::new(BuddySystem::<ORDER>::new()))
 	}
 
 	pub unsafe fn init(&self, start: *mut u8, len: usize) {

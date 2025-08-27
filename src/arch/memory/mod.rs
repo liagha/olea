@@ -15,28 +15,28 @@ use {
 };
 
 #[cfg(target_arch = "x86")]
-pub use x86::bits32::paging::VAddr as VirtAddr;
+pub use x86::bits32::paging::VAddr as VirtualAddress;
 #[cfg(target_arch = "x86_64")]
-pub use x86::bits64::paging::PAddr as PhysAddr;
+pub use x86::bits64::paging::PAddr as PhysicalAddress;
 #[cfg(target_arch = "x86_64")]
-pub use x86::bits64::paging::VAddr as VirtAddr;
+pub use x86::bits64::paging::VAddr as VirtualAddress;
 use crate::arch::kernel::BOOT_INFO;
 
 #[allow(dead_code)]
 #[derive(Copy, Clone)]
 pub struct BootStack {
-	start: VirtAddr,
-	end: VirtAddr,
-	ist_start: VirtAddr,
-	ist_end: VirtAddr,
+	start: VirtualAddress,
+	end: VirtualAddress,
+	ist_start: VirtualAddress,
+	ist_end: VirtualAddress,
 }
 
 impl BootStack {
 	pub const fn new(
-		start: VirtAddr,
-		end: VirtAddr,
-		ist_start: VirtAddr,
-		ist_end: VirtAddr,
+		start: VirtualAddress,
+		end: VirtualAddress,
+		ist_start: VirtualAddress,
+		ist_end: VirtualAddress,
 	) -> Self {
 		Self {
 			start,
@@ -48,7 +48,7 @@ impl BootStack {
 }
 
 impl Stack for BootStack {
-	fn top(&self) -> VirtAddr {
+	fn top(&self) -> VirtualAddress {
 		cfg_if::cfg_if! {
 			if #[cfg(target_arch = "x86")] {
 				self.end - 16u32
@@ -58,11 +58,11 @@ impl Stack for BootStack {
 		}
 	}
 
-	fn bottom(&self) -> VirtAddr {
+	fn bottom(&self) -> VirtualAddress {
 		self.start
 	}
 
-	fn interrupt_top(&self) -> VirtAddr {
+	fn interrupt_top(&self) -> VirtualAddress {
 		cfg_if::cfg_if! {
 			if #[cfg(target_arch = "x86")] {
 				self.ist_end - 16u32
@@ -72,7 +72,7 @@ impl Stack for BootStack {
 		}
 	}
 
-	fn interrupt_bottom(&self) -> VirtAddr {
+	fn interrupt_bottom(&self) -> VirtualAddress {
 		self.ist_start
 	}
 }
@@ -89,10 +89,10 @@ pub fn get_boot_stack() -> BootStack {
 		for i in regions {
 			if i.region_type == MemoryRegionType::KernelStack {
 				return BootStack::new(
-					VirtAddr(i.range.start_frame_number * 0x1000),
-					VirtAddr(i.range.end_frame_number * 0x1000),
-					VirtAddr((BOOT_IST_STACK.0.as_ptr() as usize).try_into().unwrap()),
-					VirtAddr(
+					VirtualAddress(i.range.start_frame_number * 0x1000),
+					VirtualAddress(i.range.end_frame_number * 0x1000),
+					VirtualAddress((BOOT_IST_STACK.0.as_ptr() as usize).try_into().unwrap()),
+					VirtualAddress(
 						(BOOT_IST_STACK.0.as_ptr() as usize + INTERRUPT_STACK_SIZE)
 							.try_into()
 							.unwrap(),
@@ -106,21 +106,21 @@ pub fn get_boot_stack() -> BootStack {
 }
 
 #[allow(dead_code)]
-pub fn is_kernel(addr: VirtAddr) -> bool {
+pub fn is_kernel(addr: VirtualAddress) -> bool {
 	unsafe {
 		let regions = BOOT_INFO.unwrap().memory_map.deref();
 
 		for i in regions {
 			if i.region_type == MemoryRegionType::Kernel
-				&& addr >= VirtAddr(i.range.start_frame_number * 0x1000)
-				&& addr <= VirtAddr(i.range.end_frame_number * 0x1000)
+				&& addr >= VirtualAddress(i.range.start_frame_number * 0x1000)
+				&& addr <= VirtualAddress(i.range.end_frame_number * 0x1000)
 			{
 				return true;
 			}
 
 			if i.region_type == MemoryRegionType::KernelStack
-				&& addr >= VirtAddr(i.range.start_frame_number * 0x1000)
-				&& addr <= VirtAddr(i.range.end_frame_number * 0x1000)
+				&& addr >= VirtualAddress(i.range.start_frame_number * 0x1000)
+				&& addr <= VirtualAddress(i.range.end_frame_number * 0x1000)
 			{
 				return true;
 			}
@@ -186,17 +186,17 @@ pub static mut BOOT_IST_STACK: Aligned<[u8; INTERRUPT_STACK_SIZE]> =
 #[cfg(target_arch = "x86")]
 pub fn get_boot_stack() -> BootStack {
 	BootStack::new(
-		unsafe { VirtAddr((BOOT_STACK.0.as_ptr() as usize).try_into().unwrap()) },
+		unsafe { VirtualAddress((BOOT_STACK.0.as_ptr() as usize).try_into().unwrap()) },
 		unsafe {
-			VirtAddr(
+			VirtualAddress(
 				(BOOT_STACK.0.as_ptr() as usize + BOOT_STACK_SIZE)
 					.try_into()
 					.unwrap(),
 			)
 		},
-		unsafe { VirtAddr((BOOT_IST_STACK.0.as_ptr() as usize).try_into().unwrap()) },
+		unsafe { VirtualAddress((BOOT_IST_STACK.0.as_ptr() as usize).try_into().unwrap()) },
 		unsafe {
-			VirtAddr(
+			VirtualAddress(
 				(BOOT_IST_STACK.0.as_ptr() as usize + INTERRUPT_STACK_SIZE)
 					.try_into()
 					.unwrap(),

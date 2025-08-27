@@ -1,7 +1,7 @@
 use {
     crate::{
         format,
-        sync::spinlock::Spinlock,
+        sync::lock::WaitLock,
         arch::x86::outb,
     },
 };
@@ -17,7 +17,7 @@ const COLS: usize = 80;
 const ROWS: usize = 25;
 const VGA_BUFFER_ADDRESS: u64 = 0xB8000;
 
-pub static VGA_SCREEN: Spinlock<VgaScreen> = Spinlock::new(VgaScreen::new());
+pub static VGA_SCREEN: WaitLock<VgaScreen> = WaitLock::new(VgaScreen::new());
 
 #[derive(Clone, Copy)]
 #[repr(C, packed)]

@@ -4,7 +4,7 @@ use {
 			block_current_task, reschedule, wakeup_task,
 			task::{PriorityTaskQueue},
 		},
-		sync::spinlock::SpinlockIrqSave,
+		sync::lock::WaitLockIrqSave,
 	},
 	core::{
 		cell::UnsafeCell,
@@ -14,16 +14,16 @@ use {
 };
 
 pub struct Mutex<T> {
-	is_locked: SpinlockIrqSave<bool>,
-	wait_queue: SpinlockIrqSave<PriorityTaskQueue>,
+	is_locked: WaitLockIrqSave<bool>,
+	wait_queue: WaitLockIrqSave<PriorityTaskQueue>,
 	data: UnsafeCell<T>,
 }
 
 impl<T> Mutex<T> {
 	pub const fn new(data: T) -> Self {
 		Self {
-			is_locked: SpinlockIrqSave::new(false),
-			wait_queue: SpinlockIrqSave::new(PriorityTaskQueue::new()),
+			is_locked: WaitLockIrqSave::new(false),
+			wait_queue: WaitLockIrqSave::new(PriorityTaskQueue::new()),
 			data: UnsafeCell::new(data),
 		}
 	}

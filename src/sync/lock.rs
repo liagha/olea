@@ -12,18 +12,18 @@ use {
 };
 
 #[derive(Debug)]
-pub struct RawSpinlock {
+pub struct RawWaitLock {
 	queue: AtomicUsize,
 	dequeue: AtomicUsize,
 }
 
-impl Default for RawSpinlock {
+impl Default for RawWaitLock {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl RawSpinlock {
+impl RawWaitLock {
 	pub const fn new() -> Self {
 		Self {
 			queue: AtomicUsize::new(0),
@@ -61,31 +61,31 @@ impl RawSpinlock {
 }
 
 #[derive(Debug)]
-pub struct Spinlock<T> {
-	lock: RawSpinlock,
+pub struct WaitLock<T> {
+	lock: RawWaitLock,
 	data: UnsafeCell<T>,
 }
 
-impl<T> Spinlock<T> {
+impl<T> WaitLock<T> {
 	pub const fn new(data: T) -> Self {
 		Self {
-			lock: RawSpinlock::new(),
+			lock: RawWaitLock::new(),
 			data: UnsafeCell::new(data),
 		}
 	}
 
-	pub fn lock(&self) -> SpinlockGuard<'_, T> {
+	pub fn lock(&self) -> WaitLockGuard<'_, T> {
 		self.lock.lock();
-		SpinlockGuard {
+		WaitLockGuard {
 			lock: &self.lock,
 			data: &self.data,
 			_phantom: PhantomData,
 		}
 	}
 
-	pub fn try_lock(&self) -> Option<SpinlockGuard<'_, T>> {
+	pub fn try_lock(&self) -> Option<WaitLockGuard<'_, T>> {
 		if self.lock.try_lock() {
-			Some(SpinlockGuard {
+			Some(WaitLockGuard {
 				lock: &self.lock,
 				data: &self.data,
 				_phantom: PhantomData,
@@ -100,16 +100,16 @@ impl<T> Spinlock<T> {
 	}
 }
 
-unsafe impl<T: Send> Sync for Spinlock<T> {}
-unsafe impl<T: Send> Send for Spinlock<T> {}
+unsafe impl<T: Send> Sync for WaitLock<T> {}
+unsafe impl<T: Send> Send for WaitLock<T> {}
 
-pub struct SpinlockGuard<'a, T> {
-	lock: &'a RawSpinlock,
+pub struct WaitLockGuard<'a, T> {
+	lock: &'a RawWaitLock,
 	data: &'a UnsafeCell<T>,
 	_phantom: PhantomData<&'a mut T>,
 }
 
-impl<'a, T> Deref for SpinlockGuard<'a, T> {
+impl<'a, T> Deref for WaitLockGuard<'a, T> {
 	type Target = T;
 
 	fn deref(&self) -> &T {
@@ -117,31 +117,31 @@ impl<'a, T> Deref for SpinlockGuard<'a, T> {
 	}
 }
 
-impl<'a, T> DerefMut for SpinlockGuard<'a, T> {
+impl<'a, T> DerefMut for WaitLockGuard<'a, T> {
 	fn deref_mut(&mut self) -> &mut T {
 		unsafe { &mut *self.data.get() }
 	}
 }
 
-impl<'a, T> Drop for SpinlockGuard<'a, T> {
+impl<'a, T> Drop for WaitLockGuard<'a, T> {
 	fn drop(&mut self) {
 		self.lock.unlock();
 	}
 }
 
-pub struct RawSpinlockIrqSave {
+pub struct RawWaitLockIrqSave {
 	queue: AtomicUsize,
 	dequeue: AtomicUsize,
 	irq_state: AtomicBool,
 }
 
-impl Default for RawSpinlockIrqSave {
+impl Default for RawWaitLockIrqSave {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl RawSpinlockIrqSave {
+impl RawWaitLockIrqSave {
 	pub const fn new() -> Self {
 		Self {
 			queue: AtomicUsize::new(0),
@@ -196,22 +196,22 @@ impl RawSpinlockIrqSave {
 	}
 }
 
-pub struct SpinlockIrqSave<T> {
-	lock: RawSpinlockIrqSave,
+pub struct WaitLockIrqSave<T> {
+	lock: RawWaitLockIrqSave,
 	data: UnsafeCell<T>,
 }
 
-impl<T> SpinlockIrqSave<T> {
+impl<T> WaitLockIrqSave<T> {
 	pub const fn new(data: T) -> Self {
 		Self {
-			lock: RawSpinlockIrqSave::new(),
+			lock: RawWaitLockIrqSave::new(),
 			data: UnsafeCell::new(data),
 		}
 	}
 
-	pub fn lock(&self) -> SpinlockIrqSaveGuard<'_, T> {
+	pub fn lock(&self) -> WaitLockIrqSaveGuard<'_, T> {
 		let irq_was_enabled = self.lock.lock();
-		SpinlockIrqSaveGuard {
+		WaitLockIrqSaveGuard {
 			lock: &self.lock,
 			data: &self.data,
 			irq_was_enabled,
@@ -219,8 +219,8 @@ impl<T> SpinlockIrqSave<T> {
 		}
 	}
 
-	pub fn try_lock(&self) -> Option<SpinlockIrqSaveGuard<'_, T>> {
-		self.lock.try_lock().map(|irq_was_enabled| SpinlockIrqSaveGuard {
+	pub fn try_lock(&self) -> Option<WaitLockIrqSaveGuard<'_, T>> {
+		self.lock.try_lock().map(|irq_was_enabled| WaitLockIrqSaveGuard {
 				lock: &self.lock,
 				data: &self.data,
 				irq_was_enabled,
@@ -233,17 +233,17 @@ impl<T> SpinlockIrqSave<T> {
 	}
 }
 
-unsafe impl<T: Send> Sync for SpinlockIrqSave<T> {}
-unsafe impl<T: Send> Send for SpinlockIrqSave<T> {}
+unsafe impl<T: Send> Sync for WaitLockIrqSave<T> {}
+unsafe impl<T: Send> Send for WaitLockIrqSave<T> {}
 
-pub struct SpinlockIrqSaveGuard<'a, T> {
-	lock: &'a RawSpinlockIrqSave,
+pub struct WaitLockIrqSaveGuard<'a, T> {
+	lock: &'a RawWaitLockIrqSave,
 	data: &'a UnsafeCell<T>,
 	irq_was_enabled: bool,
 	_phantom: PhantomData<&'a mut T>,
 }
 
-impl<'a, T> Deref for SpinlockIrqSaveGuard<'a, T> {
+impl<'a, T> Deref for WaitLockIrqSaveGuard<'a, T> {
 	type Target = T;
 
 	fn deref(&self) -> &T {
@@ -251,13 +251,13 @@ impl<'a, T> Deref for SpinlockIrqSaveGuard<'a, T> {
 	}
 }
 
-impl<'a, T> DerefMut for SpinlockIrqSaveGuard<'a, T> {
+impl<'a, T> DerefMut for WaitLockIrqSaveGuard<'a, T> {
 	fn deref_mut(&mut self) -> &mut T {
 		unsafe { &mut *self.data.get() }
 	}
 }
 
-impl<'a, T> Drop for SpinlockIrqSaveGuard<'a, T> {
+impl<'a, T> Drop for WaitLockIrqSaveGuard<'a, T> {
 	fn drop(&mut self) {
 		self.lock.unlock(self.irq_was_enabled);
 	}
@@ -268,17 +268,17 @@ const WRITER_BIT: usize = 1 << 31;
 const WRITER_WAITING_BIT: usize = 1 << 30;
 
 #[derive(Debug)]
-pub struct RawRwSpinlock {
+pub struct RawSharedWaitLock {
 	state: AtomicUsize,
 }
 
-impl Default for RawRwSpinlock {
+impl Default for RawSharedWaitLock {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl RawRwSpinlock {
+impl RawSharedWaitLock {
 	pub const fn new() -> Self {
 		Self {
 			state: AtomicUsize::new(0),
@@ -405,31 +405,31 @@ impl RawRwSpinlock {
 }
 
 #[derive(Debug)]
-pub struct RwSpinlock<T> {
-	lock: RawRwSpinlock,
+pub struct SharedWaitLock<T> {
+	lock: RawSharedWaitLock,
 	data: UnsafeCell<T>,
 }
 
-impl<T> RwSpinlock<T> {
+impl<T> SharedWaitLock<T> {
 	pub const fn new(data: T) -> Self {
 		Self {
-			lock: RawRwSpinlock::new(),
+			lock: RawSharedWaitLock::new(),
 			data: UnsafeCell::new(data),
 		}
 	}
 
-	pub fn read(&self) -> RwSpinlockReadGuard<'_, T> {
+	pub fn read(&self) -> SharedWaitLockReadGuard<'_, T> {
 		self.lock.read_lock();
-		RwSpinlockReadGuard {
+		SharedWaitLockReadGuard {
 			lock: &self.lock,
 			data: &self.data,
 			_phantom: PhantomData,
 		}
 	}
 
-	pub fn try_read(&self) -> Option<RwSpinlockReadGuard<'_, T>> {
+	pub fn try_read(&self) -> Option<SharedWaitLockReadGuard<'_, T>> {
 		if self.lock.try_read_lock() {
-			Some(RwSpinlockReadGuard {
+			Some(SharedWaitLockReadGuard {
 				lock: &self.lock,
 				data: &self.data,
 				_phantom: PhantomData,
@@ -439,18 +439,18 @@ impl<T> RwSpinlock<T> {
 		}
 	}
 
-	pub fn write(&self) -> RwSpinlockWriteGuard<'_, T> {
+	pub fn write(&self) -> SharedWaitLockWriteGuard<'_, T> {
 		self.lock.write_lock();
-		RwSpinlockWriteGuard {
+		SharedWaitLockWriteGuard {
 			lock: &self.lock,
 			data: &self.data,
 			_phantom: PhantomData,
 		}
 	}
 
-	pub fn try_write(&self) -> Option<RwSpinlockWriteGuard<'_, T>> {
+	pub fn try_write(&self) -> Option<SharedWaitLockWriteGuard<'_, T>> {
 		if self.lock.try_write_lock() {
-			Some(RwSpinlockWriteGuard {
+			Some(SharedWaitLockWriteGuard {
 				lock: &self.lock,
 				data: &self.data,
 				_phantom: PhantomData,
@@ -465,16 +465,16 @@ impl<T> RwSpinlock<T> {
 	}
 }
 
-unsafe impl<T: Send> Sync for RwSpinlock<T> {}
-unsafe impl<T: Send> Send for RwSpinlock<T> {}
+unsafe impl<T: Send> Sync for SharedWaitLock<T> {}
+unsafe impl<T: Send> Send for SharedWaitLock<T> {}
 
-pub struct RwSpinlockReadGuard<'a, T> {
-	lock: &'a RawRwSpinlock,
+pub struct SharedWaitLockReadGuard<'a, T> {
+	lock: &'a RawSharedWaitLock,
 	data: &'a UnsafeCell<T>,
 	_phantom: PhantomData<&'a T>,
 }
 
-impl<'a, T> Deref for RwSpinlockReadGuard<'a, T> {
+impl<'a, T> Deref for SharedWaitLockReadGuard<'a, T> {
 	type Target = T;
 
 	fn deref(&self) -> &T {
@@ -482,19 +482,19 @@ impl<'a, T> Deref for RwSpinlockReadGuard<'a, T> {
 	}
 }
 
-impl<'a, T> Drop for RwSpinlockReadGuard<'a, T> {
+impl<'a, T> Drop for SharedWaitLockReadGuard<'a, T> {
 	fn drop(&mut self) {
 		self.lock.read_unlock();
 	}
 }
 
-pub struct RwSpinlockWriteGuard<'a, T> {
-	lock: &'a RawRwSpinlock,
+pub struct SharedWaitLockWriteGuard<'a, T> {
+	lock: &'a RawSharedWaitLock,
 	data: &'a UnsafeCell<T>,
 	_phantom: PhantomData<&'a mut T>,
 }
 
-impl<'a, T> Deref for RwSpinlockWriteGuard<'a, T> {
+impl<'a, T> Deref for SharedWaitLockWriteGuard<'a, T> {
 	type Target = T;
 
 	fn deref(&self) -> &T {
@@ -502,13 +502,13 @@ impl<'a, T> Deref for RwSpinlockWriteGuard<'a, T> {
 	}
 }
 
-impl<'a, T> DerefMut for RwSpinlockWriteGuard<'a, T> {
+impl<'a, T> DerefMut for SharedWaitLockWriteGuard<'a, T> {
 	fn deref_mut(&mut self) -> &mut T {
 		unsafe { &mut *self.data.get() }
 	}
 }
 
-impl<'a, T> Drop for RwSpinlockWriteGuard<'a, T> {
+impl<'a, T> Drop for SharedWaitLockWriteGuard<'a, T> {
 	fn drop(&mut self) {
 		self.lock.write_unlock();
 	}

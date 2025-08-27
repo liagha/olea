@@ -10,7 +10,7 @@ use {
 		format::{
 			self, Debug,
 		},
-		sync::spinlock::*,
+		sync::lock::*,
 	},
 	core::any::Any,
 	alloc::{
@@ -408,13 +408,13 @@ impl Node for SymbolLink {
 
 #[derive(Debug)]
 pub struct FileSystem {
-	handle: Spinlock<Directory>,
+	handle: WaitLock<Directory>,
 }
 
 impl FileSystem {
 	pub fn new() -> FileSystem {
 		FileSystem {
-			handle: Spinlock::new(Directory::new()),
+			handle: WaitLock::new(Directory::new()),
 		}
 	}
 }
