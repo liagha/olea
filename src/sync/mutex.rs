@@ -1,102 +1,123 @@
 use {
 	crate::{
-		sync::spinlock::*,
 		scheduler::{
-			task::*,
 			block_current_task, reschedule, wakeup_task,
+			task::{PriorityTaskQueue},
 		},
+		sync::spinlock::SpinlockIrqSave,
 	},
 	core::{
-		marker::Sync,
 		cell::UnsafeCell,
-		ops::{Deref, DerefMut, Drop},
+		marker::{PhantomData, Send, Sync},
+		ops::{Deref, DerefMut},
 	},
 };
 
-pub struct Mutex<T: ?Sized> {
-	value: SpinlockIrqSave<bool>,
-	queue: SpinlockIrqSave<PriorityTaskQueue>,
+pub struct Mutex<T> {
+	is_locked: SpinlockIrqSave<bool>,
+	wait_queue: SpinlockIrqSave<PriorityTaskQueue>,
 	data: UnsafeCell<T>,
 }
 
-pub struct MutexGuard<'a, T: ?Sized + 'a> {
-	value: &'a SpinlockIrqSave<bool>,
-	queue: &'a SpinlockIrqSave<PriorityTaskQueue>,
-	data: &'a mut T,
-}
-
-unsafe impl<T: ?Sized + Send> Sync for Mutex<T> {}
-unsafe impl<T: ?Sized + Send> Send for Mutex<T> {}
-
 impl<T> Mutex<T> {
-	pub fn new(user_data: T) -> Mutex<T> {
-		Mutex {
-			value: SpinlockIrqSave::new(true),
-			queue: SpinlockIrqSave::new(PriorityTaskQueue::new()),
-			data: UnsafeCell::new(user_data),
+	pub const fn new(data: T) -> Self {
+		Self {
+			is_locked: SpinlockIrqSave::new(false),
+			wait_queue: SpinlockIrqSave::new(PriorityTaskQueue::new()),
+			data: UnsafeCell::new(data),
+		}
+	}
+
+	pub fn lock(&self) -> MutexGuard<'_, T> {
+		self.acquire_lock();
+		MutexGuard {
+			mutex: self,
+			_phantom: PhantomData,
+		}
+	}
+
+	pub fn try_lock(&self) -> Option<MutexGuard<'_, T>> {
+		if self.try_acquire_lock() {
+			Some(MutexGuard {
+				mutex: self,
+				_phantom: PhantomData,
+			})
+		} else {
+			None
 		}
 	}
 
 	pub fn into_inner(self) -> T {
-		let Mutex { data, .. } = self;
-		data.into_inner()
+		self.data.into_inner()
 	}
-}
 
-impl<T: ?Sized> Mutex<T> {
-	fn obtain_lock(&self) {
+	fn acquire_lock(&self) {
 		loop {
-			let mut count = self.value.lock();
+			{
+				let mut locked = self.is_locked.lock();
+				if !*locked {
+					*locked = true;
+					return;
+				}
 
-			if *count {
-				*count = false;
-				return;
-			} else {
-				self.queue.lock().push(block_current_task());
-				
-				drop(count);
-				
-				reschedule();
+				let task = block_current_task();
+				self.wait_queue.lock().push(task);
 			}
+
+			reschedule();
 		}
 	}
 
-	pub fn lock(&self) -> MutexGuard<T> {
-		self.obtain_lock();
-		MutexGuard {
-			value: &self.value,
-			queue: &self.queue,
-			data: unsafe { &mut *self.data.get() },
+	fn try_acquire_lock(&self) -> bool {
+		let mut locked = self.is_locked.lock();
+		if !*locked {
+			*locked = true;
+			true
+		} else {
+			false
+		}
+	}
+
+	fn release_lock(&self) {
+		let mut locked = self.is_locked.lock();
+		*locked = false;
+
+		if let Some(task) = self.wait_queue.lock().pop() {
+			wakeup_task(task);
 		}
 	}
 }
 
 impl<T: Default> Default for Mutex<T> {
-	fn default() -> Mutex<T> {
-		Mutex::new(Default::default())
+	fn default() -> Self {
+		Self::new(T::default())
 	}
 }
 
-impl<'a, T: ?Sized> Deref for MutexGuard<'a, T> {
+unsafe impl<T: Send> Sync for Mutex<T> {}
+unsafe impl<T: Send> Send for Mutex<T> {}
+
+pub struct MutexGuard<'a, T> {
+	mutex: &'a Mutex<T>,
+	_phantom: PhantomData<&'a mut T>,
+}
+
+impl<'a, T> Deref for MutexGuard<'a, T> {
 	type Target = T;
+
 	fn deref(&self) -> &T {
-		&*self.data
+		unsafe { &*self.mutex.data.get() }
 	}
 }
 
-impl<'a, T: ?Sized> DerefMut for MutexGuard<'a, T> {
+impl<'a, T> DerefMut for MutexGuard<'a, T> {
 	fn deref_mut(&mut self) -> &mut T {
-		&mut *self.data
+		unsafe { &mut *self.mutex.data.get() }
 	}
 }
 
-impl<'a, T: ?Sized> Drop for MutexGuard<'a, T> {
+impl<'a, T> Drop for MutexGuard<'a, T> {
 	fn drop(&mut self) {
-		let mut count = self.value.lock();
-		*count = true;
-
-		if let Some(task) = self.queue.lock().pop() {
-			wakeup_task(task);
-		}
+		self.mutex.release_lock();
 	}
 }

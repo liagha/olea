@@ -1,3 +1,4 @@
+use core::ops::{Deref, DerefMut};
 use {
 	super::{
 		descriptor::OpenOptions,
@@ -6,8 +7,6 @@ use {
 	crate::{
 		sync::spinlock::*,
 	},
-	spinning_top::RwSpinlock,
-	core::ops::{Deref, DerefMut},
 	alloc::{
 		sync::Arc,
 		vec::Vec,

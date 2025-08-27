@@ -1,9 +1,10 @@
 mod scheduler;
 pub mod task;
+mod error;
 
 use {
 	crate::{
-		io::Error,
+		scheduler::error::Error,
 		scheduler::task::{Task, TaskPriority},
 		file::{
 			vfs::{

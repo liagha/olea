@@ -1,7 +1,7 @@
 use {
 	super::save_interrupt,
 	crate::{
-		io::Error,
+		scheduler::error::Error,
 		consts::*,
 		scheduler::task::*,
 		file::{
