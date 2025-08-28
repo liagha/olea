@@ -257,7 +257,7 @@ pub mod numbers {
 	pub const ILLEGAL_BYTE_SEQUENCE: i32 = 84;
 
 	/// Interrupted system invoke should be restarted
-	pub const RESTART_SYSCALL: i32 = 85;
+	pub const RESTART_INVOKE: i32 = 85;
 
 	/// Streams pipe error
 	pub const STREAM_PIPE_ERROR: i32 = 86;

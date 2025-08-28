@@ -7,7 +7,7 @@ use {
 
 /// Helper function called by sys_invalid to handle unknown system invoke
 /// Takes invoke number as parameter and terminates the process
-extern "C" fn invalid_syscall(sys_no: u64) -> ! {
+extern "C" fn invalid_invoke(sys_no: u64) -> ! {
 	error!("invalid invoke {}.", sys_no);
 	
 	exit();
@@ -22,7 +22,7 @@ pub unsafe extern "C" fn invalid() {
 	asm!(
 	"mov rdi, rax",    // Move invoke number from rax to rdi (1st argument)
 	"call {}",         // Call the invalid_syscall function
-	sym invalid_syscall,  // Reference to the function symbol
+	sym invalid_invoke,  // Reference to the function symbol
 	options(noreturn)     // This never returns
 	);
 }
