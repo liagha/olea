@@ -6,46 +6,18 @@
 extern crate olea;
 extern crate alloc;
 
-use alloc::vec::Vec;
 use {
 	alloc::string::String,
 	olea::{
-		io::{self, Read},
-		file::vfs::File,
+		io::{load_file, process_elf},
 		scheduler::{self, task::NORMAL_PRIORITY},
 		arch::{
-			process_elf,
 			kernel::interrupts::interrupt_enable,
 		},
 	},
 };
 
 extern "C" fn create_user() {
-	pub fn load_file(path: &String) -> Result<Vec<u8>, io::Error> {
-		debug!("attempting to load application from path.");
-
-		let mut file = File::open(path).map_err(|_| io::Error::FsError)?;
-		let length = file.len().map_err(|_| io::Error::FsError)?;
-
-		if length == 0 {
-			error!("file is empty.");
-			return Err(io::Error::InvalidArgument);
-		}
-
-		if length > usize::MAX {
-			error!("file size exceeds maximum supported size.");
-			return Err(io::Error::ValueOverflow);
-		}
-
-		debug!("file size is {} bytes.", length);
-		let mut buffer: Vec<u8> = Vec::new();
-
-		buffer.resize(length, 0);
-		file.read(&mut buffer)?;
-
-		drop(file);
-		Ok(buffer)
-	}
 
 	let path = String::from("/bin/demo");
 

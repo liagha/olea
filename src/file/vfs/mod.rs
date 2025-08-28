@@ -15,7 +15,6 @@ use {
 	},
 	crate::{
 		format::Debug,
-		io::{self, Write, Read},
 		scheduler::{insert_io_interface, remove_io_interface},
 	},
 	alloc::{
@@ -79,7 +78,7 @@ pub fn rename(old_path: &String, new_path: &String) -> Result<(), Error> {
 
 #[derive(Debug)]
 pub struct File {
-	fd: descriptor::Descriptor,
+	pub fd: descriptor::Descriptor,
 	path: String,
 }
 
@@ -105,18 +104,6 @@ impl File {
 	pub fn len(&self) -> Result<usize, Error> {
 		let st = descriptor::fstat(self.fd)?;
 		Ok(st.size)
-	}
-}
-
-impl Read for File {
-	fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
-		descriptor::read(self.fd, buf).map_err(|_| io::Error::FsError)
-	}
-}
-
-impl Write for File {
-	fn write(&mut self, buf: &[u8]) -> Result<usize, io::Error> {
-		descriptor::write(self.fd, buf).map_err(|_| io::Error::FsError)
 	}
 }
 
