@@ -45,7 +45,7 @@ impl Tss {
     }
 }
 
-pub fn init() {
+pub fn initialize() {
     #[cfg(target_arch = "x86_64")]
     let limit = 0;
     #[cfg(target_arch = "x86")]

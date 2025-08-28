@@ -52,7 +52,7 @@ impl VgaScreen {
         }
     }
 
-    fn init(&mut self) {
+    fn initialize(&mut self) {
         unsafe {
             outb(CRT_CONTROLLER_ADDRESS_PORT, CURSOR_START_REGISTER);
             outb(CRT_CONTROLLER_DATA_PORT, CURSOR_DISABLE);
@@ -125,6 +125,6 @@ impl format::Write for VgaScreen {
     }
 }
 
-pub fn init() {
-    VGA_SCREEN.lock().init();
+pub fn initialize() {
+    VGA_SCREEN.lock().initialize();
 }

@@ -63,7 +63,7 @@ pub extern "C" fn main() -> i32 {
 
 	println!("\n-     O L E A     -\n");
 
-	olea::init();
+	olea::initialize();
 
 	for _ in 0..2 {
 		scheduler::spawn(task_test, NORMAL_PRIORITY).unwrap();

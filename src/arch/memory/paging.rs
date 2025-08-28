@@ -544,7 +544,7 @@ pub fn create_usr_pgd() -> PhysicalAddress {
 	}
 }
 
-pub fn init() {
+pub fn initialize() {
 	let recursive_pgt = unsafe { BOOT_INFO.unwrap().recursive_page_table_addr } as *mut u64;
 	let recursive_pgt_idx = unsafe { BOOT_INFO.unwrap().recursive_index() };
 

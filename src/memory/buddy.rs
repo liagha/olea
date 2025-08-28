@@ -26,7 +26,7 @@ impl<const ORDER: usize> BuddySystem<ORDER> {
 		}
 	}
 
-	pub unsafe fn init(&mut self, start: *mut u8, len: usize) {
+	pub unsafe fn initialize(&mut self, start: *mut u8, len: usize) {
 		assert!(
 			len.is_power_of_two(),
 			"heap size must be a power of two, but got `{}`.",
@@ -142,9 +142,9 @@ impl<const ORDER: usize> LockedHeap<ORDER> {
 		LockedHeap(WaitLock::new(BuddySystem::<ORDER>::new()))
 	}
 
-	pub unsafe fn init(&self, start: *mut u8, len: usize) {
+	pub unsafe fn initialize(&self, start: *mut u8, len: usize) {
 		unsafe {
-			self.0.lock().init(start, len);
+			self.0.lock().initialize(start, len);
 		}
 	}
 }

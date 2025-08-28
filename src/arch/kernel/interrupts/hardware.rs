@@ -64,7 +64,7 @@ unsafe fn interrupt_remap() {
     outb(0xA1, 0x00);
 }
 
-pub fn init() {
+pub fn initialize() {
     unsafe {
         interrupt_remap();
 

@@ -157,10 +157,10 @@ pub fn get_memory_size() -> usize {
 	sz.try_into().unwrap()
 }
 
-pub fn init() {
-	paging::init();
-	physical::init();
-	r#virtual::init();
+pub fn initialize() {
+	paging::initialize();
+	physical::initialize();
+	r#virtual::initialize();
 }
 
 #[repr(C, align(64))]

@@ -15,7 +15,7 @@ pub const KERNEL_VIRTUAL_MEMORY_END: VirtualAddress = VirtualAddress(0x800_0000_
 
 const TASK_VIRTUAL_MEMORY_END: VirtualAddress = VirtualAddress(0x8000_0000_0000u64);
 
-pub fn init() {
+pub fn initialize() {
 	let entry = FreeListEntry {
 		start: KERNEL_VIRTUAL_MEMORY_START,
 		end: KERNEL_VIRTUAL_MEMORY_END,

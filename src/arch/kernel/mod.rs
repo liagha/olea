@@ -25,5 +25,5 @@ pub fn register_task() {
 }
 
 pub fn initialize() {
-	boot::early_init();
+	boot::initialize();
 }

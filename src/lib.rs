@@ -54,9 +54,9 @@ static mut ARENA: Arena = Arena::new();
 #[global_allocator]
 static ALLOCATOR: LockedHeap<32> = LockedHeap::<32>::new();
 
-pub fn init() {
+pub fn initialize() {
 	unsafe {
-		ALLOCATOR.init(ARENA.0.as_mut_ptr(), HEAP_SIZE);
+		ALLOCATOR.initialize(ARENA.0.as_mut_ptr(), HEAP_SIZE);
 	}
 
 	arch::kernel::initialize();

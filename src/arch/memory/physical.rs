@@ -13,7 +13,7 @@ use crate::arch::memory::{
 
 static mut PHYSICAL_FREE_LIST: FreeList<PhysicalAddress> = FreeList::new();
 
-pub fn init() {
+pub fn initialize() {
 	unsafe {
 		let regions = BOOT_INFO.unwrap().memory_map.deref();
 

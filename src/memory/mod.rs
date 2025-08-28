@@ -12,7 +12,7 @@ use alloc::alloc::Layout;
 pub fn initialize() {
 	info!("memory size: {} MB.", get_memory_size() >> 20);
 
-	arch::memory::init();
+	arch::memory::initialize();
 }
 
 #[cfg(not(test))]

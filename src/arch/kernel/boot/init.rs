@@ -14,12 +14,12 @@ use {
 #[cfg(feature = "vga")]
 use crate::arch::kernel::devices::vga;
 
-pub fn early_init() {
+pub fn initialize() {
     enable_features();
-    global::init();
-    interrupts::init();
-    timer::init();
+    global::initialize();
+    interrupts::initialize();
+    timer::initialize();
 
     #[cfg(feature = "vga")]
-    vga::init();
+    vga::initialize();
 }
