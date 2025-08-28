@@ -167,7 +167,6 @@ pub fn initialize() {
 pub struct Aligned<T>(T);
 
 impl<T> Aligned<T> {
-	/// Constructor.
 	pub const fn new(t: T) -> Self {
 		Self(t)
 	}

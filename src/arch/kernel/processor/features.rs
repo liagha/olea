@@ -10,15 +10,14 @@ use {
     },
 };
 
-// Constants for Extended Feature Enable Register (EFER) bits
-const SYSTEM_CALL_ENABLE: u64 = 1 << 0;  // Enables SYSCALL/SYSRET instructions
-const LONG_MODE_ENABLE: u64 = 1 << 8;   // Enables 64-bit long mode
-const LONG_MODE_ACTIVE: u64 = 1 << 10;  // Indicates long mode is active
-const NO_EXECUTE_ENABLE: u64 = 1 << 11; // Enables NX bit for memory protection
-const SECURE_VIRTUAL_MACHINE_ENABLE: u64 = 1 << 12; // Enables SVM (AMD virtualization)
-const LONG_MODE_SEGMENT_LIMIT_ENABLE: u64 = 1 << 13; // Enables LMSLE
-const FAST_FXSAVE_FXRSTOR: u64 = 1 << 14; // Enables fast FXSAVE/FXRSTOR
-const TRANSLATION_CACHE_EXTENSION: u64 = 1 << 15; // Enables TCE
+const SYSTEM_CALL_ENABLE: u64 = 1 << 0;
+const LONG_MODE_ENABLE: u64 = 1 << 8;
+const LONG_MODE_ACTIVE: u64 = 1 << 10;
+const NO_EXECUTE_ENABLE: u64 = 1 << 11;
+const SECURE_VIRTUAL_MACHINE_ENABLE: u64 = 1 << 12;
+const LONG_MODE_SEGMENT_LIMIT_ENABLE: u64 = 1 << 13;
+const FAST_FXSAVE_FXRSTOR: u64 = 1 << 14;
+const TRANSLATION_CACHE_EXTENSION: u64 = 1 << 15;
 
 static mut PHYSICAL_ADDRESS_BITS: u8 = 0;
 static mut LINEAR_ADDRESS_BITS: u8 = 0;

@@ -295,10 +295,8 @@ impl RawSharedWaitLock {
 				continue;
 			}
 
-			// Try to increment reader count
 			let new_state = state + 1;
 			if new_state & READER_MASK == 0 {
-				// Reader count would overflow, spin
 				pause();
 				continue;
 			}
@@ -320,15 +318,12 @@ impl RawSharedWaitLock {
 	pub fn try_read_lock(&self) -> bool {
 		let state = self.state.load(Ordering::Acquire);
 
-		// If writer is active or waiting, fail
 		if (state & (WRITER_BIT | WRITER_WAITING_BIT)) != 0 {
 			return false;
 		}
 
-		// Try to increment reader count
 		let new_state = state + 1;
 		if new_state & READER_MASK == 0 {
-			// Reader count would overflow
 			return false;
 		}
 
@@ -347,7 +342,6 @@ impl RawSharedWaitLock {
 
 	#[inline]
 	pub fn write_lock(&self) {
-		// Set writer waiting bit
 		loop {
 			let state = self.state.load(Ordering::Acquire);
 			if (state & WRITER_WAITING_BIT) == 0 && self.state.compare_exchange_weak(
@@ -361,7 +355,6 @@ impl RawSharedWaitLock {
 			pause();
 		}
 
-		// Wait for all readers to finish and acquire write lock
 		loop {
 			let state = self.state.load(Ordering::Acquire);
 			if (state & READER_MASK) == 0 && (state & WRITER_BIT) == 0 && self.state.compare_exchange_weak(
@@ -380,7 +373,6 @@ impl RawSharedWaitLock {
 	pub fn try_write_lock(&self) -> bool {
 		let state = self.state.load(Ordering::Acquire);
 
-		// Check if we can acquire write lock immediately
 		if state != 0 {
 			return false;
 		}

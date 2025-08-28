@@ -18,15 +18,6 @@ pub struct BufferSegment {
 	pub length: usize,  
 }
 
-/// Handler for writev() system invoke - write data from multiple buffers
-/// Implements scatter-gather write operation
-///
-/// Arguments:
-/// - descriptor: File descriptor to write to
-/// - pointer: Pointer to array of BufferSegment structures
-/// - count: Number of BufferSegment structures in array
-///
-/// Returns: Number of bytes written, or negative error code
 pub unsafe extern "C" fn write_vector(
     descriptor: Descriptor,
     pointer: *const BufferSegment,
@@ -55,14 +46,6 @@ pub unsafe extern "C" fn write_vector(
 	length  
 }
 
-/// Handler for write() system invoke - write data from single buffer
-///
-/// Arguments:
-/// - fd: File descriptor to write to
-/// - buffer: Pointer to data buffer
-/// - length: Number of bytes to write
-///
-/// Returns: Number of bytes written, or negative error code
 pub unsafe extern "C" fn write(descriptor: Descriptor, buffer: *mut u8, length: usize) -> isize {
 	debug!("enter invoke write.");
 

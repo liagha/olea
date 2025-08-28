@@ -36,8 +36,6 @@ unsafe extern "C" fn jump_to_user_land(ds: usize, stack: usize, cs: usize, entry
     )
 }
 
-/// High-level wrapper to transition to user mode with predefined segments
-/// Sets up proper user-space segment selectors and memory layout
 pub unsafe fn to_user_mode(func: usize) -> ! {
     jump_to_user_land(
         0x23,  // User data segment selector (GDT entry 4, DPL=3)

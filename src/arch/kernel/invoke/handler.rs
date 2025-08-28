@@ -5,16 +5,6 @@ use {
     },
 };
 
-/// Main system invoke entry point that handles ALL system invoke
-/// This function is called by the CPU when userspace executes `invoke` instruction
-///
-/// Register state on entry (set by CPU's invoke instruction):
-/// - rax: system invoke number
-/// - rdi, rsi, rdx, r10, r8, r9: invoke arguments 1-6
-/// - rcx: userspace return address (saved by CPU)
-/// - r11: userspace flags register (saved by CPU)
-/// - rsp: still pointing to userspace stack
-/// - CS/SS: switched to kernel segments by CPU
 #[naked]
 pub unsafe extern "C" fn invoke_handler() {
     naked_asm!(
